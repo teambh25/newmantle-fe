@@ -1,4 +1,6 @@
 import NewMantleForm from "@/components/NewMantleForm";
+import GameDescription from "@/components/GameDescription";
+import FAQSection from "@/components/FAQSection";
 
 export default function Home() {
   return (
@@ -10,9 +12,12 @@ export default function Home() {
         오늘의 단어를 맞혀보세요!
       </p>
       <p className="text-sm text-gray-500 mb-8 max-w-md text-center">
-        힌트는 없습니다. <br></br>몇 번 만에 맞힐 수 있나요?
+        단어를 입력하면, <br></br>정답 단어와의 유사도만 알려드립니다. <br></br>
+        몇트 안에 맞힐 수 있나요?
       </p>
       <NewMantleForm />
+      <GameDescription />
+      {/* <FAQSection /> */}
     </main>
   );
 }

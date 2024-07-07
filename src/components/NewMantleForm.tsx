@@ -17,6 +17,7 @@ interface SubmittedWord {
   word: string;
   similarity: number;
   rank: number;
+  attempt: number;
 }
 
 const SimilarityBar: React.FC<{ similarity: number; rank: number }> = ({
@@ -28,10 +29,10 @@ const SimilarityBar: React.FC<{ similarity: number; rank: number }> = ({
 
   return (
     <div className="w-full">
-      <div className="text-center text-xs text-gray-500 mb-1">
+      <div className="text-center text-xs text-gray-500 font-semibold">
         {rank === -1 ? "순위 밖" : `${rank}위`}
       </div>
-      <div className="relative w-full h-6 bg-gray-200 rounded overflow-hidden">
+      <div className="relative w-full h-6 bg-gray-200 rounded-full overflow-hidden">
         <div
           className={`absolute top-0 bottom-0 ${barColor}`}
           style={{
@@ -40,7 +41,7 @@ const SimilarityBar: React.FC<{ similarity: number; rank: number }> = ({
             right: similarity < 0 ? "50%" : "auto",
           }}
         />
-        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-xs text-gray-700 font-semibold z-10">
+        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-xs text-gray-400  z-10">
           {similarity.toFixed(2)}
         </div>
       </div>
@@ -48,7 +49,10 @@ const SimilarityBar: React.FC<{ similarity: number; rank: number }> = ({
   );
 };
 
-const mockSubmitWord = async (word: string): Promise<SubmittedWord> => {
+const mockSubmitWord = async (
+  word: string,
+  attempt: number
+): Promise<SubmittedWord> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       const isCorrect = word.toLowerCase() === "정답";
@@ -56,6 +60,7 @@ const mockSubmitWord = async (word: string): Promise<SubmittedWord> => {
         word,
         similarity: isCorrect ? 100 : Math.random() * 200 - 100,
         rank: isCorrect ? 1 : Math.floor(Math.random() * 1002) - 1, // -1 to 1000 range
+        attempt,
       });
     }, 500);
   });
@@ -82,8 +87,9 @@ export default function NewMantleForm() {
     if (inputWord.trim() && !isLoading) {
       setIsLoading(true);
       setAttempts((prev) => prev + 1);
+      const currentAttempt = attempts + 1;
       try {
-        const newWord = await mockSubmitWord(inputWord.trim());
+        const newWord = await mockSubmitWord(inputWord.trim(), currentAttempt);
         setSubmittedWords((prev) => {
           if (prev.length === 0) return [newWord];
           const [lastWord, ...restWords] = prev;
@@ -102,6 +108,18 @@ export default function NewMantleForm() {
         setIsLoading(false);
       }
     }
+  };
+
+  const handleCopyLink = () => {
+    const link = window.location.href;
+    navigator.clipboard
+      .writeText(link)
+      .then(() => {
+        alert("링크가 클립보드에 복사되었습니다!");
+      })
+      .catch((error) => {
+        console.error("링크 복사 실패:", error);
+      });
   };
 
   const displayedWords = showAllWords
@@ -139,6 +157,9 @@ export default function NewMantleForm() {
           <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 text-center w-full">
             <p className="font-bold">정답을 맞췄습니다!</p>
             <p>{attempts}번째 만에 맞히셨네요.</p>
+            <Button onClick={handleCopyLink} className="mt-4">
+              링크 복사하기
+            </Button>
           </div>
         )}
 
@@ -148,6 +169,7 @@ export default function NewMantleForm() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="text-center w-20">🔄</TableHead>
                     <TableHead className="text-center">단어</TableHead>
                     <TableHead className="text-center">유사도</TableHead>
                   </TableRow>
@@ -160,6 +182,9 @@ export default function NewMantleForm() {
                         word.similarity === 100 ? "bg-green-100" : ""
                       } ${index === 0 ? "bg-blue-50" : ""}`}
                     >
+                      <TableCell className="text-center py-2 w-20">
+                        {word.attempt}트
+                      </TableCell>
                       <TableCell className="text-center py-2">
                         {word.word}
                       </TableCell>
