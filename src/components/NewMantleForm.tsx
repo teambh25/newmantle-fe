@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface SubmittedWord {
   word: string;
@@ -50,22 +51,6 @@ const SimilarityBar: React.FC<{ similarity: number; rank: number }> = ({
   );
 };
 
-// const mockSubmitWord = async (
-//   word: string,
-//   attempt: number
-// ): Promise<SubmittedWord> => {
-//   return new Promise((resolve) => {
-//     setTimeout(() => {
-//       const isCorrect = word.toLowerCase() === "정답";
-//       resolve({
-//         word,
-//         similarity: isCorrect ? 100 : Math.random() * 200 - 100,
-//         rank: isCorrect ? 1 : Math.floor(Math.random() * 1002) - 1, // -1 to 1000 range
-//         attempt,
-//       });
-//     }, 500);
-//   });
-// };
 const submitWord = async (
   word: string,
   attempt: number
@@ -95,6 +80,7 @@ export default function NewMantleForm() {
   const [attempts, setAttempts] = useState(0);
   const [currentDate, setCurrentDate] = useState("");
   const [showAllWords, setShowAllWords] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const now = new Date();
@@ -108,9 +94,9 @@ export default function NewMantleForm() {
     if (inputWord.trim() && !isLoading) {
       setIsLoading(true);
       setAttempts((prev) => prev + 1);
+      setError(null); // Reset error message
       const currentAttempt = attempts + 1;
       try {
-        // const newWord = await mockSubmitWord(inputWord.trim(), currentAttempt);
         const newWord = await submitWord(inputWord.trim(), currentAttempt);
 
         setSubmittedWords((prev) => {
@@ -122,14 +108,26 @@ export default function NewMantleForm() {
           return [newWord, ...sortedRestWords];
         });
         setInputWord("");
-        // if (newWord.similarity === 100) {
-        //   setIsCorrect(true);
-        // }
         if (newWord.correct) {
           setIsCorrect(true);
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Error submitting word:", error);
+        if (error instanceof Error) {
+          if (
+            "response" in error &&
+            typeof error.response === "object" &&
+            error.response &&
+            "status" in error.response &&
+            error.response.status === 400
+          ) {
+            setError("유효한 단어가 아닙니다.");
+          } else {
+            setError("단어 제출 중 오류가 발생했습니다.");
+          }
+        } else {
+          setError("알 수 없는 오류가 발생했습니다.");
+        }
       } finally {
         setIsLoading(false);
       }
@@ -179,6 +177,12 @@ export default function NewMantleForm() {
           </div>
         </form>
 
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
         {isCorrect && (
           <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 text-center w-full">
             <p className="font-bold">정답을 맞췄습니다!</p>
@@ -204,9 +208,9 @@ export default function NewMantleForm() {
                   {displayedWords.map((word, index) => (
                     <TableRow
                       key={index}
-                      className={`${
-                        word.similarity === 100 ? "bg-green-100" : ""
-                      } ${index === 0 ? "bg-blue-50" : ""}`}
+                      className={`${word.correct ? "bg-green-100" : ""} ${
+                        index === 0 ? "bg-blue-50" : ""
+                      }`}
                     >
                       <TableCell className="text-center py-2 w-20">
                         {word.attempt}트
