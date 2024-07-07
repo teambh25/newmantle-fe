@@ -18,6 +18,7 @@ interface SubmittedWord {
   similarity: number;
   rank: number;
   attempt: number;
+  correct: boolean;
 }
 
 const SimilarityBar: React.FC<{ similarity: number; rank: number }> = ({
