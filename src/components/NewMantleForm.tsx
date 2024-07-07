@@ -132,7 +132,7 @@ export default function NewMantleForm() {
         <h2 className="text-2xl font-bold">{currentDate}</h2>
         <h3 className="text-xl mt-2">정답은...?</h3>
       </CardHeader>
-      <CardContent className="flex flex-col items-center">
+      <CardContent className="flex flex-col items-center mx-0">
         <form onSubmit={handleSubmit} className="w-full mb-6">
           <div className="flex flex-col space-y-2">
             <Input
