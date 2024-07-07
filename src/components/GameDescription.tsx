@@ -14,7 +14,7 @@ const GameDescription: React.FC = () => {
     <Card className="w-full max-w-2xl mt-12">
       <CardHeader>
         <CardTitle className="leading-normal">
-          이 게임은 원작인 '꼬맨틀'의 개선된 버전입니다.
+          이 게임은 원작인 꼬맨틀의 개선된 버전입니다.
         </CardTitle>
         <CardDescription>
           개선된 모델을 통해 기존 꼬맨틀보다 더 유의미한 유사도를 확인할 수
