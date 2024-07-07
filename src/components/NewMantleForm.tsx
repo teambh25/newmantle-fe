@@ -49,21 +49,41 @@ const SimilarityBar: React.FC<{ similarity: number; rank: number }> = ({
   );
 };
 
-const mockSubmitWord = async (
+// const mockSubmitWord = async (
+//   word: string,
+//   attempt: number
+// ): Promise<SubmittedWord> => {
+//   return new Promise((resolve) => {
+//     setTimeout(() => {
+//       const isCorrect = word.toLowerCase() === "정답";
+//       resolve({
+//         word,
+//         similarity: isCorrect ? 100 : Math.random() * 200 - 100,
+//         rank: isCorrect ? 1 : Math.floor(Math.random() * 1002) - 1, // -1 to 1000 range
+//         attempt,
+//       });
+//     }, 500);
+//   });
+// };
+const submitWord = async (
   word: string,
   attempt: number
 ): Promise<SubmittedWord> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const isCorrect = word.toLowerCase() === "정답";
-      resolve({
-        word,
-        similarity: isCorrect ? 100 : Math.random() * 200 - 100,
-        rank: isCorrect ? 1 : Math.floor(Math.random() * 1002) - 1, // -1 to 1000 range
-        attempt,
-      });
-    }, 500);
-  });
+  const encodedWord = encodeURIComponent(word);
+  const response = await fetch(
+    `http://43.203.234.62:5000/guess/1/${encodedWord}`
+  );
+  if (!response.ok) {
+    throw new Error("API request failed");
+  }
+  const data = await response.json();
+  return {
+    word,
+    similarity: data.score,
+    rank: data.rank,
+    attempt,
+    correct: data.correct,
+  };
 };
 
 export default function NewMantleForm() {
@@ -89,7 +109,9 @@ export default function NewMantleForm() {
       setAttempts((prev) => prev + 1);
       const currentAttempt = attempts + 1;
       try {
-        const newWord = await mockSubmitWord(inputWord.trim(), currentAttempt);
+        // const newWord = await mockSubmitWord(inputWord.trim(), currentAttempt);
+        const newWord = await submitWord(inputWord.trim(), currentAttempt);
+
         setSubmittedWords((prev) => {
           if (prev.length === 0) return [newWord];
           const [lastWord, ...restWords] = prev;
@@ -99,7 +121,10 @@ export default function NewMantleForm() {
           return [newWord, ...sortedRestWords];
         });
         setInputWord("");
-        if (newWord.similarity === 100) {
+        // if (newWord.similarity === 100) {
+        //   setIsCorrect(true);
+        // }
+        if (newWord.correct) {
           setIsCorrect(true);
         }
       } catch (error) {
