@@ -20,18 +20,18 @@ const SurveyForm: React.FC = () => {
       </h2>
       <div className="flex justify-center space-x-4">
         <Button
-          variant={voted === true ? "default" : "outline"}
-          onClick={() => handleVote(true)}
-          disabled={voted !== null}
-        >
-          <ThumbsUp className="mr-2 h-4 w-4" /> 재밌다
-        </Button>
-        <Button
           variant={voted === false ? "default" : "outline"}
           onClick={() => handleVote(false)}
           disabled={voted !== null}
         >
           <ThumbsDown className="mr-2 h-4 w-4" /> 재미없다
+        </Button>
+        <Button
+          variant={voted === true ? "default" : "outline"}
+          onClick={() => handleVote(true)}
+          disabled={voted !== null}
+        >
+          <ThumbsUp className="mr-2 h-4 w-4" /> 재밌다
         </Button>
       </div>
       {voted !== null && (

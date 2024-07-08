@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface SubmittedWord {
   word: string;
@@ -58,20 +59,35 @@ const submitWord = async (
   attempt: number
 ): Promise<SubmittedWord> => {
   const encodedWord = encodeURIComponent(word);
-  const response = await fetch(
-    `http://43.203.234.62:5000/guess/1/${encodedWord}`
-  );
-  if (!response.ok) {
-    throw new Error("API request failed");
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3000); // 3초 타임아웃
+
+  try {
+    const response = await fetch(
+      `http://43.203.234.62:5000/guess/1/${encodedWord}`,
+      { signal: controller.signal }
+    );
+    clearTimeout(timeoutId);
+    if (response.status === 400) {
+      throw new Error("Invalid word");
+    }
+    if (!response.ok) {
+      throw new Error("API request failed");
+    }
+    const data = await response.json();
+    return {
+      word,
+      similarity: data.correct ? null : data.score,
+      rank: data.rank,
+      attempt,
+      correct: data.correct,
+    };
+  } catch (error) {
+    if ((error as Error).name === "AbortError") {
+      throw new Error("Request timeout");
+    }
+    throw error;
   }
-  const data = await response.json();
-  return {
-    word,
-    similarity: data.correct ? null : data.score,
-    rank: data.rank,
-    attempt,
-    correct: data.correct,
-  };
 };
 
 export default function NewMantleForm() {
@@ -82,6 +98,8 @@ export default function NewMantleForm() {
   const [attempts, setAttempts] = useState(0);
   const [currentDate, setCurrentDate] = useState("");
   const [showAllWords, setShowAllWords] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isTimeout, setIsTimeout] = useState(false);
 
   useEffect(() => {
     const now = new Date();
@@ -94,11 +112,10 @@ export default function NewMantleForm() {
     e.preventDefault();
     if (inputWord.trim() && !isLoading) {
       setIsLoading(true);
-      setAttempts((prev) => prev + 1);
-      const currentAttempt = attempts + 1;
+      setError(null);
+      setIsTimeout(false);
       try {
-        const newWord = await submitWord(inputWord.trim(), currentAttempt);
-
+        const newWord = await submitWord(inputWord.trim(), attempts + 1);
         setSubmittedWords((prev) => {
           if (prev.length === 0) return [newWord];
           const [lastWord, ...restWords] = prev;
@@ -111,8 +128,21 @@ export default function NewMantleForm() {
         if (newWord.correct) {
           setIsCorrect(true);
         }
+        setAttempts((prev) => prev + 1);
       } catch (error) {
-        console.error("Error submitting word:", error);
+        if (error instanceof Error) {
+          if (error.message === "Invalid word") {
+            setError("올바른 단어를 입력해주세요.");
+          } else if (error.message === "Request timeout") {
+            setIsTimeout(true);
+            setError(
+              "서버 응답이 지연되고 있습니다. 잠시 후 다시 시도해주세요."
+            );
+          } else {
+            console.error("Error submitting word:", error);
+            setError("단어 제출 중 오류가 발생했습니다.");
+          }
+        }
       } finally {
         setIsLoading(false);
       }
@@ -157,10 +187,16 @@ export default function NewMantleForm() {
               disabled={isLoading || isCorrect}
               className="w-full"
             >
-              {isLoading ? "제출 중..." : "제출"}
+              {isLoading ? "제출 중..." : isTimeout ? "재시도" : "제출"}
             </Button>
           </div>
         </form>
+
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
         {isCorrect && (
           <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 text-center w-full">
