@@ -1,3 +1,5 @@
+// src/components/NewMantleForm.tsx
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -12,22 +14,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface SubmittedWord {
   word: string;
-  similarity: number;
+  similarity: number | null;
   rank: number;
   attempt: number;
   correct: boolean;
 }
 
-const SimilarityBar: React.FC<{ similarity: number; rank: number }> = ({
+const SimilarityBar: React.FC<{ similarity: number | null; rank: number }> = ({
   similarity,
   rank,
 }) => {
-  const barWidth = `${Math.abs(similarity) / 2}%`;
-  const barColor = similarity >= 0 ? "bg-blue-500" : "bg-red-500";
+  const barWidth = similarity !== null ? `${Math.abs(similarity) / 2}%` : "0%";
+  const barColor =
+    similarity !== null && similarity >= 0 ? "bg-blue-500" : "bg-red-500";
 
   return (
     <div className="w-full">
@@ -39,12 +41,12 @@ const SimilarityBar: React.FC<{ similarity: number; rank: number }> = ({
           className={`absolute top-0 bottom-0 ${barColor}`}
           style={{
             width: barWidth,
-            left: similarity >= 0 ? "50%" : "auto",
-            right: similarity < 0 ? "50%" : "auto",
+            left: similarity !== null && similarity >= 0 ? "50%" : "auto",
+            right: similarity !== null && similarity < 0 ? "50%" : "auto",
           }}
         />
-        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-xs text-gray-400  z-10">
-          {similarity.toFixed(2)}
+        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-xs text-gray-400 z-10">
+          {similarity !== null ? similarity.toFixed(2) : "정답!"}
         </div>
       </div>
     </div>
@@ -65,7 +67,7 @@ const submitWord = async (
   const data = await response.json();
   return {
     word,
-    similarity: data.score,
+    similarity: data.correct ? null : data.score,
     rank: data.rank,
     attempt,
     correct: data.correct,
@@ -80,7 +82,6 @@ export default function NewMantleForm() {
   const [attempts, setAttempts] = useState(0);
   const [currentDate, setCurrentDate] = useState("");
   const [showAllWords, setShowAllWords] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const now = new Date();
@@ -94,7 +95,6 @@ export default function NewMantleForm() {
     if (inputWord.trim() && !isLoading) {
       setIsLoading(true);
       setAttempts((prev) => prev + 1);
-      setError(null); // Reset error message
       const currentAttempt = attempts + 1;
       try {
         const newWord = await submitWord(inputWord.trim(), currentAttempt);
@@ -103,7 +103,7 @@ export default function NewMantleForm() {
           if (prev.length === 0) return [newWord];
           const [lastWord, ...restWords] = prev;
           const sortedRestWords = [...restWords, lastWord].sort(
-            (a, b) => b.similarity - a.similarity
+            (a, b) => (b.similarity ?? -Infinity) - (a.similarity ?? -Infinity)
           );
           return [newWord, ...sortedRestWords];
         });
@@ -111,23 +111,8 @@ export default function NewMantleForm() {
         if (newWord.correct) {
           setIsCorrect(true);
         }
-      } catch (error: unknown) {
+      } catch (error) {
         console.error("Error submitting word:", error);
-        if (error instanceof Error) {
-          if (
-            "response" in error &&
-            typeof error.response === "object" &&
-            error.response &&
-            "status" in error.response &&
-            error.response.status === 400
-          ) {
-            setError("유효한 단어가 아닙니다.");
-          } else {
-            setError("단어 제출 중 오류가 발생했습니다.");
-          }
-        } else {
-          setError("알 수 없는 오류가 발생했습니다.");
-        }
       } finally {
         setIsLoading(false);
       }
@@ -176,12 +161,6 @@ export default function NewMantleForm() {
             </Button>
           </div>
         </form>
-
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
 
         {isCorrect && (
           <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 text-center w-full">
