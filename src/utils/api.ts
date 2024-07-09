@@ -16,7 +16,7 @@ export const submitWord = async (
 
   try {
     const response = await fetch(
-      `http://3.35.132.212:5000/guess/1/${encodedWord}`,
+      `https://newmentle-be.ddnsking.com/guess/3/${encodedWord}`,
       { signal: controller.signal }
     );
     clearTimeout(timeoutId);
