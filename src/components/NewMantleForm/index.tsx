@@ -27,6 +27,16 @@ export default function NewMantleForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (inputWord.trim() && !isLoading) {
+      // 이미 제출한 단어인지 확인
+      const alreadySubmitted = submittedWords.some(
+        (word) => word.word.toLowerCase() === inputWord.trim().toLowerCase()
+      );
+
+      if (alreadySubmitted) {
+        setError("이미 제출한 단어입니다.");
+        return;
+      }
+
       setIsLoading(true);
       setError(null);
       try {
