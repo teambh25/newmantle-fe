@@ -89,7 +89,13 @@ export default function NewMantleForm() {
   };
 
   const handleCopyLink = () => {
-    const link = window.location.href;
+    const baseUrl = window.location.origin;
+    const utmParams = new URLSearchParams({
+      utm_source: "newmantle",
+      utm_medium: "share",
+      utm_campaign: "game_completion",
+    });
+    const link = `${baseUrl}?${utmParams.toString()}`;
     navigator.clipboard.writeText(link).then(
       () => {
         toast({
