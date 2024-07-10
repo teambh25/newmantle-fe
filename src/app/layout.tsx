@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import AmplitudeInitializer from "@/components/AmplitudeInitializer";
+
 import { Inter } from "next/font/google";
 import "./globals.css";
 import localFont from "next/font/local";
@@ -40,7 +42,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="kr">
-      <body className={pretendard.className}>{children}</body>
+      <body className={pretendard.className}>
+        <AmplitudeInitializer />
+        {children}
+      </body>
     </html>
   );
 }

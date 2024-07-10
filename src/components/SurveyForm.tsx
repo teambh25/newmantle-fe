@@ -3,12 +3,17 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { logEvent } from "@/utils/amplitude";
 
 const SurveyForm: React.FC = () => {
   const [voted, setVoted] = useState<boolean | null>(null);
 
   const handleVote = (isPositive: boolean) => {
-    // Here you would typically send the vote to your backend
+    // 앰플리튜드 이벤트 로깅
+    logEvent("Survey Vote", {
+      vote: isPositive ? "positive" : "negative",
+    });
+
     console.log(`User voted: ${isPositive ? "positive" : "negative"}`);
     setVoted(isPositive);
   };
@@ -16,7 +21,7 @@ const SurveyForm: React.FC = () => {
   return (
     <div className="w-full max-w-2xl mt-8">
       <h2 className="text-xl font-semibold mb-2 text-center">
-        꼬맨틀과 비교했을 때 더 재미있나요?
+        게임이 재미있었나요?
       </h2>
       <div className="flex justify-center space-x-4">
         <Button

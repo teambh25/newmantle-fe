@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import WordTable from "./WordTable";
 import { submitWord, SubmittedWord } from "@/utils/api";
+import { logEvent } from "@/utils/amplitude";
 
 export default function NewMantleForm() {
   const [inputWord, setInputWord] = useState("");
@@ -14,14 +15,20 @@ export default function NewMantleForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [attempts, setAttempts] = useState(0);
+  const startTimeRef = useRef<number>(Date.now());
   const [currentDate, setCurrentDate] = useState("");
   const [showAllWords, setShowAllWords] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    startTimeRef.current = Date.now(); // 컴포넌트가 마운트될 때 시작 시간 설정
     const now = new Date();
     setCurrentDate(`${now.getMonth() + 1}월 ${now.getDate()}일`);
+    logEvent("Game Started", {
+      date: new Date().toISOString(),
+    });
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,15 +48,33 @@ export default function NewMantleForm() {
       setError(null);
       try {
         const newWord = await submitWord(inputWord.trim(), attempts + 1);
+        logEvent("Word Submitted", {
+          word: inputWord.trim(),
+          attempt: attempts + 1,
+          similarity: newWord.similarity,
+          isCorrect: newWord.correct,
+        });
         setSubmittedWords((prev) => {
-          const updatedWords = [newWord, ...prev].sort(
-            (a, b) => (b.similarity ?? -Infinity) - (a.similarity ?? -Infinity)
-          );
-          return updatedWords;
+          // 새로운 단어를 항상 배열의 맨 앞에 추가
+          const updatedWords = [newWord, ...prev];
+          // 나머지 단어들은 유사도에 따라 정렬
+          const sortedWords = updatedWords
+            .slice(1)
+            .sort(
+              (a, b) =>
+                (b.similarity ?? -Infinity) - (a.similarity ?? -Infinity)
+            );
+          // 최종 결과: 새 단어 + 정렬된 나머지 단어들
+          return [newWord, ...sortedWords];
         });
         setInputWord("");
         if (newWord.correct) {
           setIsCorrect(true);
+          const timeSpent = (Date.now() - startTimeRef.current) / 1000;
+          logEvent("Game Completed", {
+            attempts: attempts + 1,
+            timeSpent: timeSpent,
+          });
           toast({
             title: "축하합니다!",
             description: `${attempts + 1}번째 시도에 정답을 맞추셨습니다.`,
@@ -68,6 +93,7 @@ export default function NewMantleForm() {
         }
       } finally {
         setIsLoading(false);
+        inputRef.current?.focus();
       }
     }
   };
@@ -75,8 +101,21 @@ export default function NewMantleForm() {
   const handleCopyLink = () => {
     const link = window.location.href;
     navigator.clipboard.writeText(link).then(
-      () => toast({ title: "링크가 복사되었습니다!" }),
-      () => toast({ title: "링크 복사 실패", variant: "destructive" })
+      () => {
+        logEvent("Result Shared", {
+          method: "Link Copy",
+          attempts: attempts,
+          timeSpent: (Date.now() - startTimeRef.current) / 1000,
+        });
+        toast({ title: "링크가 복사되었습니다!" });
+      },
+      () => {
+        logEvent("Share Error", {
+          method: "Link Copy",
+          errorType: "Clipboard Write Failed",
+        });
+        toast({ title: "링크 복사 실패", variant: "destructive" });
+      }
     );
   };
 
@@ -96,6 +135,7 @@ export default function NewMantleForm() {
               placeholder="단어를 입력하세요"
               className="text-center"
               disabled={isLoading || isCorrect}
+              ref={inputRef} // ref 추가
             />
             <Button
               type="submit"
