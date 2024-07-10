@@ -20,6 +20,7 @@ export default function NewMantleForm() {
   const [showAllWords, setShowAllWords] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const [shouldFocus, setShouldFocus] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -31,19 +32,16 @@ export default function NewMantleForm() {
     });
   }, []);
 
+  useEffect(() => {
+    if (shouldFocus && inputRef.current) {
+      inputRef.current.focus();
+      setShouldFocus(false);
+    }
+  }, [shouldFocus]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (inputWord.trim() && !isLoading) {
-      // 이미 제출한 단어인지 확인
-      const alreadySubmitted = submittedWords.some(
-        (word) => word.word.toLowerCase() === inputWord.trim().toLowerCase()
-      );
-
-      if (alreadySubmitted) {
-        setError("이미 제출한 단어입니다.");
-        return;
-      }
-
       setIsLoading(true);
       setError(null);
       try {
@@ -55,26 +53,18 @@ export default function NewMantleForm() {
           isCorrect: newWord.correct,
         });
         setSubmittedWords((prev) => {
-          // 새로운 단어를 항상 배열의 맨 앞에 추가
           const updatedWords = [newWord, ...prev];
-          // 나머지 단어들은 유사도에 따라 정렬
           const sortedWords = updatedWords
             .slice(1)
             .sort(
               (a, b) =>
                 (b.similarity ?? -Infinity) - (a.similarity ?? -Infinity)
             );
-          // 최종 결과: 새 단어 + 정렬된 나머지 단어들
           return [newWord, ...sortedWords];
         });
         setInputWord("");
         if (newWord.correct) {
           setIsCorrect(true);
-          const timeSpent = (Date.now() - startTimeRef.current) / 1000;
-          logEvent("Game Completed", {
-            attempts: attempts + 1,
-            timeSpent: timeSpent,
-          });
           toast({
             title: "축하합니다!",
             description: `${attempts + 1}번째 시도에 정답을 맞추셨습니다.`,
@@ -93,7 +83,7 @@ export default function NewMantleForm() {
         }
       } finally {
         setIsLoading(false);
-        inputRef.current?.focus();
+        setShouldFocus(true); // 에러 발생 시에도 포커스 요청
       }
     }
   };
