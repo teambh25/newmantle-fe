@@ -67,7 +67,7 @@ export default function NewMantleForm() {
           setIsCorrect(true);
           toast({
             title: "축하합니다!",
-            description: `${attempts + 1}번째 시도에 정답을 맞추셨습니다.`,
+            description: `${attempts + 1}번째 시도에 정답을 맞히셨습니다.`,
           });
         }
         setAttempts((prev) => prev + 1);
@@ -92,19 +92,22 @@ export default function NewMantleForm() {
     const link = window.location.href;
     navigator.clipboard.writeText(link).then(
       () => {
+        toast({
+          title: "링크가 복사되었습니다!",
+          description: "친구들에게 공유해보세요.",
+        });
         logEvent("Result Shared", {
           method: "Link Copy",
           attempts: attempts,
           timeSpent: (Date.now() - startTimeRef.current) / 1000,
         });
-        toast({ title: "링크가 복사되었습니다!" });
       },
       () => {
+        toast({ title: "링크 복사 실패", variant: "destructive" });
         logEvent("Share Error", {
           method: "Link Copy",
           errorType: "Clipboard Write Failed",
         });
-        toast({ title: "링크 복사 실패", variant: "destructive" });
       }
     );
   };
@@ -148,8 +151,10 @@ export default function NewMantleForm() {
             <AlertDescription>
               <p className="font-bold">정답을 맞췄습니다!</p>
               <p>{attempts}번째 만에 맞히셨네요.</p>
+              <p>(내일은 새로운 단어로 도전할 수 있어요!)</p>
+
               <Button onClick={handleCopyLink} className="mt-4">
-                링크 복사하기
+                친구에게 공유하기
               </Button>
             </AlertDescription>
           </Alert>

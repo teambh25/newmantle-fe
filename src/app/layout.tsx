@@ -4,6 +4,7 @@ import AmplitudeInitializer from "@/components/AmplitudeInitializer";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import localFont from "next/font/local";
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({ subsets: ["latin"] });
 const pretendard = localFont({
@@ -45,6 +46,7 @@ export default function RootLayout({
       <body className={pretendard.className}>
         <AmplitudeInitializer />
         {children}
+        <Toaster />
       </body>
     </html>
   );
