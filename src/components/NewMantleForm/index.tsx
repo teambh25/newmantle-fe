@@ -22,9 +22,10 @@ export default function NewMantleForm() {
   const { toast } = useToast();
   const [shouldFocus, setShouldFocus] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [gameCompleted, setGameCompleted] = useState(false);
 
   useEffect(() => {
-    startTimeRef.current = Date.now(); // 컴포넌트가 마운트될 때 시작 시간 설정
+    startTimeRef.current = Date.now();
     const now = new Date();
     setCurrentDate(`${now.getMonth() + 1}월 ${now.getDate()}일`);
     logEvent("Game Started", {
@@ -43,7 +44,6 @@ export default function NewMantleForm() {
     e.preventDefault();
     const trimmedWord = inputWord.trim();
     if (trimmedWord && !isLoading) {
-      // 이미 제출된 단어인지 확인
       if (
         submittedWords.some(
           (word) => word.word.toLowerCase() === trimmedWord.toLowerCase()
@@ -78,9 +78,14 @@ export default function NewMantleForm() {
         setInputWord("");
         if (newWord.correct) {
           setIsCorrect(true);
+          setGameCompleted(true);
           toast({
             title: "축하합니다!",
             description: `${attempts + 1}번째 시도에 정답을 맞히셨습니다.`,
+          });
+          logEvent("Game Completed", {
+            attempts: attempts + 1,
+            timeSpent: (Date.now() - startTimeRef.current) / 1000,
           });
         }
         setAttempts((prev) => prev + 1);
@@ -100,6 +105,7 @@ export default function NewMantleForm() {
       }
     }
   };
+
   const handleCopyLink = () => {
     const baseUrl = window.location.origin;
     const utmParams = new URLSearchParams({
@@ -145,12 +151,12 @@ export default function NewMantleForm() {
               onChange={(e) => setInputWord(e.target.value)}
               placeholder="단어를 입력하세요"
               className="text-center"
-              disabled={isLoading || isCorrect}
-              ref={inputRef} // ref 추가
+              disabled={isLoading || gameCompleted}
+              ref={inputRef}
             />
             <Button
               type="submit"
-              disabled={isLoading || isCorrect}
+              disabled={isLoading || gameCompleted}
               className="w-full"
             >
               {isLoading ? "제출 중..." : "제출"}
@@ -164,7 +170,7 @@ export default function NewMantleForm() {
           </Alert>
         )}
 
-        {isCorrect && (
+        {gameCompleted && (
           <Alert className="mb-6 bg-green-100 border-green-500 text-green-700">
             <AlertDescription>
               <p className="font-bold">정답을 맞췄습니다!</p>
