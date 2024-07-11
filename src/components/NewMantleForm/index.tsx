@@ -41,13 +41,26 @@ export default function NewMantleForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputWord.trim() && !isLoading) {
+    const trimmedWord = inputWord.trim();
+    if (trimmedWord && !isLoading) {
+      // 이미 제출된 단어인지 확인
+      if (
+        submittedWords.some(
+          (word) => word.word.toLowerCase() === trimmedWord.toLowerCase()
+        )
+      ) {
+        setError("이미 제출한 단어입니다.");
+        setInputWord("");
+        setShouldFocus(true);
+        return;
+      }
+
       setIsLoading(true);
       setError(null);
       try {
-        const newWord = await submitWord(inputWord.trim(), attempts + 1);
+        const newWord = await submitWord(trimmedWord, attempts + 1);
         logEvent("Word Submitted", {
-          word: inputWord.trim(),
+          word: trimmedWord,
           attempt: attempts + 1,
           similarity: newWord.similarity,
           isCorrect: newWord.correct,
@@ -83,11 +96,10 @@ export default function NewMantleForm() {
         }
       } finally {
         setIsLoading(false);
-        setShouldFocus(true); // 에러 발생 시에도 포커스 요청
+        setShouldFocus(true);
       }
     }
   };
-
   const handleCopyLink = () => {
     const baseUrl = window.location.origin;
     const utmParams = new URLSearchParams({
