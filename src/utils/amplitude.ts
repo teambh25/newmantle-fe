@@ -2,7 +2,7 @@ import * as amplitude from "@amplitude/analytics-browser";
 
 export const initAmplitude = () => {
   amplitude.init("fd3846e9e235a99e336ee61b72e08f0b", {
-    defaultTracking: true,
+    defaultTracking: { sessions: true },
   });
 };
 
