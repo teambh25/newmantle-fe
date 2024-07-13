@@ -1,3 +1,4 @@
+//src/components/NewMantleForm/SimilarityBar.tsx
 import React from "react";
 
 interface SimilarityBarProps {
