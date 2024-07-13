@@ -16,11 +16,11 @@ const pretendard = localFont({
 
 export const metadata: Metadata = {
   title: "뉴맨틀",
-  description: "단어 맞추기 게임",
+  description: "단어 맞히기 게임",
   openGraph: {
-    title: "뉴맨틀 - 단어 맞추기 게임",
+    title: "뉴맨틀 - 단어 맞히기 게임",
     description:
-      "꼬맨틀을 개선한 새로운 단어 맞추기 게임, 뉴맨틀에 도전해보세요!",
+      "꼬맨틀을 개선한 새로운 단어 맞히기 게임, 뉴맨틀에 도전해보세요!",
     url: "https://newmantle.kr",
     siteName: "뉴맨틀",
     images: [
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
         url: "/newmantle_opengraph.png", // app 디렉토리 내의 이미지 경로
         width: 1200,
         height: 630,
-        alt: "뉴맨틀 - 단어 맞추기 게임",
+        alt: "뉴맨틀 - 단어 맞히기 게임",
       },
     ],
     locale: "ko_KR",
