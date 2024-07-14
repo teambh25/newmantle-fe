@@ -45,51 +45,61 @@ export default function NewMantleForm() {
     e.preventDefault();
     const trimmedWord = inputWord.trim();
     if (trimmedWord && !isLoading) {
-      if (
-        submittedWords.some(
-          (word) => word.word.toLowerCase() === trimmedWord.toLowerCase()
-        )
-      ) {
-        setError("이미 제출한 단어입니다.");
-        setInputWord("");
-        setShouldFocus(true);
-        return;
-      }
-
       setIsLoading(true);
       setError(null);
       try {
-        const newWord = await submitWord(trimmedWord, attempts + 1);
-        logEvent("Word Submitted", {
-          word: trimmedWord,
-          attempt: attempts + 1,
-          similarity: newWord.similarity,
-          isCorrect: newWord.correct,
-        });
-        setSubmittedWords((prev) => {
-          const updatedWords = [newWord, ...prev];
-          const sortedWords = updatedWords
-            .slice(1)
-            .sort(
-              (a, b) =>
-                (b.similarity ?? -Infinity) - (a.similarity ?? -Infinity)
-            );
-          return [newWord, ...sortedWords];
-        });
-        setInputWord("");
-        if (newWord.correct) {
-          setIsCorrect(true);
-          setGameCompleted(true);
-          toast({
-            title: "축하합니다!",
-            description: `${attempts + 1}번째 시도에 정답을 맞히셨습니다.`,
+        // 이미 제출한 단어인지 확인
+        const existingWordIndex = submittedWords.findIndex(
+          (word) => word.word.toLowerCase() === trimmedWord.toLowerCase()
+        );
+
+        if (existingWordIndex !== -1) {
+          // 이미 제출한 단어인 경우
+          setError("이미 제출한 단어입니다.");
+          // 기존 단어를 배열의 첫 번째로 이동
+          const existingWord = submittedWords[existingWordIndex];
+          setSubmittedWords((prev) => [
+            existingWord,
+            ...prev.filter((_, index) => index !== existingWordIndex),
+          ]);
+        } else {
+          // 새로운 단어인 경우
+          const newWord = await submitWord(trimmedWord, attempts + 1);
+          logEvent("Word Submitted", {
+            word: trimmedWord,
+            attempt: attempts + 1,
+            similarity: newWord.similarity,
+            isCorrect: newWord.correct,
           });
-          logEvent("Game Completed", {
-            attempts: attempts + 1,
-            timeSpent: (Date.now() - startTimeRef.current) / 1000,
+
+          setSubmittedWords((prev) => {
+            const updatedWords = [newWord, ...prev];
+            const sortedWords = updatedWords
+              .slice(1)
+              .sort(
+                (a, b) =>
+                  (b.similarity ?? -Infinity) - (a.similarity ?? -Infinity)
+              );
+            return [newWord, ...sortedWords];
           });
+
+          setAttempts((prev) => prev + 1);
+
+          if (newWord.correct) {
+            setIsCorrect(true);
+            setGameCompleted(true);
+            toast({
+              title: "축하합니다!",
+              description: `${attempts + 1}번째 시도에 정답을 맞히셨습니다.`,
+            });
+            logEvent("Game Completed", {
+              attempts: attempts + 1,
+              timeSpent: (Date.now() - startTimeRef.current) / 1000,
+            });
+          }
         }
-        setAttempts((prev) => prev + 1);
+
+        setInputWord("");
       } catch (error) {
         if (error instanceof Error) {
           setError(
