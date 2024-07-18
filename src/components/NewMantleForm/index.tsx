@@ -125,7 +125,7 @@ export default function NewMantleForm() {
         if (error instanceof Error) {
           setIsError(true);
           if (error.message === "Invalid word") {
-            setErrorMessage("올바른 단어를 입력하세요");
+            setErrorMessage("없는 단어입니다");
           } else {
             setErrorMessage("오류가 발생했습니다");
           }
@@ -134,13 +134,17 @@ export default function NewMantleForm() {
         setInputWord("");
         setIsLoading(false);
         setShouldFocus(true);
+        // 에러 메시지가 있을 경우 에러 상태를 설정합니다
+        if (errorMessage) {
+          setIsError(true);
+        }
       }
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputWord(e.target.value);
-    if (isError) {
+    if (e.target.value.trim() !== "") {
       setIsError(false);
       setErrorMessage(null);
     }
@@ -197,7 +201,9 @@ export default function NewMantleForm() {
               onFocus={handleInputFocus}
               placeholder={errorMessage || "단어를 입력하세요"}
               className={`text-center ${
-                isError ? "border-red-500 focus:ring-red-500" : ""
+                isError
+                  ? "border-red-500 placeholder-red-500"
+                  : "placeholder-gray-400"
               }`}
               disabled={isLoading || gameCompleted}
               ref={inputRef}
