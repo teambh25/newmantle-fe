@@ -36,7 +36,7 @@ const WordTable: React.FC<WordTableProps> = ({ words, showAll }) => {
             }`}
           >
             <TableCell className="text-center py-2 w-20">
-              {word.attempt}트
+              {word.attempt}
             </TableCell>
             <TableCell className="text-center py-2">{word.word}</TableCell>
             <TableCell className="w-1/2 py-2">
