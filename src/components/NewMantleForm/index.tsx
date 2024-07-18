@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef, FormEvent } from "react";
+import React, { useState, useEffect, useRef, FormEvent, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -54,6 +54,22 @@ export default function NewMantleForm() {
     }
   }, [inputWord, isLoading, gameCompleted]);
 
+  const sortedWords = useMemo(() => {
+    if (submittedWords.length <= 1) return submittedWords;
+
+    const [firstWord, ...restWords] = submittedWords;
+    const sortedRestWords = restWords.sort((a, b) => {
+      if (a.rank === -1 && b.rank === -1) {
+        return (b.similarity ?? 0) - (a.similarity ?? 0);
+      }
+      if (a.rank === -1) return 1;
+      if (b.rank === -1) return -1;
+      return a.rank - b.rank;
+    });
+
+    return [firstWord, ...sortedRestWords];
+  }, [submittedWords]);
+
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (inputWord.trim() && !isLoading && !gameCompleted) {
@@ -89,17 +105,7 @@ export default function NewMantleForm() {
             isCorrect: newWord.correct,
           });
 
-          setSubmittedWords((prev) => {
-            const updatedWords = [newWord, ...prev];
-            const sortedWords = updatedWords
-              .slice(1)
-              .sort(
-                (a, b) =>
-                  (b.similarity ?? -Infinity) - (a.similarity ?? -Infinity)
-              );
-            return [newWord, ...sortedWords];
-          });
-
+          setSubmittedWords((prev) => [newWord, ...prev]);
           setAttempts((prev) => prev + 1);
 
           if (newWord.correct) {
@@ -125,7 +131,7 @@ export default function NewMantleForm() {
           }
         }
       } finally {
-        setInputWord(""); // 입력 필드를 비웁니다.
+        setInputWord("");
         setIsLoading(false);
         setShouldFocus(true);
       }
@@ -220,10 +226,10 @@ export default function NewMantleForm() {
         )}
 
         <div className="w-full">
-          {submittedWords.length > 0 ? (
+          {sortedWords.length > 0 ? (
             <>
-              <WordTable words={submittedWords} showAll={showAllWords} />
-              {submittedWords.length > 5 && (
+              <WordTable words={sortedWords} showAll={showAllWords} />
+              {sortedWords.length > 5 && (
                 <div className="text-center mt-4">
                   <Button
                     onClick={() => setShowAllWords(!showAllWords)}

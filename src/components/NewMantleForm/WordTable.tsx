@@ -40,8 +40,8 @@ const WordTable: React.FC<WordTableProps> = ({ words, showAll }) => {
         {displayedWords.map((word, index) => (
           <TableRow
             key={index}
-            className={`${word.correct ? "bg-green-100" : ""} ${
-              index === 0 ? "bg-blue-50" : ""
+            className={`${word.correct ? "bg-green-50" : ""} ${
+              index === 0 ? "bg-muted font-medium" : ""
             }`}
           >
             <TableCell className="text-center py-2 w-12 sm:w-16">

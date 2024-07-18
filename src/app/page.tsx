@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
-      <main className="flex-grow flex flex-col items-center justify-start p-4 sm:p-6 md:p-8 bg-gradient-to-b from-blue-100 to-white">
+      <main className="flex-grow flex flex-col items-center justify-start p-4 sm:p-6 md:p-8 bg-white">
         <h1 className="text-4xl sm:text-5xl font-bold mb-2 mt-8 sm:mt-0 text-blue-600">
           뉴맨틀
         </h1>
