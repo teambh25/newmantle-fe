@@ -125,7 +125,7 @@ export default function NewMantleForm() {
         if (error instanceof Error) {
           setIsError(true);
           if (error.message === "Invalid word") {
-            setErrorMessage("올바른 단어를 입력하세요");
+            setErrorMessage("없는 단어입니다");
           } else {
             setErrorMessage("오류가 발생했습니다");
           }
