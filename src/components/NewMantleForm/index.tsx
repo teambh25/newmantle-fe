@@ -19,8 +19,6 @@ export default function NewMantleForm() {
   const [isError, setIsError] = useState(false);
   const { toast } = useToast();
   const [shouldFocus, setShouldFocus] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-
   const inputRef = useRef<HTMLInputElement>(null);
   const [gameCompleted, setGameCompleted] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -171,15 +169,14 @@ export default function NewMantleForm() {
           <div className="flex flex-col space-y-2">
             <Input
               type="text"
-              value={isError ? errorMessage : inputWord}
+              value={inputWord}
               onChange={(e) => {
                 setInputWord(e.target.value);
                 setIsError(false);
-                setErrorMessage("");
               }}
               placeholder="단어를 입력하세요"
               className={`text-center ${
-                isError ? "border-red-500 focus:ring-red-500 text-red-500" : ""
+                isError ? "border-red-500 focus:ring-red-500" : ""
               }`}
               disabled={isLoading || gameCompleted}
               ref={inputRef}
