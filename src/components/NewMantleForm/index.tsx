@@ -1,13 +1,13 @@
-//src/components/NewMantleForm/index.tsx
+// src/components/NewMantleForm/index.tsx
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, FormEvent } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import WordTable from "./WordTable";
-import { submitWord, SubmittedWord } from "@/utils/api";
+import { submitWord as apiSubmitWord, SubmittedWord } from "@/utils/api";
 import { logEvent } from "@/utils/amplitude";
 
 export default function NewMantleForm() {
@@ -24,6 +24,7 @@ export default function NewMantleForm() {
   const [shouldFocus, setShouldFocus] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [gameCompleted, setGameCompleted] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     startTimeRef.current = Date.now();
@@ -41,30 +42,46 @@ export default function NewMantleForm() {
     }
   }, [shouldFocus]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    const form = formRef.current;
+    if (form) {
+      const handleFormSubmit = (e: Event) => {
+        e.preventDefault();
+        submitWord();
+      };
+      form.addEventListener("submit", handleFormSubmit);
+      return () => {
+        form.removeEventListener("submit", handleFormSubmit);
+      };
+    }
+  }, [inputWord, isLoading, gameCompleted]);
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (inputWord.trim() && !isLoading && !gameCompleted) {
+      submitWord();
+    }
+  };
+
+  const submitWord = async () => {
     const trimmedWord = inputWord.trim();
     if (trimmedWord && !isLoading) {
       setIsLoading(true);
       setError(null);
       try {
-        // 이미 제출한 단어인지 확인
         const existingWordIndex = submittedWords.findIndex(
           (word) => word.word.toLowerCase() === trimmedWord.toLowerCase()
         );
 
         if (existingWordIndex !== -1) {
-          // 이미 제출한 단어인 경우
           setError("이미 제출한 단어입니다.");
-          // 기존 단어를 배열의 첫 번째로 이동
           const existingWord = submittedWords[existingWordIndex];
           setSubmittedWords((prev) => [
             existingWord,
             ...prev.filter((_, index) => index !== existingWordIndex),
           ]);
         } else {
-          // 새로운 단어인 경우
-          const newWord = await submitWord(trimmedWord, attempts + 1);
+          const newWord = await apiSubmitWord(trimmedWord, attempts + 1);
           logEvent("Word Submitted", {
             word: trimmedWord,
             attempt: attempts + 1,
@@ -146,11 +163,6 @@ export default function NewMantleForm() {
       }
     );
   };
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      handleSubmit(e);
-    }
-  };
 
   return (
     <Card className="w-full max-w-2xl">
@@ -159,13 +171,12 @@ export default function NewMantleForm() {
         <h3 className="text-xl mt-2">정답은...?</h3>
       </CardHeader>
       <CardContent className="flex flex-col items-center mx-0">
-        <form onSubmit={handleSubmit} className="w-full mb-6">
+        <form ref={formRef} onSubmit={handleSubmit} className="w-full mb-6">
           <div className="flex flex-col space-y-2">
             <Input
               type="text"
               value={inputWord}
               onChange={(e) => setInputWord(e.target.value)}
-              onKeyPress={handleKeyPress}
               placeholder="단어를 입력하세요"
               className="text-center"
               disabled={isLoading || gameCompleted}
