@@ -17,6 +17,7 @@ export default function NewMantleForm() {
   const [currentDate, setCurrentDate] = useState("");
   const [showAllWords, setShowAllWords] = useState(false);
   const [isError, setIsError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { toast } = useToast();
   const [shouldFocus, setShouldFocus] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -65,6 +66,7 @@ export default function NewMantleForm() {
     if (trimmedWord && !isLoading) {
       setIsLoading(true);
       setIsError(false);
+      setErrorMessage(null);
       try {
         const existingWordIndex = submittedWords.findIndex(
           (word) => word.word.toLowerCase() === trimmedWord.toLowerCase()
@@ -72,6 +74,7 @@ export default function NewMantleForm() {
 
         if (existingWordIndex !== -1) {
           setIsError(true);
+          setErrorMessage("이미 제출한 단어입니다");
           const existingWord = submittedWords[existingWordIndex];
           setSubmittedWords((prev) => [
             existingWord,
@@ -112,20 +115,34 @@ export default function NewMantleForm() {
             });
           }
         }
-
-        setInputWord("");
       } catch (error) {
         if (error instanceof Error) {
           setIsError(true);
           if (error.message === "Invalid word") {
-            setInputWord("");
+            setErrorMessage("올바른 단어를 입력하세요");
+          } else {
+            setErrorMessage("오류가 발생했습니다");
           }
         }
       } finally {
+        setInputWord(""); // 입력 필드를 비웁니다.
         setIsLoading(false);
         setShouldFocus(true);
       }
     }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputWord(e.target.value);
+    if (isError) {
+      setIsError(false);
+      setErrorMessage(null);
+    }
+  };
+
+  const handleInputFocus = () => {
+    // 포커스 시 에러 메시지를 지우지 않습니다.
+    // 대신, 사용자가 새로운 입력을 시작할 때 에러 상태를 리셋합니다.
   };
 
   const handleCopyLink = () => {
@@ -170,11 +187,9 @@ export default function NewMantleForm() {
             <Input
               type="text"
               value={inputWord}
-              onChange={(e) => {
-                setInputWord(e.target.value);
-                setIsError(false);
-              }}
-              placeholder="단어를 입력하세요"
+              onChange={handleInputChange}
+              onFocus={handleInputFocus}
+              placeholder={errorMessage || "단어를 입력하세요"}
               className={`text-center ${
                 isError ? "border-red-500 focus:ring-red-500" : ""
               }`}
