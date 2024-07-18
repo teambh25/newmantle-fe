@@ -61,6 +61,9 @@ export default function NewMantleForm() {
     if (inputWord.trim() && !isLoading && !gameCompleted) {
       submitWord();
     }
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
   };
 
   const submitWord = async () => {
