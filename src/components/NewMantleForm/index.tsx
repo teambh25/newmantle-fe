@@ -1,9 +1,7 @@
-// src/components/NewMantleForm/index.tsx
 "use client";
-import React, { useState, useEffect, useRef, FormEvent } from "react";
+import React, { useState, useEffect, useRef, FormEvent, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import WordTable from "./WordTable";
 import { submitWord as apiSubmitWord, SubmittedWord } from "@/utils/api";
@@ -18,7 +16,8 @@ export default function NewMantleForm() {
   const startTimeRef = useRef<number>(Date.now());
   const [currentDate, setCurrentDate] = useState("");
   const [showAllWords, setShowAllWords] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isError, setIsError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { toast } = useToast();
   const [shouldFocus, setShouldFocus] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -55,6 +54,22 @@ export default function NewMantleForm() {
     }
   }, [inputWord, isLoading, gameCompleted]);
 
+  const sortedWords = useMemo(() => {
+    if (submittedWords.length <= 1) return submittedWords;
+
+    const [firstWord, ...restWords] = submittedWords;
+    const sortedRestWords = restWords.sort((a, b) => {
+      if (a.rank === -1 && b.rank === -1) {
+        return (b.similarity ?? 0) - (a.similarity ?? 0);
+      }
+      if (a.rank === -1) return 1;
+      if (b.rank === -1) return -1;
+      return a.rank - b.rank;
+    });
+
+    return [firstWord, ...sortedRestWords];
+  }, [submittedWords]);
+
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (inputWord.trim() && !isLoading && !gameCompleted) {
@@ -66,14 +81,16 @@ export default function NewMantleForm() {
     const trimmedWord = inputWord.trim();
     if (trimmedWord && !isLoading) {
       setIsLoading(true);
-      setError(null);
+      setIsError(false);
+      setErrorMessage(null);
       try {
         const existingWordIndex = submittedWords.findIndex(
           (word) => word.word.toLowerCase() === trimmedWord.toLowerCase()
         );
 
         if (existingWordIndex !== -1) {
-          setError("이미 제출한 단어입니다.");
+          setIsError(true);
+          setErrorMessage("이미 제출한 단어입니다");
           const existingWord = submittedWords[existingWordIndex];
           setSubmittedWords((prev) => [
             existingWord,
@@ -88,17 +105,7 @@ export default function NewMantleForm() {
             isCorrect: newWord.correct,
           });
 
-          setSubmittedWords((prev) => {
-            const updatedWords = [newWord, ...prev];
-            const sortedWords = updatedWords
-              .slice(1)
-              .sort(
-                (a, b) =>
-                  (b.similarity ?? -Infinity) - (a.similarity ?? -Infinity)
-              );
-            return [newWord, ...sortedWords];
-          });
-
+          setSubmittedWords((prev) => [newWord, ...prev]);
           setAttempts((prev) => prev + 1);
 
           if (newWord.correct) {
@@ -114,23 +121,34 @@ export default function NewMantleForm() {
             });
           }
         }
-
-        setInputWord("");
       } catch (error) {
         if (error instanceof Error) {
-          setError(
-            error.message === "Invalid word"
-              ? "올바른 단어를 입력해주세요."
-              : error.message === "Request timeout"
-              ? "서버 응답이 지연되고 있습니다. 잠시 후 다시 시도해주세요."
-              : "단어 제출 중 오류가 발생했습니다."
-          );
+          setIsError(true);
+          if (error.message === "Invalid word") {
+            setErrorMessage("올바른 단어를 입력하세요");
+          } else {
+            setErrorMessage("오류가 발생했습니다");
+          }
         }
       } finally {
+        setInputWord("");
         setIsLoading(false);
         setShouldFocus(true);
       }
     }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputWord(e.target.value);
+    if (isError) {
+      setIsError(false);
+      setErrorMessage(null);
+    }
+  };
+
+  const handleInputFocus = () => {
+    // 포커스 시 에러 메시지를 지우지 않습니다.
+    // 대신, 사용자가 새로운 입력을 시작할 때 에러 상태를 리셋합니다.
   };
 
   const handleCopyLink = () => {
@@ -175,9 +193,12 @@ export default function NewMantleForm() {
             <Input
               type="text"
               value={inputWord}
-              onChange={(e) => setInputWord(e.target.value)}
-              placeholder="단어를 입력하세요"
-              className="text-center"
+              onChange={handleInputChange}
+              onFocus={handleInputFocus}
+              placeholder={errorMessage || "단어를 입력하세요"}
+              className={`text-center ${
+                isError ? "border-red-500 focus:ring-red-500" : ""
+              }`}
               disabled={isLoading || gameCompleted}
               ref={inputRef}
               autoComplete="off"
@@ -192,31 +213,23 @@ export default function NewMantleForm() {
           </div>
         </form>
 
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
         {gameCompleted && (
-          <Alert className="mb-6 bg-green-100 border-green-500 text-green-700">
-            <AlertDescription>
-              <p className="font-bold">정답을 맞췄습니다!</p>
-              <p>{attempts}번째 만에 맞히셨네요.</p>
-              <p>(내일은 새로운 단어로 도전할 수 있어요!)</p>
+          <div className="mb-6 p-4 bg-green-100 border border-green-500 text-green-700 rounded-md">
+            <p className="font-bold">정답을 맞췄습니다!</p>
+            <p>{attempts}번째 만에 맞히셨네요.</p>
+            <p>(내일은 새로운 단어로 도전할 수 있어요!)</p>
 
-              <Button onClick={handleCopyLink} className="mt-4">
-                친구에게 공유하기
-              </Button>
-            </AlertDescription>
-          </Alert>
+            <Button onClick={handleCopyLink} className="mt-4">
+              친구에게 공유하기
+            </Button>
+          </div>
         )}
 
         <div className="w-full">
-          {submittedWords.length > 0 ? (
+          {sortedWords.length > 0 ? (
             <>
-              <WordTable words={submittedWords} showAll={showAllWords} />
-              {submittedWords.length > 5 && (
+              <WordTable words={sortedWords} showAll={showAllWords} />
+              {sortedWords.length > 5 && (
                 <div className="text-center mt-4">
                   <Button
                     onClick={() => setShowAllWords(!showAllWords)}

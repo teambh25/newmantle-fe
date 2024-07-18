@@ -7,7 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import SimilarityBar from "./SimilarityBar";
+import Similarity from "./Similarity";
 import { SubmittedWord } from "@/utils/api";
 
 interface WordTableProps {
@@ -18,29 +18,54 @@ interface WordTableProps {
 const WordTable: React.FC<WordTableProps> = ({ words, showAll }) => {
   const displayedWords = showAll ? words : words.slice(0, 5);
 
+  const getStyle = (rank: number | null) => {
+    if (rank === null) return "text-green-600 font-bold";
+    if (rank === -1) return "text-gray-400";
+    if (rank <= 10) return "text-blue-600 font-bold";
+    if (rank <= 100) return "text-blue-500 font-semibold";
+    return "text-gray-600";
+  };
+
   return (
-    <Table>
+    <Table className="table-fixed">
       <TableHeader>
         <TableRow>
-          <TableHead className="text-center w-20">🔄</TableHead>
+          <TableHead className="text-center w-12 sm:w-16">#</TableHead>
           <TableHead className="text-center">단어</TableHead>
-          <TableHead className="text-center">유사도</TableHead>
+          <TableHead className="text-center w-20 sm:w-24">순위</TableHead>
+          <TableHead className="text-center w-20 sm:w-24">유사도</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {displayedWords.map((word, index) => (
           <TableRow
             key={index}
-            className={`${word.correct ? "bg-green-100" : ""} ${
-              index === 0 ? "bg-blue-50" : ""
+            className={`${word.correct ? "bg-green-50" : ""} ${
+              index === 0 ? "bg-muted font-medium" : ""
             }`}
           >
-            <TableCell className="text-center py-2 w-20">
+            <TableCell className="text-center py-2 w-12 sm:w-16">
               {word.attempt}
             </TableCell>
-            <TableCell className="text-center py-2">{word.word}</TableCell>
-            <TableCell className="w-1/2 py-2">
-              <SimilarityBar similarity={word.similarity} rank={word.rank} />
+            <TableCell className="text-center py-2 whitespace-nowrap overflow-hidden text-ellipsis">
+              {word.word}
+            </TableCell>
+            <TableCell
+              className={`text-center py-2 w-20 sm:w-24 ${getStyle(
+                word.correct ? null : word.rank
+              )}`}
+            >
+              {word.correct
+                ? "정답!"
+                : word.rank === -1
+                ? "순위 밖"
+                : `${word.rank}위`}
+            </TableCell>
+            <TableCell className="text-center w-20 sm:w-24 py-2">
+              <Similarity
+                similarity={word.similarity}
+                rank={word.correct ? null : word.rank}
+              />
             </TableCell>
           </TableRow>
         ))}
