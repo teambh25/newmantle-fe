@@ -18,7 +18,8 @@ interface WordTableProps {
 const WordTable: React.FC<WordTableProps> = ({ words, showAll }) => {
   const displayedWords = showAll ? words : words.slice(0, 5);
 
-  const getStyle = (rank: number) => {
+  const getStyle = (rank: number | null) => {
+    if (rank === null) return "text-green-600 font-bold";
     if (rank === -1) return "text-gray-400";
     if (rank <= 10) return "text-blue-600 font-bold";
     if (rank <= 100) return "text-blue-500 font-semibold";
@@ -50,12 +51,21 @@ const WordTable: React.FC<WordTableProps> = ({ words, showAll }) => {
               {word.word}
             </TableCell>
             <TableCell
-              className={`text-center py-2 w-20 sm:w-24 ${getStyle(word.rank)}`}
+              className={`text-center py-2 w-20 sm:w-24 ${getStyle(
+                word.correct ? null : word.rank
+              )}`}
             >
-              {word.rank === -1 ? "순위 밖" : `${word.rank}위`}
+              {word.correct
+                ? "정답!"
+                : word.rank === -1
+                ? "순위 밖"
+                : `${word.rank}위`}
             </TableCell>
             <TableCell className="text-center w-20 sm:w-24 py-2">
-              <Similarity similarity={word.similarity} rank={word.rank} />
+              <Similarity
+                similarity={word.similarity}
+                rank={word.correct ? null : word.rank}
+              />
             </TableCell>
           </TableRow>
         ))}

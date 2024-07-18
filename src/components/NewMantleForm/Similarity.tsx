@@ -2,11 +2,12 @@ import React from "react";
 
 interface SimilarityProps {
   similarity: number | null;
-  rank: number;
+  rank: number | null;
 }
 
 const Similarity: React.FC<SimilarityProps> = ({ similarity, rank }) => {
-  const getStyle = (rank: number) => {
+  const getStyle = (rank: number | null) => {
+    if (rank === null) return "text-green-600 font-bold";
     if (rank === -1) return "text-gray-400";
     if (rank <= 10) return "text-blue-600 font-bold";
     if (rank <= 100) return "text-blue-500 font-semibold";
