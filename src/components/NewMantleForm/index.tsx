@@ -73,7 +73,7 @@ export default function NewMantleForm() {
         );
 
         if (existingWordIndex !== -1) {
-          setError("이미 제출한 단어입니다.");
+          // setError("이미 제출한 단어입니다.");
           const existingWord = submittedWords[existingWordIndex];
           setSubmittedWords((prev) => [
             existingWord,
