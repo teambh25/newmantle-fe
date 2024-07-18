@@ -22,7 +22,7 @@ const WordTable: React.FC<WordTableProps> = ({ words, showAll }) => {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className="text-center w-12">🔄</TableHead>
+          <TableHead className="text-center w-12">#</TableHead>
           <TableHead className="text-center">단어</TableHead>
           <TableHead className="text-center w-20">순위</TableHead>
           <TableHead className="text-center">유사도</TableHead>
