@@ -171,8 +171,20 @@ export default function NewMantleForm() {
         <h3 className="text-xl mt-2">정답은...?</h3>
       </CardHeader>
       <CardContent className="flex flex-col items-center mx-0">
-        <form ref={formRef} onSubmit={handleSubmit} className="w-full mb-6">
+        <form
+          ref={formRef}
+          onSubmit={handleSubmit}
+          className="w-full mb-6"
+          autoCorrect="off"
+          autoCapitalize="off"
+          autoComplete="off"
+        >
           <div className="flex flex-col space-y-2">
+            <input
+              type="text"
+              style={{ position: "absolute", width: 0, height: 0, opacity: 0 }}
+              aria-hidden="true"
+            />
             <Input
               type="text"
               value={inputWord}
@@ -182,14 +194,16 @@ export default function NewMantleForm() {
               disabled={isLoading || gameCompleted}
               ref={inputRef}
               autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              autoFocus
             />
-            <Button
+            <input
               type="submit"
+              value={isLoading ? "제출 중..." : "제출"}
               disabled={isLoading || gameCompleted}
-              className="w-full"
-            >
-              {isLoading ? "제출 중..." : "제출"}
-            </Button>
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md"
+            />
           </div>
         </form>
 
