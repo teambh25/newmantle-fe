@@ -146,6 +146,11 @@ export default function NewMantleForm() {
       }
     );
   };
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSubmit(e);
+    }
+  };
 
   return (
     <Card className="w-full max-w-2xl">
@@ -160,10 +165,12 @@ export default function NewMantleForm() {
               type="text"
               value={inputWord}
               onChange={(e) => setInputWord(e.target.value)}
+              onKeyPress={handleKeyPress}
               placeholder="단어를 입력하세요"
               className="text-center"
               disabled={isLoading || gameCompleted}
               ref={inputRef}
+              autoComplete="off"
             />
             <Button
               type="submit"
