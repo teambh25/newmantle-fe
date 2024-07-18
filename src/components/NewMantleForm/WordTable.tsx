@@ -22,8 +22,9 @@ const WordTable: React.FC<WordTableProps> = ({ words, showAll }) => {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className="text-center w-20">🔄</TableHead>
+          <TableHead className="text-center w-16">🔄</TableHead>
           <TableHead className="text-center">단어</TableHead>
+          <TableHead className="text-center w-24">순위</TableHead>
           <TableHead className="text-center">유사도</TableHead>
         </TableRow>
       </TableHeader>
@@ -35,12 +36,15 @@ const WordTable: React.FC<WordTableProps> = ({ words, showAll }) => {
               index === 0 ? "bg-blue-50" : ""
             }`}
           >
-            <TableCell className="text-center py-2 w-20">
+            <TableCell className="text-center py-2 w-16">
               {word.attempt}
             </TableCell>
             <TableCell className="text-center py-2">{word.word}</TableCell>
-            <TableCell className="w-1/2 py-2">
-              <SimilarityBar similarity={word.similarity} rank={word.rank} />
+            <TableCell className="text-center py-2 w-24">
+              {word.rank === -1 ? "순위 밖" : `${word.rank}위`}
+            </TableCell>
+            <TableCell className="w-1/3 py-2">
+              <SimilarityBar similarity={word.similarity} />
             </TableCell>
           </TableRow>
         ))}
