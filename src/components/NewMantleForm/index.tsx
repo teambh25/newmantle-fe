@@ -1,9 +1,7 @@
-// src/components/NewMantleForm/index.tsx
 "use client";
 import React, { useState, useEffect, useRef, FormEvent } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import WordTable from "./WordTable";
 import { submitWord as apiSubmitWord, SubmittedWord } from "@/utils/api";
@@ -18,9 +16,11 @@ export default function NewMantleForm() {
   const startTimeRef = useRef<number>(Date.now());
   const [currentDate, setCurrentDate] = useState("");
   const [showAllWords, setShowAllWords] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isError, setIsError] = useState(false);
   const { toast } = useToast();
   const [shouldFocus, setShouldFocus] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
   const inputRef = useRef<HTMLInputElement>(null);
   const [gameCompleted, setGameCompleted] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -66,14 +66,14 @@ export default function NewMantleForm() {
     const trimmedWord = inputWord.trim();
     if (trimmedWord && !isLoading) {
       setIsLoading(true);
-      setError(null);
+      setIsError(false);
       try {
         const existingWordIndex = submittedWords.findIndex(
           (word) => word.word.toLowerCase() === trimmedWord.toLowerCase()
         );
 
         if (existingWordIndex !== -1) {
-          // setError("이미 제출한 단어입니다.");
+          setIsError(true);
           const existingWord = submittedWords[existingWordIndex];
           setSubmittedWords((prev) => [
             existingWord,
@@ -118,13 +118,10 @@ export default function NewMantleForm() {
         setInputWord("");
       } catch (error) {
         if (error instanceof Error) {
-          setError(
-            error.message === "Invalid word"
-              ? "올바른 단어를 입력해주세요."
-              : error.message === "Request timeout"
-              ? "서버 응답이 지연되고 있습니다. 잠시 후 다시 시도해주세요."
-              : "단어 제출 중 오류가 발생했습니다."
-          );
+          setIsError(true);
+          if (error.message === "Invalid word") {
+            setInputWord("");
+          }
         }
       } finally {
         setIsLoading(false);
@@ -174,10 +171,16 @@ export default function NewMantleForm() {
           <div className="flex flex-col space-y-2">
             <Input
               type="text"
-              value={inputWord}
-              onChange={(e) => setInputWord(e.target.value)}
+              value={isError ? errorMessage : inputWord}
+              onChange={(e) => {
+                setInputWord(e.target.value);
+                setIsError(false);
+                setErrorMessage("");
+              }}
               placeholder="단어를 입력하세요"
-              className="text-center"
+              className={`text-center ${
+                isError ? "border-red-500 focus:ring-red-500 text-red-500" : ""
+              }`}
               disabled={isLoading || gameCompleted}
               ref={inputRef}
               autoComplete="off"
@@ -192,24 +195,16 @@ export default function NewMantleForm() {
           </div>
         </form>
 
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
         {gameCompleted && (
-          <Alert className="mb-6 bg-green-100 border-green-500 text-green-700">
-            <AlertDescription>
-              <p className="font-bold">정답을 맞췄습니다!</p>
-              <p>{attempts}번째 만에 맞히셨네요.</p>
-              <p>(내일은 새로운 단어로 도전할 수 있어요!)</p>
+          <div className="mb-6 p-4 bg-green-100 border border-green-500 text-green-700 rounded-md">
+            <p className="font-bold">정답을 맞췄습니다!</p>
+            <p>{attempts}번째 만에 맞히셨네요.</p>
+            <p>(내일은 새로운 단어로 도전할 수 있어요!)</p>
 
-              <Button onClick={handleCopyLink} className="mt-4">
-                친구에게 공유하기
-              </Button>
-            </AlertDescription>
-          </Alert>
+            <Button onClick={handleCopyLink} className="mt-4">
+              친구에게 공유하기
+            </Button>
+          </div>
         )}
 
         <div className="w-full">
