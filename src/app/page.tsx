@@ -1,12 +1,11 @@
 import NewMantleForm from "@/components/NewMantleForm";
 import GameDescription from "@/components/GameDescription";
-import FAQSection from "@/components/FAQSection";
 import Footer from "@/components/Footer";
 
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
-      <main className="flex-grow flex flex-col items-center justify-start p-4 sm:p-6 md:p-8 bg-white">
+      <main className="flex-grow flex flex-col items-center justify-start p-4 sm:p-6 md:p-8 ">
         <h1 className="text-4xl sm:text-5xl font-bold mb-2 mt-8 sm:mt-0 text-blue-600">
           뉴맨틀
         </h1>
@@ -18,9 +17,10 @@ export default function Home() {
           <br></br>
           몇트 안에 맞힐 수 있나요?
         </p>
-        <NewMantleForm />
-        <GameDescription />
-        {/* <FAQSection /> */}
+        <div className="w-full max-w-2xl space-y-16">
+          <NewMantleForm />
+          <GameDescription />
+        </div>
       </main>
       <Footer />
     </div>
