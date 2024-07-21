@@ -1,3 +1,5 @@
+import { formatDate } from "./date";
+
 export interface SubmittedWord {
   word: string;
   similarity: number | null;
@@ -6,17 +8,20 @@ export interface SubmittedWord {
   correct: boolean;
 }
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 export const submitWord = async (
   word: string,
   attempt: number
 ): Promise<SubmittedWord> => {
   const encodedWord = encodeURIComponent(word);
+  const currentDate = formatDate(new Date());
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 3000);
 
   try {
     const response = await fetch(
-      `https://newmentle-be.ddnsking.com/guess/3/${encodedWord}`,
+      `${API_BASE_URL}/guess/${currentDate}/${encodedWord}`,
       { signal: controller.signal }
     );
     clearTimeout(timeoutId);
