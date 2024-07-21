@@ -1,6 +1,11 @@
-import NewMantleForm from "@/components/NewMantleForm";
+import dynamic from "next/dynamic";
+// import NewMantleForm from "@/components/NewMantleForm";
 import GameDescription from "@/components/GameDescription";
 import Footer from "@/components/Footer";
+
+const NewMantleForm = dynamic(() => import("@/components/NewMantleForm"), {
+  ssr: false,
+});
 
 export default function Home() {
   return (
