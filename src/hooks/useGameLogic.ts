@@ -1,15 +1,48 @@
-// src/hooks/useGameLogic.ts
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo } from "react";
 import { submitWord as apiSubmitWord, SubmittedWord } from "@/utils/api";
 import { useToast } from "@/components/ui/use-toast";
 import { logEvent } from "@/utils/amplitude";
 
+const STORAGE_KEY = "newmantle_game_data";
+
+interface GameData {
+  submittedWords: SubmittedWord[];
+  attempts: number;
+  gameCompleted: boolean;
+  lastPlayedDate: string;
+}
+
+function getInitialGameState(): GameData {
+  if (typeof window === "undefined") {
+    return {
+      submittedWords: [],
+      attempts: 0,
+      gameCompleted: false,
+      lastPlayedDate: new Date().toDateString(),
+    };
+  }
+
+  const storedData = localStorage.getItem(STORAGE_KEY);
+  if (storedData) {
+    const parsedData: GameData = JSON.parse(storedData);
+    const today = new Date().toDateString();
+    if (parsedData.lastPlayedDate === today) {
+      return parsedData;
+    }
+  }
+
+  return {
+    submittedWords: [],
+    attempts: 0,
+    gameCompleted: false,
+    lastPlayedDate: new Date().toDateString(),
+  };
+}
+
 export function useGameLogic() {
   const [inputWord, setInputWord] = useState("");
-  const [submittedWords, setSubmittedWords] = useState<SubmittedWord[]>([]);
+  const [gameState, setGameState] = useState<GameData>(getInitialGameState);
   const [isLoading, setIsLoading] = useState(false);
-  const [attempts, setAttempts] = useState(0);
-  const [gameCompleted, setGameCompleted] = useState(false);
   const [isError, setIsError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const startTimeRef = useRef<number>(Date.now());
@@ -19,17 +52,22 @@ export function useGameLogic() {
     logEvent("Game Started", { date: new Date().toISOString() });
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
+  }, [gameState]);
+
   const sortedWords = useMemo(() => {
-    if (submittedWords.length <= 1) return submittedWords;
-    const [firstWord, ...restWords] = submittedWords;
+    if (gameState.submittedWords.length <= 1) return gameState.submittedWords;
+    const [firstWord, ...restWords] = gameState.submittedWords;
     const sortedRestWords = restWords.sort((a, b) => {
-      if (a.rank === -1 && b.rank === -1) return (b.similarity ?? 0) - (a.similarity ?? 0);
+      if (a.rank === -1 && b.rank === -1)
+        return (b.similarity ?? 0) - (a.similarity ?? 0);
       if (a.rank === -1) return 1;
       if (b.rank === -1) return -1;
       return a.rank - b.rank;
     });
     return [firstWord, ...sortedRestWords];
-  }, [submittedWords]);
+  }, [gameState.submittedWords]);
 
   const submitWord = async () => {
     const trimmedWord = inputWord.trim();
@@ -38,47 +76,62 @@ export function useGameLogic() {
       setIsError(false);
       setErrorMessage(null);
       try {
-        const existingWordIndex = submittedWords.findIndex(
+        const existingWordIndex = gameState.submittedWords.findIndex(
           (word) => word.word.toLowerCase() === trimmedWord.toLowerCase()
         );
 
         if (existingWordIndex !== -1) {
           setIsError(true);
           setErrorMessage("이미 제출한 단어입니다");
-          const existingWord = submittedWords[existingWordIndex];
-          setSubmittedWords((prev) => [
-            existingWord,
-            ...prev.filter((_, index) => index !== existingWordIndex),
-          ]);
+          const existingWord = gameState.submittedWords[existingWordIndex];
+          setGameState((prev) => ({
+            ...prev,
+            submittedWords: [
+              existingWord,
+              ...prev.submittedWords.filter(
+                (_, index) => index !== existingWordIndex
+              ),
+            ],
+          }));
         } else {
-          const newWord = await apiSubmitWord(trimmedWord, attempts + 1);
+          const newWord = await apiSubmitWord(
+            trimmedWord,
+            gameState.attempts + 1
+          );
           logEvent("Word Submitted", {
             word: trimmedWord,
-            attempt: attempts + 1,
+            attempt: gameState.attempts + 1,
             similarity: newWord.similarity,
             isCorrect: newWord.correct,
           });
 
-          setSubmittedWords((prev) => [newWord, ...prev]);
-          setAttempts((prev) => prev + 1);
+          setGameState((prev) => ({
+            ...prev,
+            submittedWords: [newWord, ...prev.submittedWords],
+            attempts: prev.attempts + 1,
+            gameCompleted: newWord.correct,
+          }));
 
           if (newWord.correct) {
-            setGameCompleted(true);
             toast({
               title: "축하합니다!",
-              description: `${attempts + 1}번째 시도에 정답을 맞히셨습니다.`,
+              description: `${
+                gameState.attempts + 1
+              }번째 시도에 정답을 맞히셨습니다.`,
             });
             logEvent("Game Completed", {
-              attempts: attempts + 1,
+              attempts: gameState.attempts + 1,
               timeSpent: (Date.now() - startTimeRef.current) / 1000,
             });
           }
         }
       } catch (error) {
         setIsError(true);
-        setErrorMessage(error instanceof Error && error.message === "Invalid word" 
-          ? "없는 단어입니다" 
-          : "오류가 발생했습니다");
+        setErrorMessage(
+          error instanceof Error && error.message === "Invalid word"
+            ? "없는 단어입니다"
+            : "오류가 발생했습니다"
+        );
       } finally {
         setInputWord("");
         setIsLoading(false);
@@ -89,10 +142,10 @@ export function useGameLogic() {
   return {
     inputWord,
     setInputWord,
-    submittedWords,
+    submittedWords: gameState.submittedWords,
     isLoading,
-    attempts,
-    gameCompleted,
+    attempts: gameState.attempts,
+    gameCompleted: gameState.gameCompleted,
     isError,
     errorMessage,
     sortedWords,

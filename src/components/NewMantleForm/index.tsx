@@ -1,4 +1,3 @@
-// src/components/NewMantleForm/index.tsx
 "use client";
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -55,25 +54,33 @@ export default function NewMantleForm() {
         <h3 className="text-xl mt-2">정답은...?</h3>
       </div>
       <div className="flex flex-col items-center mx-0">
-        <GameForm
-          inputWord={gameLogic.inputWord}
-          setInputWord={gameLogic.setInputWord}
-          isLoading={gameLogic.isLoading}
-          gameCompleted={gameLogic.gameCompleted}
-          isError={gameLogic.isError}
-          errorMessage={gameLogic.errorMessage}
-          submitWord={gameLogic.submitWord}
-        />
+        {!gameLogic.gameCompleted && (
+          <GameForm
+            inputWord={gameLogic.inputWord}
+            setInputWord={gameLogic.setInputWord}
+            isLoading={gameLogic.isLoading}
+            gameCompleted={gameLogic.gameCompleted}
+            isError={gameLogic.isError}
+            errorMessage={gameLogic.errorMessage}
+            submitWord={gameLogic.submitWord}
+          />
+        )}
 
         {gameLogic.gameCompleted && (
-          <div className="mb-6 p-4 bg-green-100 border border-green-500 text-green-700 rounded-md">
-            <p className="font-bold">정답을 맞췄습니다!</p>
-            <p>{gameLogic.attempts}번째 만에 맞히셨네요.</p>
-            <p>(내일은 새로운 단어로 도전할 수 있어요!)</p>
+          <div className="mb-6 p-4 bg-green-100 border border-green-500 text-green-700 rounded-md w-full">
+            <p className="font-bold text-center">
+              축하합니다! 정답을 맞췄습니다!
+            </p>
+            <p className="text-center">
+              {gameLogic.attempts}번째 만에 맞히셨네요.
+            </p>
+            <p className="text-center text-sm mt-2">
+              (내일은 새로운 단어로 도전할 수 있어요!)
+            </p>
 
-            <Button onClick={handleCopyLink} className="mt-4">
-              친구에게 공유하기
-            </Button>
+            <div className="flex justify-center mt-4">
+              <Button onClick={handleCopyLink}>친구에게 공유하기</Button>
+            </div>
           </div>
         )}
 
