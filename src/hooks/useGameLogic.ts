@@ -39,7 +39,7 @@ function getInitialGameState(): GameData {
   };
 }
 
-export function useGameLogic() {
+export function useGameLogic(gameDate: string) {
   const [inputWord, setInputWord] = useState("");
   const [gameState, setGameState] = useState<GameData>(getInitialGameState);
   const [isLoading, setIsLoading] = useState(false);
@@ -49,8 +49,8 @@ export function useGameLogic() {
   const { toast } = useToast();
 
   useEffect(() => {
-    logEvent("Game Started", { date: new Date().toISOString() });
-  }, []);
+    logEvent("Game Started", { date: gameDate });
+  }, [gameDate]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
@@ -96,7 +96,8 @@ export function useGameLogic() {
         } else {
           const newWord = await apiSubmitWord(
             trimmedWord,
-            gameState.attempts + 1
+            gameState.attempts + 1,
+            gameDate
           );
           logEvent("Word Submitted", {
             word: trimmedWord,
