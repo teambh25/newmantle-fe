@@ -6,17 +6,21 @@ import WordTable from "./WordTable";
 import { GameForm } from "./GameForm";
 import { useGameLogic } from "@/hooks/useGameLogic";
 import { logEvent } from "@/utils/amplitude";
+import { useGameDate } from "@/hooks/useGameDate";
 
 export default function NewMantleForm() {
-  const [currentDate, setCurrentDate] = useState("");
+  const gameDate = useGameDate();
+  const [displayDate, setDisplayDate] = useState("");
   const [showAllWords, setShowAllWords] = useState(false);
   const { toast } = useToast();
-  const gameLogic = useGameLogic();
+  const gameLogic = useGameLogic(gameDate);
 
   useEffect(() => {
-    const now = new Date();
-    setCurrentDate(`${now.getMonth() + 1}월 ${now.getDate()}일`);
-  }, []);
+    if (gameDate) {
+      const [year, month, day] = gameDate.split("-");
+      setDisplayDate(`${parseInt(month)}월 ${parseInt(day)}일`);
+    }
+  }, [gameDate]);
 
   const handleCopyLink = () => {
     const baseUrl = window.location.origin;
@@ -50,37 +54,29 @@ export default function NewMantleForm() {
   return (
     <div className="w-full max-w-2xl">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold">{currentDate}</h2>
+        <h2 className="text-2xl font-bold">{displayDate}</h2>
         <h3 className="text-xl mt-2">정답은...?</h3>
       </div>
       <div className="flex flex-col items-center mx-0">
-        {!gameLogic.gameCompleted && (
-          <GameForm
-            inputWord={gameLogic.inputWord}
-            setInputWord={gameLogic.setInputWord}
-            isLoading={gameLogic.isLoading}
-            gameCompleted={gameLogic.gameCompleted}
-            isError={gameLogic.isError}
-            errorMessage={gameLogic.errorMessage}
-            submitWord={gameLogic.submitWord}
-          />
-        )}
+        <GameForm
+          inputWord={gameLogic.inputWord}
+          setInputWord={gameLogic.setInputWord}
+          isLoading={gameLogic.isLoading}
+          gameCompleted={gameLogic.gameCompleted}
+          isError={gameLogic.isError}
+          errorMessage={gameLogic.errorMessage}
+          submitWord={gameLogic.submitWord}
+        />
 
         {gameLogic.gameCompleted && (
-          <div className="mb-6 p-4 bg-green-100 border border-green-500 text-green-700 rounded-md w-full">
-            <p className="font-bold text-center">
-              축하합니다! 정답을 맞췄습니다!
-            </p>
-            <p className="text-center">
-              {gameLogic.attempts}번째 만에 맞히셨네요.
-            </p>
-            <p className="text-center text-sm mt-2">
-              (내일은 새로운 단어로 도전할 수 있어요!)
-            </p>
+          <div className="mb-6 p-4 bg-green-100 border border-green-500 text-green-700 rounded-md">
+            <p className="font-bold">정답을 맞췄습니다!</p>
+            <p>{gameLogic.attempts}번째 만에 맞히셨네요.</p>
+            <p>(내일은 새로운 단어로 도전할 수 있어요!)</p>
 
-            <div className="flex justify-center mt-4">
-              <Button onClick={handleCopyLink}>친구에게 공유하기</Button>
-            </div>
+            <Button onClick={handleCopyLink} className="mt-4">
+              친구에게 공유하기
+            </Button>
           </div>
         )}
 
