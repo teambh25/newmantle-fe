@@ -29,6 +29,7 @@ const GiveUpButton: React.FC<GiveUpButtonProps> = ({
   hintUsed,
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleClick = () => {
     if (disabled) {
@@ -37,12 +38,17 @@ const GiveUpButton: React.FC<GiveUpButtonProps> = ({
     }
   };
 
+  const handleGiveUp = () => {
+    onGiveUp();
+    setDialogOpen(false);
+  };
+
   return (
     <TooltipProvider>
       <Tooltip open={showTooltip}>
         <TooltipTrigger asChild>
           <span>
-            <Dialog>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button
                   onClick={handleClick}
@@ -63,7 +69,7 @@ const GiveUpButton: React.FC<GiveUpButtonProps> = ({
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
-                  <Button variant="outline" onClick={onGiveUp}>
+                  <Button variant="outline" onClick={handleGiveUp}>
                     네, 포기합니다
                   </Button>
                 </DialogFooter>
