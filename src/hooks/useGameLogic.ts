@@ -81,7 +81,74 @@ export function useGameLogic(gameDate: string) {
   }, [gameState.submittedWords]);
 
   const submitWord = async () => {
-    // ... (기존 코드 유지)
+    const trimmedWord = inputWord.trim();
+    if (trimmedWord && !isLoading) {
+      setIsLoading(true);
+      setIsError(false);
+      setErrorMessage(null);
+      try {
+        const existingWordIndex = gameState.submittedWords.findIndex(
+          (word) => word.word.toLowerCase() === trimmedWord.toLowerCase()
+        );
+
+        if (existingWordIndex !== -1) {
+          setIsError(true);
+          setErrorMessage("이미 제출한 단어입니다");
+          const existingWord = gameState.submittedWords[existingWordIndex];
+          setGameState((prev) => ({
+            ...prev,
+            submittedWords: [
+              existingWord,
+              ...prev.submittedWords.filter(
+                (_, index) => index !== existingWordIndex
+              ),
+            ],
+          }));
+        } else {
+          const newWord = await apiSubmitWord(
+            trimmedWord,
+            gameState.attempts + 1,
+            gameDate
+          );
+          logEvent("Word Submitted", {
+            word: trimmedWord,
+            attempt: gameState.attempts + 1,
+            similarity: newWord.similarity,
+            isCorrect: newWord.correct,
+          });
+
+          setGameState((prev) => ({
+            ...prev,
+            submittedWords: [newWord, ...prev.submittedWords],
+            attempts: prev.attempts + 1,
+            gameCompleted: newWord.correct,
+          }));
+
+          if (newWord.correct) {
+            toast({
+              title: "축하합니다!",
+              description: `${
+                gameState.attempts + 1
+              }번째 시도에 정답을 맞히셨습니다.`,
+            });
+            logEvent("Game Completed", {
+              attempts: gameState.attempts + 1,
+              timeSpent: (Date.now() - startTimeRef.current) / 1000,
+            });
+          }
+        }
+      } catch (error) {
+        setIsError(true);
+        setErrorMessage(
+          error instanceof Error && error.message === "Invalid word"
+            ? "없는 단어입니다"
+            : "오류가 발생했습니다"
+        );
+      } finally {
+        setInputWord("");
+        setIsLoading(false);
+      }
+    }
   };
 
   const requestHint = async () => {
