@@ -148,15 +148,25 @@ export function useGameLogic(gameDate: string) {
   const requestHint = async () => {
     if (hintDisabled) return;
 
-    const topRankedWord = sortedWords.find((word) => word.rank !== -1);
-    let hintRank = 100;
+    // 순위가 있는 단어들 중 가장 높은 순위의 단어를 찾습니다.
+    const topRankedWord = sortedWords.reduce((highest, current) => {
+      if (current.rank === undefined || current.rank === -1) return highest;
+      if (!highest || current.rank < highest.rank) return current;
+      return highest;
+    }, null as SubmittedWord | null);
 
-    if (topRankedWord) {
-      if (topRankedWord.rank <= 10) {
-        setHintDisabled(true);
-        return;
-      }
-      hintRank = Math.max(1, topRankedWord.rank - 10);
+    let hintRank: number;
+
+    if (!topRankedWord || topRankedWord.rank === -1) {
+      // 순위권 내 단어가 없으면 100위 단어를 힌트로 제공
+      hintRank = 100;
+    } else if (topRankedWord.rank <= 20) {
+      // 최고 순위가 20위 이하면 힌트 버튼 비활성화 (10위까지의 여유를 둠)
+      setHintDisabled(true);
+      return;
+    } else {
+      // 현재 최고 순위보다 10 순위 높은 단어를 힌트로 제공
+      hintRank = topRankedWord.rank - 10;
     }
 
     try {
