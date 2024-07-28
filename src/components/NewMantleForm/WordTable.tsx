@@ -64,7 +64,9 @@ const WordTable: React.FC<WordTableProps> = ({ words, showAll }) => {
                 ? "정답!"
                 : word.rank === -1
                 ? "순위 밖"
-                : `${word.rank}위`}
+                : word.rank !== undefined
+                ? `${word.rank}위`
+                : "N/A"}
             </TableCell>
             <TableCell className="text-center w-20 sm:w-24 py-2">
               <Similarity

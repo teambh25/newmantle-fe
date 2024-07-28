@@ -1,7 +1,7 @@
 import React from "react";
 
 interface SimilarityProps {
-  similarity: number | null;
+  similarity: number | null | undefined;
   rank: number | null;
 }
 
@@ -16,7 +16,11 @@ const Similarity: React.FC<SimilarityProps> = ({ similarity, rank }) => {
 
   return (
     <span className={getStyle(rank)}>
-      {similarity !== null ? similarity.toFixed(2) : "정답!"}
+      {similarity !== null && similarity !== undefined
+        ? similarity.toFixed(2)
+        : rank === null
+        ? "정답!"
+        : "N/A"}
     </span>
   );
 };
