@@ -72,11 +72,19 @@ export default function NewMantleForm() {
         <div className="w-full mb-4 flex justify-center">
           <HintButton
             onHintRequest={gameLogic.requestHint}
-            disabled={gameLogic.hintDisabled || gameLogic.gameCompleted}
+            disabled={
+              gameLogic.hintDisabled ||
+              gameLogic.gameCompleted ||
+              gameLogic.givenUp
+            }
           />
           <GiveUpButton
             onGiveUp={gameLogic.giveUp}
-            disabled={gameLogic.hintUsed < 3}
+            disabled={
+              gameLogic.hintUsed < 3 ||
+              gameLogic.gameCompleted ||
+              gameLogic.givenUp
+            }
             hintUsed={gameLogic.hintUsed}
           />
         </div>
