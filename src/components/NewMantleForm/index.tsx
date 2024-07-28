@@ -7,6 +7,7 @@ import { GameForm } from "./GameForm";
 import { useGameLogic } from "@/hooks/useGameLogic";
 import { logEvent } from "@/utils/amplitude";
 import { useGameDate } from "@/hooks/useGameDate";
+import HintButton from "@/components/HintButton";
 
 export default function NewMantleForm() {
   const gameDate = useGameDate();
@@ -67,6 +68,12 @@ export default function NewMantleForm() {
           errorMessage={gameLogic.errorMessage}
           submitWord={gameLogic.submitWord}
         />
+        <div className="w-full mb-4 flex justify-center">
+          <HintButton
+            onHintRequest={gameLogic.requestHint}
+            disabled={gameLogic.hintDisabled || gameLogic.gameCompleted}
+          />
+        </div>
 
         {gameLogic.gameCompleted && (
           <div className="mb-6 p-4 bg-green-100 border border-green-500 text-green-700 rounded-md">

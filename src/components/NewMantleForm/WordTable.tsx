@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import Similarity from "./Similarity";
 import { SubmittedWord } from "@/utils/api";
+import { Lightbulb } from "lucide-react";
 
 interface WordTableProps {
   words: SubmittedWord[];
@@ -45,7 +46,11 @@ const WordTable: React.FC<WordTableProps> = ({ words, showAll }) => {
             }`}
           >
             <TableCell className="text-center py-2 w-12 sm:w-16">
-              {word.attempt}
+              {word.attempt === -1 ? (
+                <Lightbulb size={16} className="inline" />
+              ) : (
+                word.attempt
+              )}
             </TableCell>
             <TableCell className="text-center py-2 whitespace-nowrap overflow-hidden text-ellipsis">
               {word.word}

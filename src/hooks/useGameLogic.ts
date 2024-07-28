@@ -1,5 +1,9 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { submitWord as apiSubmitWord, SubmittedWord } from "@/utils/api";
+import {
+  submitWord as apiSubmitWord,
+  SubmittedWord,
+  getHint,
+} from "@/utils/api";
 import { useToast } from "@/components/ui/use-toast";
 import { logEvent } from "@/utils/amplitude";
 
@@ -47,6 +51,7 @@ export function useGameLogic(gameDate: string) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const startTimeRef = useRef<number>(Date.now());
   const { toast } = useToast();
+  const [hintDisabled, setHintDisabled] = useState(false);
 
   useEffect(() => {
     logEvent("Game Started", { date: gameDate });
@@ -140,6 +145,47 @@ export function useGameLogic(gameDate: string) {
     }
   };
 
+  const requestHint = async () => {
+    if (hintDisabled) return;
+
+    const topRankedWord = sortedWords.find((word) => word.rank !== -1);
+    let hintRank = 100;
+
+    if (topRankedWord) {
+      if (topRankedWord.rank <= 10) {
+        setHintDisabled(true);
+        return;
+      }
+      hintRank = Math.max(1, topRankedWord.rank - 10);
+    }
+
+    try {
+      const hintResponse = await getHint(new Date(gameDate), hintRank);
+      const newHintWord: SubmittedWord = {
+        word: hintResponse.word,
+        similarity: hintResponse.score,
+        rank: hintRank,
+        attempt: -1, // 힌트 단어는 attempt를 -1로 표시
+        correct: false,
+      };
+
+      setGameState((prev) => ({
+        ...prev,
+        submittedWords: [newHintWord, ...prev.submittedWords],
+      }));
+
+      logEvent("Hint Requested", { hintRank });
+    } catch (error) {
+      console.error("힌트 요청 중 오류 발생:", error);
+      toast({
+        title: "힌트 요청 실패",
+        description:
+          "힌트를 가져오는 중 오류가 발생했습니다. 다시 시도해주세요.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return {
     inputWord,
     setInputWord,
@@ -151,5 +197,7 @@ export function useGameLogic(gameDate: string) {
     errorMessage,
     sortedWords,
     submitWord,
+    hintDisabled,
+    requestHint,
   };
 }
