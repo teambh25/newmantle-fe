@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -24,10 +24,16 @@ export const GameForm: React.FC<GameFormProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const dummyInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const currentInputWord = inputWord; // 현재 입력값 저장
     submitWord();
-    setInputWord("");
 
     // iOS 버퍼 이슈 해결을 위한 트릭
     if (dummyInputRef.current && inputRef.current) {
@@ -35,8 +41,9 @@ export const GameForm: React.FC<GameFormProps> = ({
       setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.focus();
+          setInputWord(""); // 여기서 입력값을 지웁니다
         }
-      }, 0);
+      }, 20); // 딜레이를 약간 증가
     }
   };
 
