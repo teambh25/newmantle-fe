@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -23,20 +23,43 @@ export const GameForm: React.FC<GameFormProps> = ({
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const dummyInputRef = useRef<HTMLInputElement>(null);
+  const focusTimeoutRef = useRef<number | null>(null);
+
+  const setFocusWithDebounce = useCallback(() => {
+    if (focusTimeoutRef.current !== null) {
+      clearTimeout(focusTimeoutRef.current);
+    }
+    focusTimeoutRef.current = window.setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 50);
+  }, []);
+
+  useEffect(() => {
+    setFocusWithDebounce();
+  }, [inputWord, setFocusWithDebounce]);
+
+  useEffect(() => {
+    return () => {
+      if (focusTimeoutRef.current !== null) {
+        clearTimeout(focusTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     submitWord();
-    setInputWord("");
 
     // iOS 버퍼 이슈 해결을 위한 트릭
     if (dummyInputRef.current && inputRef.current) {
       dummyInputRef.current.focus();
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
-      }, 0);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setFocusWithDebounce();
+        });
+      });
     }
   };
 
