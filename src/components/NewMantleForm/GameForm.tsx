@@ -31,6 +31,7 @@ export const GameForm: React.FC<GameFormProps> = ({
       const handleFormSubmit = (e: Event) => {
         e.preventDefault();
         submitWord();
+        inputRef.current?.focus();
       };
       form.addEventListener("submit", handleFormSubmit);
       return () => {
@@ -65,6 +66,7 @@ export const GameForm: React.FC<GameFormProps> = ({
           disabled={isLoading || gameCompleted}
           ref={inputRef}
           autoComplete="off"
+          onFocus={(e) => e.target.scrollIntoView(false)}
         />
         <Button
           type="submit"
