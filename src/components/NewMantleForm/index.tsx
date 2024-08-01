@@ -7,6 +7,8 @@ import { GameForm } from "./GameForm";
 import { useGameLogic } from "@/hooks/useGameLogic";
 import { logEvent } from "@/utils/amplitude";
 import { useGameDate } from "@/hooks/useGameDate";
+import HintButton from "@/components/HintButton";
+import GiveUpButton from "@/components/GiveUpButton";
 
 export default function NewMantleForm() {
   const gameDate = useGameDate();
@@ -67,11 +69,38 @@ export default function NewMantleForm() {
           errorMessage={gameLogic.errorMessage}
           submitWord={gameLogic.submitWord}
         />
+        <div className="w-full mb-4 flex justify-center">
+          <HintButton
+            onHintRequest={gameLogic.requestHint}
+            disabled={
+              gameLogic.hintDisabled ||
+              gameLogic.gameCompleted ||
+              gameLogic.givenUp
+            }
+          />
+          <GiveUpButton
+            onGiveUp={gameLogic.giveUp}
+            disabled={
+              gameLogic.hintUsed < 3 ||
+              gameLogic.gameCompleted ||
+              gameLogic.givenUp
+            }
+            hintUsed={gameLogic.hintUsed}
+          />
+        </div>
 
-        {gameLogic.gameCompleted && (
+        {(gameLogic.gameCompleted || gameLogic.givenUp) && (
           <div className="mb-6 p-4 bg-green-100 border border-green-500 text-green-700 rounded-md">
-            <p className="font-bold">정답을 맞췄습니다!</p>
-            <p>{gameLogic.attempts}번째 만에 맞히셨네요.</p>
+            <p className="font-bold">
+              {gameLogic.givenUp
+                ? "게임을 포기하셨습니다."
+                : "정답을 맞췄습니다!"}
+            </p>
+            <p>
+              {gameLogic.givenUp
+                ? `${gameLogic.attempts}번 시도하셨습니다.`
+                : `${gameLogic.attempts}번째 만에 맞히셨네요.`}
+            </p>
             <p>(내일은 새로운 단어로 도전할 수 있어요!)</p>
 
             <Button onClick={handleCopyLink} className="mt-4">

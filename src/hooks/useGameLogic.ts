@@ -1,5 +1,9 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { submitWord as apiSubmitWord, SubmittedWord } from "@/utils/api";
+import {
+  submitWord as apiSubmitWord,
+  SubmittedWord,
+  getHint,
+} from "@/utils/api";
 import { useToast } from "@/components/ui/use-toast";
 import { logEvent } from "@/utils/amplitude";
 
@@ -10,6 +14,8 @@ interface GameData {
   attempts: number;
   gameCompleted: boolean;
   lastPlayedDate: string;
+  hintUsed: number;
+  givenUp: boolean;
 }
 
 function getInitialGameState(): GameData {
@@ -19,6 +25,8 @@ function getInitialGameState(): GameData {
       attempts: 0,
       gameCompleted: false,
       lastPlayedDate: new Date().toDateString(),
+      hintUsed: 0,
+      givenUp: false,
     };
   }
 
@@ -36,6 +44,8 @@ function getInitialGameState(): GameData {
     attempts: 0,
     gameCompleted: false,
     lastPlayedDate: new Date().toDateString(),
+    hintUsed: 0,
+    givenUp: false,
   };
 }
 
@@ -47,6 +57,7 @@ export function useGameLogic(gameDate: string) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const startTimeRef = useRef<number>(Date.now());
   const { toast } = useToast();
+  const [hintDisabled, setHintDisabled] = useState(false);
 
   useEffect(() => {
     logEvent("Game Started", { date: gameDate });
@@ -140,6 +151,91 @@ export function useGameLogic(gameDate: string) {
     }
   };
 
+  const requestHint = async () => {
+    if (hintDisabled) return;
+
+    // 순위가 있는 단어들 중 가장 높은 순위의 단어를 찾습니다.
+    const topRankedWord = sortedWords.reduce((highest, current) => {
+      if (current.rank === undefined || current.rank === -1) return highest;
+      if (!highest || current.rank < highest.rank) return current;
+      return highest;
+    }, null as SubmittedWord | null);
+
+    let hintRank: number;
+
+    if (!topRankedWord || topRankedWord.rank === -1) {
+      // 순위권 내 단어가 없으면 100위 단어를 힌트로 제공
+      hintRank = 100;
+    } else if (topRankedWord.rank <= 20) {
+      // 최고 순위가 20위 이하면 힌트 버튼 비활성화 (10위까지의 여유를 둠)
+      setHintDisabled(true);
+      return;
+    } else {
+      // 현재 최고 순위보다 10 순위 높은 단어를 힌트로 제공
+      hintRank = topRankedWord.rank - 10;
+    }
+
+    try {
+      const hintResponse = await getHint(new Date(gameDate), hintRank);
+      const newHintWord: SubmittedWord = {
+        word: hintResponse.word,
+        similarity: hintResponse.score,
+        rank: hintRank,
+        attempt: -1,
+        correct: false,
+      };
+
+      setGameState((prev) => ({
+        ...prev,
+        submittedWords: [newHintWord, ...prev.submittedWords],
+        hintUsed: prev.hintUsed + 1,
+      }));
+
+      logEvent("Hint Requested", { hintRank });
+    } catch (error) {
+      console.error("힌트 요청 중 오류 발생:", error);
+      toast({
+        title: "힌트 요청 실패",
+        description:
+          "힌트를 가져오는 중 오류가 발생했습니다. 다시 시도해주세요.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const giveUp = async () => {
+    try {
+      const answer = await getHint(new Date(gameDate), 0);
+      setGameState((prev) => ({
+        ...prev,
+        submittedWords: [
+          {
+            word: answer.word,
+            similarity: 100,
+            rank: 0,
+            attempt: prev.attempts + 1,
+            correct: true,
+          },
+          ...prev.submittedWords,
+        ],
+        gameCompleted: true,
+        givenUp: true,
+      }));
+      logEvent("Game Given Up", {
+        attempts: gameState.attempts,
+        hintUsed: gameState.hintUsed,
+      });
+    } catch (error) {
+      console.error("정답 가져오기 실패:", error);
+      toast({
+        title: "정답 가져오기 실패",
+        description:
+          "정답을 가져오는 중 오류가 발생했습니다. 다시 시도해주세요.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return {
     inputWord,
     setInputWord,
@@ -151,5 +247,10 @@ export function useGameLogic(gameDate: string) {
     errorMessage,
     sortedWords,
     submitWord,
+    hintDisabled,
+    requestHint,
+    hintUsed: gameState.hintUsed,
+    givenUp: gameState.givenUp,
+    giveUp,
   };
 }
