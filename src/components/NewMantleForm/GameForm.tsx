@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -24,33 +24,25 @@ export const GameForm: React.FC<GameFormProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const dummyInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    await submitWord();
+    submitWord();
     setInputWord("");
 
     // iOS 버퍼 이슈 해결을 위한 트릭
     if (dummyInputRef.current && inputRef.current) {
       dummyInputRef.current.focus();
-      // 약간의 지연 후 실제 입력 필드로 포커스 이동
       setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.focus();
         }
-      }, 50);
+      }, 0);
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputWord(e.target.value);
   };
-
-  // 컴포넌트가 마운트되거나 업데이트될 때마다 입력 필드에 포커스
-  useEffect(() => {
-    if (inputRef.current && !isLoading && !gameCompleted) {
-      inputRef.current.focus();
-    }
-  }, [isLoading, gameCompleted]);
 
   return (
     <form onSubmit={handleSubmit} className="w-full mb-6" autoComplete="off">
