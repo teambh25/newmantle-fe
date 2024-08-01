@@ -51,13 +51,13 @@ export const GameForm: React.FC<GameFormProps> = ({
 
   return (
     <form ref={formRef} className="w-full mb-6">
-      <div className="flex flex-col space-y-2">
+      <div className="flex space-x-2">
         <Input
           type="text"
           value={inputWord}
           onChange={handleInputChange}
           placeholder={errorMessage || "단어를 입력하세요"}
-          className={`text-center ${
+          className={`flex-grow ${
             isError
               ? "border-red-500 placeholder-red-500"
               : "placeholder-gray-400"
@@ -69,7 +69,7 @@ export const GameForm: React.FC<GameFormProps> = ({
         <Button
           type="submit"
           disabled={isLoading || gameCompleted}
-          className="w-full"
+          className="flex-shrink-0"
         >
           {isLoading ? "제출 중..." : "제출"}
         </Button>
