@@ -1,5 +1,4 @@
-// src/components/GameForm.tsx
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -23,35 +22,60 @@ export const GameForm: React.FC<GameFormProps> = ({
   submitWord,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
-  const formRef = useRef<HTMLFormElement>(null);
+  const dummyInputRef = useRef<HTMLInputElement>(null);
+  const focusTimeoutRef = useRef<number | null>(null);
+
+  const setFocusWithDebounce = useCallback(() => {
+    if (focusTimeoutRef.current !== null) {
+      clearTimeout(focusTimeoutRef.current);
+    }
+    focusTimeoutRef.current = window.setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 50);
+  }, []);
 
   useEffect(() => {
-    const form = formRef.current;
-    if (form) {
-      const handleFormSubmit = (e: Event) => {
-        e.preventDefault();
-        submitWord();
-      };
-      form.addEventListener("submit", handleFormSubmit);
-      return () => {
-        form.removeEventListener("submit", handleFormSubmit);
-      };
-    }
-  }, [submitWord]);
+    setFocusWithDebounce();
+  }, [inputWord, setFocusWithDebounce]);
 
   useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
+    return () => {
+      if (focusTimeoutRef.current !== null) {
+        clearTimeout(focusTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    submitWord();
+
+    // iOS 버퍼 이슈 해결을 위한 트릭
+    if (dummyInputRef.current && inputRef.current) {
+      dummyInputRef.current.focus();
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setFocusWithDebounce();
+        });
+      });
     }
-  }, [isLoading]);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputWord(e.target.value);
   };
 
   return (
-    <form ref={formRef} className="w-full mb-6">
+    <form onSubmit={handleSubmit} className="w-full mb-6" autoComplete="off">
       <div className="flex space-x-2">
+        <input
+          type="text"
+          ref={dummyInputRef}
+          style={{ position: "absolute", width: 0, height: 0, opacity: 0 }}
+          aria-hidden="true"
+        />
         <Input
           type="text"
           value={inputWord}
@@ -65,6 +89,8 @@ export const GameForm: React.FC<GameFormProps> = ({
           disabled={isLoading || gameCompleted}
           ref={inputRef}
           autoComplete="off"
+          autoCapitalize="none"
+          autoCorrect="off"
         />
         <Button
           type="submit"
