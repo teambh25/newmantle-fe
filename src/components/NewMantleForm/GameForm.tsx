@@ -1,5 +1,4 @@
-// src/components/GameForm.tsx
-import React, { useRef, useEffect } from "react";
+import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -22,36 +21,21 @@ export const GameForm: React.FC<GameFormProps> = ({
   errorMessage,
   submitWord,
 }) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const formRef = useRef<HTMLFormElement>(null);
+  const [isReadOnly, setIsReadOnly] = useState(false);
 
-  useEffect(() => {
-    const form = formRef.current;
-    if (form) {
-      const handleFormSubmit = (e: Event) => {
-        e.preventDefault();
-        submitWord();
-        inputRef.current?.focus();
-      };
-      form.addEventListener("submit", handleFormSubmit);
-      return () => {
-        form.removeEventListener("submit", handleFormSubmit);
-      };
-    }
-  }, [submitWord]);
-
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isLoading]);
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsReadOnly(true);
+    submitWord();
+    setTimeout(() => setIsReadOnly(false), 0);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputWord(e.target.value);
   };
 
   return (
-    <form ref={formRef} className="w-full mb-6">
+    <form onSubmit={handleSubmit} className="w-full mb-6">
       <div className="flex space-x-2">
         <Input
           type="text"
@@ -64,9 +48,8 @@ export const GameForm: React.FC<GameFormProps> = ({
               : "placeholder-gray-400"
           }`}
           disabled={isLoading || gameCompleted}
-          ref={inputRef}
+          readOnly={isReadOnly}
           autoComplete="off"
-          onFocus={(e) => e.target.scrollIntoView(false)}
         />
         <Button
           type="submit"
