@@ -22,56 +22,49 @@ export const GameForm: React.FC<GameFormProps> = ({
   submitWord,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const dummyInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    await submitWord();
+    setInputWord("");
+
+    // iOS 버퍼 이슈 해결을 위한 트릭
+    if (dummyInputRef.current && inputRef.current) {
+      dummyInputRef.current.focus();
+      // 약간의 지연 후 실제 입력 필드로 포커스 이동
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 50);
     }
-  }, []);
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); // 폼의 기본 제출 동작을 방지합니다.
-    handleWordSubmit();
-  };
-
-  const handleWordSubmit = () => {
-    if (inputWord.trim() === "") return; // 빈 입력 방지
-
-    submitWord();
-
-    // 단어 제출 후 처리
-    requestAnimationFrame(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-        // 입력 필드의 값을 지우기 전에 선택 상태로 만듭니다.
-        inputRef.current.select();
-        // 그 다음 틱에 값을 지웁니다.
-        requestAnimationFrame(() => {
-          setInputWord("");
-        });
-      }
-    });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputWord(e.target.value);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault(); // Enter 키의 기본 동작을 방지합니다.
-      handleWordSubmit();
+  // 컴포넌트가 마운트되거나 업데이트될 때마다 입력 필드에 포커스
+  useEffect(() => {
+    if (inputRef.current && !isLoading && !gameCompleted) {
+      inputRef.current.focus();
     }
-  };
+  }, [isLoading, gameCompleted]);
 
   return (
     <form onSubmit={handleSubmit} className="w-full mb-6" autoComplete="off">
       <div className="flex space-x-2">
+        <input
+          type="text"
+          ref={dummyInputRef}
+          style={{ position: "absolute", width: 0, height: 0, opacity: 0 }}
+          aria-hidden="true"
+        />
         <Input
           type="text"
           value={inputWord}
           onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
           placeholder={errorMessage || "단어를 입력하세요"}
           className={`flex-grow ${
             isError
