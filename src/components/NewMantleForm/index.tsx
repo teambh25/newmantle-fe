@@ -81,9 +81,8 @@ export default function NewMantleForm() {
           <GiveUpButton
             onGiveUp={gameLogic.giveUp}
             disabled={
-              gameLogic.hintUsed < 3 ||
-              gameLogic.gameCompleted ||
-              gameLogic.givenUp
+              // gameLogic.hintUsed < 3 ||
+              gameLogic.gameCompleted || gameLogic.givenUp
             }
             hintUsed={gameLogic.hintUsed}
           />
