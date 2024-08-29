@@ -48,6 +48,10 @@ export default function RootLayout({
           name="viewport"
           content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
         />
+        <meta
+          name="google-adsense-account"
+          content="ca-pub-8556151022820405"
+        ></meta>
       </head>
       <body className={pretendard.className}>
         <AmplitudeInitializer />

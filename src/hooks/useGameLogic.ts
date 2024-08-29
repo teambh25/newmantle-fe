@@ -166,8 +166,8 @@ export function useGameLogic(gameDate: string) {
     if (!topRankedWord || topRankedWord.rank === -1) {
       // 순위권 내 단어가 없으면 100위 단어를 힌트로 제공
       hintRank = 100;
-    } else if (topRankedWord.rank <= 20) {
-      // 최고 순위가 20위 이하면 힌트 버튼 비활성화 (10위까지의 여유를 둠)
+    } else if (topRankedWord.rank <= 15) {
+      // 최고 순위가 15위 이하면 힌트 버튼 비활성화 (5위까지의 여유를 둠)
       setHintDisabled(true);
       return;
     } else {
