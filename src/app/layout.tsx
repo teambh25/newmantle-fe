@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     siteName: "뉴맨틀",
     images: [
       {
-        url: "/newmantle_opengraph.png", // app 디렉토리 내의 이미지 경로
+        url: "/newmantle_opengraph.webp", // app 디렉토리 내의 이미지 경로
         width: 1200,
         height: 630,
         alt: "뉴맨틀 - 단어 맞히기 게임",
