@@ -9,9 +9,8 @@ export interface SubmittedWord {
 }
 
 export interface HintResponse {
-  consonants: string;
-  word: string;
-  score: number;
+  hint: string;
+  score: number | null;
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -27,12 +26,15 @@ export const submitWord = async (
 
   try {
     const response = await fetch(
-      `${API_BASE_URL}/guess/${gameDate}/${encodedWord}`,
+      `${API_BASE_URL}/quizzes/${gameDate}/guess/${encodedWord}`,
       { signal: controller.signal }
     );
     clearTimeout(timeoutId);
     if (response.status === 400) {
       throw new Error("Invalid word");
+    }
+    if (response.status === 422) {
+      throw new Error("Invalid date format");
     }
     if (!response.ok) {
       throw new Error("API request failed");
@@ -60,17 +62,22 @@ export const getHint = async (date: Date, rank: number): Promise<HintResponse> =
 
   try {
     const response = await fetch(
-      `${API_BASE_URL}/hint/${formattedDate}/${rank}`,
+      `${API_BASE_URL}/quizzes/${formattedDate}/hint/${rank}`,
       { signal: controller.signal }
     );
     clearTimeout(timeoutId);
+    if (response.status === 400) {
+      throw new Error("Quiz not found for this date");
+    }
+    if (response.status === 422) {
+      throw new Error("Invalid date format or rank");
+    }
     if (!response.ok) {
       throw new Error("API request failed");
     }
     const data = await response.json();
     return {
-      consonants: JSON.parse(`"${data.consonants}"`), // Unicode 문자열을 실제 한글로 변환
-      word: JSON.parse(`"${data.word}"`), // Unicode 문자열을 실제 한글로 변환
+      hint: JSON.parse(`"${data.hint}"`), // Unicode 문자열을 실제 한글로 변환
       score: data.score,
     };
   } catch (error) {

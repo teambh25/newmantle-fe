@@ -139,11 +139,17 @@ export function useGameLogic(gameDate: string) {
         }
       } catch (error) {
         setIsError(true);
-        setErrorMessage(
-          error instanceof Error && error.message === "Invalid word"
-            ? "없는 단어입니다"
-            : "오류가 발생했습니다"
-        );
+        if (error instanceof Error) {
+          if (error.message === "Invalid word") {
+            setErrorMessage("없는 단어입니다");
+          } else if (error.message === "Invalid date format") {
+            setErrorMessage("잘못된 날짜 형식입니다");
+          } else {
+            setErrorMessage("오류가 발생했습니다");
+          }
+        } else {
+          setErrorMessage("오류가 발생했습니다");
+        }
       } finally {
         setInputWord("");
         setIsLoading(false);
@@ -178,7 +184,7 @@ export function useGameLogic(gameDate: string) {
     try {
       const hintResponse = await getHint(new Date(gameDate), hintRank);
       const newHintWord: SubmittedWord = {
-        word: hintResponse.word,
+        word: hintResponse.hint,
         similarity: hintResponse.score,
         rank: hintRank,
         attempt: -1,
@@ -210,7 +216,7 @@ export function useGameLogic(gameDate: string) {
         ...prev,
         submittedWords: [
           {
-            word: answer.word,
+            word: answer.hint,
             similarity: 100,
             rank: 0,
             attempt: prev.attempts + 1,
