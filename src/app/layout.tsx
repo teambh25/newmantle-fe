@@ -51,7 +51,8 @@ export default function RootLayout({
         <meta
           name="google-adsense-account"
           content="ca-pub-8556151022820405"
-        ></meta>
+        >
+        </meta>
         {/* 폰트 프리로딩 */}
         <link
           rel="preload"
