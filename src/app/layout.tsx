@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({ subsets: ["latin"] });
 const pretendard = localFont({
-  src: "../static/fonts/PretendardVariable.woff2",
+  src: "./fonts/PretendardVariable.woff2",
   display: "swap",
   weight: "45 920",
   variable: "--font-pretendard",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     siteName: "뉴맨틀",
     images: [
       {
-        url: "/newmantle_opengraph.png", // app 디렉토리 내의 이미지 경로
+        url: "/newmantle_opengraph.webp", // app 디렉토리 내의 이미지 경로
         width: 1200,
         height: 630,
         alt: "뉴맨틀 - 단어 맞히기 게임",
@@ -51,7 +51,16 @@ export default function RootLayout({
         <meta
           name="google-adsense-account"
           content="ca-pub-8556151022820405"
-        ></meta>
+        >
+        </meta>
+        {/* 폰트 프리로딩 */}
+        <link
+          rel="preload"
+          href="/fonts/PretendardVariable.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
       </head>
       <body className={pretendard.className}>
         <AmplitudeInitializer />
