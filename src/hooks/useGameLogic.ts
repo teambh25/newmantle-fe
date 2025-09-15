@@ -3,6 +3,7 @@ import {
   submitWord as apiSubmitWord,
   SubmittedWord,
   getHint,
+  getRecentAnswer,
 } from "@/utils/api";
 import { useToast } from "@/components/ui/use-toast";
 import { logEvent } from "@/utils/amplitude";
@@ -211,12 +212,12 @@ export function useGameLogic(gameDate: string) {
 
   const giveUp = async () => {
     try {
-      const answer = await getHint(new Date(gameDate), 0);
+      const answer = await getRecentAnswer(new Date(gameDate));
       setGameState((prev) => ({
         ...prev,
         submittedWords: [
           {
-            word: answer.hint,
+            word: answer,
             similarity: 100,
             rank: 0,
             attempt: prev.attempts + 1,
