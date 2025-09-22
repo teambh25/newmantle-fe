@@ -12,6 +12,7 @@ const pretendard = localFont({
   display: "swap",
   weight: "45 920",
   variable: "--font-pretendard",
+  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -53,14 +54,6 @@ export default function RootLayout({
           content="ca-pub-8556151022820405"
         >
         </meta>
-        {/* 폰트 프리로딩 */}
-        <link
-          rel="preload"
-          href="/fonts/PretendardVariable.woff2"
-          as="font"
-          type="font/woff2"
-          crossOrigin="anonymous"
-        />
       </head>
       <body className={pretendard.className}>
         <AmplitudeInitializer />
