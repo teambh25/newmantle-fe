@@ -230,6 +230,11 @@ export function useGameLogic(gameDate: string) {
         initialConsonantHintUsed: true,
       }));
 
+      toast({
+        title: "💪 정답 초성 힌트를 알려드릴게요! 거의 다 왔어요!",
+        description: "",
+      });
+
       logEvent("Initial Consonant Hint Requested");
     } catch (error) {
       console.error("초성 힌트 요청 중 오류 발생:", error);
