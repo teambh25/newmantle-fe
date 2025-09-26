@@ -21,12 +21,16 @@ interface GiveUpButtonProps {
   onGiveUp: () => void;
   disabled: boolean;
   hintUsed: number;
+  onInitialConsonantHint: () => void;
+  initialConsonantHintUsed: boolean;
 }
 
 const GiveUpButton: React.FC<GiveUpButtonProps> = ({
   onGiveUp,
   disabled,
   hintUsed,
+  onInitialConsonantHint,
+  initialConsonantHintUsed,
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -40,6 +44,11 @@ const GiveUpButton: React.FC<GiveUpButtonProps> = ({
 
   const handleGiveUp = () => {
     onGiveUp();
+    setDialogOpen(false);
+  };
+
+  const handleInitialConsonantHint = () => {
+    onInitialConsonantHint();
     setDialogOpen(false);
   };
 
@@ -69,9 +78,20 @@ const GiveUpButton: React.FC<GiveUpButtonProps> = ({
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
-                  <Button variant="outline" onClick={handleGiveUp}>
-                    네, 포기합니다
-                  </Button>
+                  {!initialConsonantHintUsed ? (
+                    <>
+                      <Button variant="outline" onClick={handleInitialConsonantHint}>
+                        초성 힌트 보기
+                      </Button>
+                      <Button variant="outline" onClick={handleGiveUp}>
+                        그냥 포기하기
+                      </Button>
+                    </>
+                  ) : (
+                    <Button variant="outline" onClick={handleGiveUp}>
+                      네, 포기합니다
+                    </Button>
+                  )}
                 </DialogFooter>
               </DialogContent>
             </Dialog>

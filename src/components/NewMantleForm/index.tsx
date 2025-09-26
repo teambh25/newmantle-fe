@@ -85,6 +85,8 @@ export default function NewMantleForm() {
               gameLogic.gameCompleted || gameLogic.givenUp
             }
             hintUsed={gameLogic.hintUsed}
+            onInitialConsonantHint={gameLogic.requestInitialConsonantHint}
+            initialConsonantHintUsed={gameLogic.initialConsonantHintUsed}
           />
         </div>
 

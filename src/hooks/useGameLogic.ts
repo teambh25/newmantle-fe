@@ -17,6 +17,7 @@ interface GameData {
   lastPlayedDate: string;
   hintUsed: number;
   givenUp: boolean;
+  initialConsonantHintUsed: boolean;
 }
 
 function getInitialGameState(): GameData {
@@ -28,6 +29,7 @@ function getInitialGameState(): GameData {
       lastPlayedDate: new Date().toDateString(),
       hintUsed: 0,
       givenUp: false,
+      initialConsonantHintUsed: false,
     };
   }
 
@@ -47,6 +49,7 @@ function getInitialGameState(): GameData {
     lastPlayedDate: new Date().toDateString(),
     hintUsed: 0,
     givenUp: false,
+    initialConsonantHintUsed: false,
   };
 }
 
@@ -210,6 +213,35 @@ export function useGameLogic(gameDate: string) {
     }
   };
 
+  const requestInitialConsonantHint = async () => {
+    try {
+      const hintResponse = await getHint(new Date(gameDate), 0);
+      const newHintWord: SubmittedWord = {
+        word:  hintResponse.hint,
+        similarity: hintResponse.score,
+        rank: 0,
+        attempt: -1,
+        correct: false,
+      };
+
+      setGameState((prev) => ({
+        ...prev,
+        submittedWords: [newHintWord, ...prev.submittedWords],
+        initialConsonantHintUsed: true,
+      }));
+
+      logEvent("Initial Consonant Hint Requested");
+    } catch (error) {
+      console.error("초성 힌트 요청 중 오류 발생:", error);
+      toast({
+        title: "초성 힌트 요청 실패",
+        description:
+          "초성 힌트를 가져오는 중 오류가 발생했습니다. 다시 시도해주세요.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const giveUp = async () => {
     try {
       const answer = await getRecentAnswer(new Date(gameDate));
@@ -259,5 +291,7 @@ export function useGameLogic(gameDate: string) {
     hintUsed: gameState.hintUsed,
     givenUp: gameState.givenUp,
     giveUp,
+    initialConsonantHintUsed: gameState.initialConsonantHintUsed,
+    requestInitialConsonantHint,
   };
 }
