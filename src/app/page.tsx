@@ -1,6 +1,7 @@
 import dynamic from "next/dynamic";
 // import NewMantleForm from "@/components/NewMantleForm";
 import GameDescription from "@/components/GameDescription";
+import NotificationFeed from "@/components/NotificationFeed";
 import Footer from "@/components/Footer";
 
 const NewMantleForm = dynamic(() => import("@/components/NewMantleForm"), {
@@ -25,6 +26,7 @@ export default function Home() {
         <div className="w-full max-w-2xl space-y-16">
           <NewMantleForm />
           <GameDescription />
+          <NotificationFeed />
         </div>
       </main>
       <Footer />
