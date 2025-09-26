@@ -50,7 +50,6 @@ function getInitialGameState(): GameData {
     hintUsed: 0,
     givenUp: false,
     initialConsonantHintUsed: false,
-    initialConsonantHintUsed: false,
   };
 }
 
@@ -297,8 +296,6 @@ export function useGameLogic(gameDate: string) {
     hintUsed: gameState.hintUsed,
     givenUp: gameState.givenUp,
     giveUp,
-    initialConsonantHintUsed: gameState.initialConsonantHintUsed,
-    requestInitialConsonantHint,
     initialConsonantHintUsed: gameState.initialConsonantHintUsed,
     requestInitialConsonantHint,
   };
