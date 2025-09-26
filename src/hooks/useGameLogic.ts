@@ -18,6 +18,7 @@ interface GameData {
   hintUsed: number;
   givenUp: boolean;
   initialConsonantHintUsed: boolean;
+  initialConsonantHintUsed: boolean;
 }
 
 function getInitialGameState(): GameData {
@@ -29,6 +30,7 @@ function getInitialGameState(): GameData {
       lastPlayedDate: new Date().toDateString(),
       hintUsed: 0,
       givenUp: false,
+      initialConsonantHintUsed: false,
       initialConsonantHintUsed: false,
     };
   }
@@ -49,6 +51,7 @@ function getInitialGameState(): GameData {
     lastPlayedDate: new Date().toDateString(),
     hintUsed: 0,
     givenUp: false,
+    initialConsonantHintUsed: false,
     initialConsonantHintUsed: false,
   };
 }
@@ -296,6 +299,8 @@ export function useGameLogic(gameDate: string) {
     hintUsed: gameState.hintUsed,
     givenUp: gameState.givenUp,
     giveUp,
+    initialConsonantHintUsed: gameState.initialConsonantHintUsed,
+    requestInitialConsonantHint,
     initialConsonantHintUsed: gameState.initialConsonantHintUsed,
     requestInitialConsonantHint,
   };
