@@ -18,6 +18,7 @@ interface GameData {
   hintUsed: number;
   givenUp: boolean;
   initialConsonantHintUsed: boolean;
+  answerSurveyVoted: boolean | null;
 }
 
 function getInitialGameState(): GameData {
@@ -30,6 +31,7 @@ function getInitialGameState(): GameData {
       hintUsed: 0,
       givenUp: false,
       initialConsonantHintUsed: false,
+      answerSurveyVoted: null,
     };
   }
 
@@ -50,6 +52,7 @@ function getInitialGameState(): GameData {
     hintUsed: 0,
     givenUp: false,
     initialConsonantHintUsed: false,
+    answerSurveyVoted: null,
   };
 }
 
@@ -280,6 +283,13 @@ export function useGameLogic(gameDate: string) {
     }
   };
 
+  const setAnswerSurveyVoted = (voted: boolean | null) => {
+    setGameState((prev) => ({
+      ...prev,
+      answerSurveyVoted: voted,
+    }));
+  };
+
   return {
     inputWord,
     setInputWord,
@@ -298,5 +308,7 @@ export function useGameLogic(gameDate: string) {
     giveUp,
     initialConsonantHintUsed: gameState.initialConsonantHintUsed,
     requestInitialConsonantHint,
+    answerSurveyVoted: gameState.answerSurveyVoted,
+    setAnswerSurveyVoted,
   };
 }
