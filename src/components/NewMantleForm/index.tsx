@@ -9,6 +9,7 @@ import { logEvent } from "@/utils/amplitude";
 import { useGameDate } from "@/hooks/useGameDate";
 import HintButton from "@/components/HintButton";
 import GiveUpButton from "@/components/GiveUpButton";
+import { ThumbsUp, ThumbsDown } from "lucide-react";
 
 export default function NewMantleForm() {
   const gameDate = useGameDate();
@@ -23,6 +24,15 @@ export default function NewMantleForm() {
       setDisplayDate(`${parseInt(month)}월 ${parseInt(day)}일`);
     }
   }, [gameDate]);
+
+  const handleAnswerSurveyVote = (isPositive: boolean) => {
+    logEvent("Answer Word Survey", {
+      vote: isPositive ? "positive" : "negative",
+      attempts: gameLogic.attempts,
+      date: gameDate,
+    });
+    gameLogic.setAnswerSurveyVoted(isPositive);
+  };
 
   const handleCopyLink = () => {
     const baseUrl = window.location.origin;
@@ -102,6 +112,33 @@ export default function NewMantleForm() {
                 : `${gameLogic.attempts}번째 만에 맞히셨네요.`}
             </p>
             <p>(내일은 새로운 단어로 도전할 수 있어요!)</p>
+
+            {gameLogic.gameCompleted && !gameLogic.givenUp && (
+              <div className="mt-4">
+                <p className="text-sm font-medium mb-2">오늘 정답은 어땠나요?</p>
+                <div className="flex justify-center space-x-2">
+                  <Button
+                    variant={gameLogic.answerSurveyVoted === true ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleAnswerSurveyVote(true)}
+                    disabled={gameLogic.answerSurveyVoted !== null}
+                  >
+                    <ThumbsUp className="mr-1 h-3 w-3" /> 좋았다
+                  </Button>
+                  <Button
+                    variant={gameLogic.answerSurveyVoted === false ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleAnswerSurveyVote(false)}
+                    disabled={gameLogic.answerSurveyVoted !== null}
+                  >
+                    <ThumbsDown className="mr-1 h-3 w-3" /> 별로였다
+                  </Button>
+                </div>
+                {gameLogic.answerSurveyVoted !== null && (
+                  <p className="text-xs mt-2 text-center">투표해 주셔서 감사합니다!</p>
+                )}
+              </div>
+            )}
 
             <Button onClick={handleCopyLink} className="mt-4">
               친구에게 공유하기
