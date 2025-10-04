@@ -20,6 +20,13 @@ const notifications: Notification[] = [
     content: '힌트를 다 써도 문제가 너무 어려워서 포기하신 분들을 위해 정답의 초성 힌트를 제공합니다. 정답 초성 힌트는 포기하기 버튼을 누르면 확인할 수 있습니다.',
     date: '2024-09-26',
     type: 'update'
+  },
+  {
+    id: '3',
+    title: '정답 이후 단어 제출 가능',
+    content: '정답 제출 이후에도 단어를 계속해서 제출할 수 있습니다.',
+    date: '2024-10-04',
+    type: 'update'
   }
 ];
 
