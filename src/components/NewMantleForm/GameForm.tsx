@@ -31,7 +31,7 @@ export const GameForm: React.FC<GameFormProps> = ({
     }
     focusTimeoutRef.current = window.setTimeout(() => {
       if (inputRef.current) {
-        inputRef.current.focus();
+        inputRef.current.focus({ preventScroll: true });
       }
     }, 50);
   }, []);
