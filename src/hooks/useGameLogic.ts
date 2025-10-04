@@ -128,7 +128,7 @@ export function useGameLogic(gameDate: string) {
             ...prev,
             submittedWords: [newWord, ...prev.submittedWords],
             attempts: prev.attempts + 1,
-            gameCompleted: newWord.correct,
+            gameCompleted: prev.gameCompleted || newWord.correct,
           }));
 
           if (newWord.correct) {
