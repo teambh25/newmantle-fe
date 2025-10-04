@@ -27,6 +27,13 @@ const notifications: Notification[] = [
     content: '정답 제출 이후에도 단어를 계속해서 제출할 수 있습니다.',
     date: '2024-10-04',
     type: 'update'
+  },
+  {
+    id: '4',
+    title: '모바일 사용성 개선',
+    content: '모바일에서 정답을 제출할 때 더이상 스크롤이 중앙으로 이동하지 않습니다.',
+    date: '2024-10-04',
+    type: 'update'
   }
 ];
 
