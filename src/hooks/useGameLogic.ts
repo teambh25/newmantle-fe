@@ -87,6 +87,11 @@ export function useGameLogic(gameDate: string) {
     return [firstWord, ...sortedRestWords];
   }, [gameState.submittedWords]);
 
+  const correctAttempts = useMemo(() => {
+    const correctWord = gameState.submittedWords.find(word => word.correct);
+    return correctWord?.attempt ?? gameState.attempts;
+  }, [gameState.submittedWords, gameState.attempts]);
+
   const submitWord = async () => {
     const trimmedWord = inputWord.trim();
     if (trimmedWord && !isLoading) {
@@ -296,6 +301,7 @@ export function useGameLogic(gameDate: string) {
     submittedWords: gameState.submittedWords,
     isLoading,
     attempts: gameState.attempts,
+    correctAttempts,
     gameCompleted: gameState.gameCompleted,
     isError,
     errorMessage,
