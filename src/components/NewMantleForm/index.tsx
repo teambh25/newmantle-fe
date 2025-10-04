@@ -28,7 +28,7 @@ export default function NewMantleForm() {
   const handleAnswerSurveyVote = (isPositive: boolean) => {
     logEvent("Answer Word Survey", {
       vote: isPositive ? "positive" : "negative",
-      attempts: gameLogic.attempts,
+      attempts: gameLogic.correctAttempts,
       date: gameDate,
     });
     gameLogic.setAnswerSurveyVoted(isPositive);
@@ -50,7 +50,7 @@ export default function NewMantleForm() {
         });
         logEvent("Result Shared", {
           method: "Link Copy",
-          attempts: gameLogic.attempts,
+          attempts: gameLogic.correctAttempts,
         });
       },
       () => {
@@ -109,7 +109,7 @@ export default function NewMantleForm() {
             <p>
               {gameLogic.givenUp
                 ? `${gameLogic.attempts}번 시도하셨습니다.`
-                : `${gameLogic.attempts}번째 만에 맞히셨네요.`}
+                : `${gameLogic.correctAttempts}번째 만에 맞히셨네요.`}
             </p>
             <p>(내일은 새로운 단어로 도전할 수 있어요!)</p>
 
