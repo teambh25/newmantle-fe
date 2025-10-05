@@ -69,10 +69,14 @@ const WordTable: React.FC<WordTableProps> = ({ words, showAll }) => {
                 : "N/A"}
             </TableCell>
             <TableCell className="text-center w-20 sm:w-24 py-2">
-              <Similarity
-                similarity={word.similarity}
-                rank={word.correct ? null : word.rank}
-              />
+              {word.attempt === -1 && word.rank === 0 ? (
+                "초성 힌트"
+              ) : (
+                <Similarity
+                  similarity={word.similarity}
+                  rank={word.correct ? null : word.rank}
+                />
+              )}
             </TableCell>
           </TableRow>
         ))}
