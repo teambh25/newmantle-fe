@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import WordTable from "./WordTable";
 import { GameForm } from "./GameForm";
+import { GameResult } from "./GameResult";
 import { useGameLogic } from "@/hooks/useGameLogic";
 import { logEvent } from "@/utils/amplitude";
 import { useGameDate } from "@/hooks/useGameDate";
 import HintButton from "@/components/HintButton";
 import GiveUpButton from "@/components/GiveUpButton";
-import { ThumbsUp, ThumbsDown } from "lucide-react";
 
 export default function NewMantleForm() {
   const gameDate = useGameDate();
@@ -70,6 +70,16 @@ export default function NewMantleForm() {
         <h3 className="text-xl mt-2">정답은...?</h3>
       </div>
       <div className="flex flex-col items-center mx-0">
+        <GameResult
+          givenUp={gameLogic.givenUp}
+          gameCompleted={gameLogic.gameCompleted}
+          attempts={gameLogic.attempts}
+          correctAttempts={gameLogic.correctAttempts}
+          answerSurveyVoted={gameLogic.answerSurveyVoted}
+          onAnswerSurveyVote={handleAnswerSurveyVote}
+          onCopyLink={handleCopyLink}
+        />
+
         <GameForm
           inputWord={gameLogic.inputWord}
           setInputWord={gameLogic.setInputWord}
@@ -98,53 +108,6 @@ export default function NewMantleForm() {
             initialConsonantHintUsed={gameLogic.initialConsonantHintUsed}
           />
         </div>
-
-        {(gameLogic.gameCompleted || gameLogic.givenUp) && (
-          <div className="mb-6 p-4 bg-green-100 border border-green-500 text-green-700 rounded-md">
-            <p className="font-bold">
-              {gameLogic.givenUp
-                ? "게임을 포기하셨습니다."
-                : "정답을 맞췄습니다!"}
-            </p>
-            <p>
-              {gameLogic.givenUp
-                ? `${gameLogic.attempts}번 시도하셨습니다.`
-                : `${gameLogic.correctAttempts}번째 만에 맞히셨네요.`}
-            </p>
-            <p>(내일은 새로운 단어로 도전할 수 있어요!)</p>
-
-            {gameLogic.gameCompleted && !gameLogic.givenUp && (
-              <div className="mt-4">
-                <p className="text-sm font-medium mb-2">오늘 정답은 어땠나요?</p>
-                <div className="flex justify-center space-x-2">
-                  <Button
-                    variant={gameLogic.answerSurveyVoted === true ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleAnswerSurveyVote(true)}
-                    disabled={gameLogic.answerSurveyVoted !== null}
-                  >
-                    <ThumbsUp className="mr-1 h-3 w-3" /> 좋았다
-                  </Button>
-                  <Button
-                    variant={gameLogic.answerSurveyVoted === false ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleAnswerSurveyVote(false)}
-                    disabled={gameLogic.answerSurveyVoted !== null}
-                  >
-                    <ThumbsDown className="mr-1 h-3 w-3" /> 별로였다
-                  </Button>
-                </div>
-                {gameLogic.answerSurveyVoted !== null && (
-                  <p className="text-xs mt-2 text-center">투표해 주셔서 감사합니다!</p>
-                )}
-              </div>
-            )}
-
-            <Button onClick={handleCopyLink} className="mt-4">
-              친구에게 공유하기
-            </Button>
-          </div>
-        )}
 
         <div className="w-full">
           {gameLogic.sortedWords.length > 0 ? (
