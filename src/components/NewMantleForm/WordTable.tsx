@@ -63,7 +63,7 @@ const WordTable: React.FC<WordTableProps> = ({ words, showAll }) => {
               {word.correct
                 ? "정답!"
                 : word.attempt === -1 && word.rank === 0
-                ? "정답"
+                ? "초성"
                 : word.rank === -1
                 ? "순위 밖"
                 : word.rank !== undefined
@@ -72,7 +72,7 @@ const WordTable: React.FC<WordTableProps> = ({ words, showAll }) => {
             </TableCell>
             <TableCell className="text-center w-20 sm:w-24 py-2">
               {word.attempt === -1 && word.rank === 0 ? (
-                <span className="text-blue-600 font-bold">초성 힌트</span>
+                <span className="text-blue-600 font-bold">힌트</span>
               ) : (
                 <Similarity
                   similarity={word.similarity}
