@@ -50,7 +50,7 @@ const SurveyForm: React.FC = () => {
 
   return (
     <div className="w-full max-w-2xl mt-8">
-      <h2 className="text-xl font-semibold mb-2 text-center">
+      <h2 className="text-xl font-black mb-4 text-center uppercase tracking-wider">
         게임이 재미있었나요?
       </h2>
       <div className="flex justify-center space-x-4">
@@ -58,6 +58,7 @@ const SurveyForm: React.FC = () => {
           variant={voted === false ? "default" : "outline"}
           onClick={() => handleVote(false)}
           disabled={voted !== null}
+          className="font-black border-2 border-black uppercase"
         >
           <ThumbsDown className="mr-2 h-4 w-4" /> 재미없다
         </Button>
@@ -65,34 +66,35 @@ const SurveyForm: React.FC = () => {
           variant={voted === true ? "default" : "outline"}
           onClick={() => handleVote(true)}
           disabled={voted !== null}
+          className="font-black border-2 border-black uppercase"
         >
           <ThumbsUp className="mr-2 h-4 w-4" /> 재밌다
         </Button>
       </div>
       {voted === false && (
-        <div className="mt-4">
-          <p className="mb-2 text-center">어떤 점이 별로였나요?</p>
-          <p className="mb-2 text-center text-xs">
+        <div className="mt-6 p-4 border-2 border-dashed border-black bg-white">
+          <p className="mb-2 text-center font-bold">어떤 점이 별로였나요?</p>
+          <p className="mb-4 text-center text-xs font-bold text-gray-600">
             피드백은 게임 개선에 큰 도움이 됩니다.
           </p>
           <Input
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}
             placeholder="여기에 의견을 작성해주세요."
-            className="mb-2"
+            className="mb-4 font-bold border-2 border-black rounded-none"
           />
           <Button
             onClick={handleSubmitFeedback}
             disabled={!feedback.trim() || isSubmitting}
-            className="w-full"
+            className="w-full font-black border-2 border-black uppercase bg-black text-white hover:bg-gray-800"
           >
             {isSubmitting ? "제출 중..." : "피드백 제출"}
           </Button>
         </div>
       )}
       {voted === true && (
-        <p className="mt-4 text-center text-sm text-gray-500">
-          투표해 주셔서 감사합니다!
+        <p className="mt-6 text-center text-sm font-black uppercase text-pink-600">
+          투표해 주셔서 감사합니다! ❤️
         </p>
       )}
     </div>
