@@ -20,6 +20,7 @@ const config = {
     extend: {
       fontFamily: {
         pretendard: ["var(--font-pretendard)"],
+        monoplex: ["var(--font-monoplex)"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -54,6 +55,12 @@ const config = {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        game: {
+          bg: "#F6F1E9",
+          yellow: "#FFD93D",
+          orange: "#FF8400",
+          brown: "#4F200D",
         },
       },
       borderRadius: {

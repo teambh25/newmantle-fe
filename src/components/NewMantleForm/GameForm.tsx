@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { CornerDownLeft } from "lucide-react";
 
 interface GameFormProps {
   inputWord: string;
@@ -75,47 +76,55 @@ export const GameForm: React.FC<GameFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="w-full mb-6 relative" autoComplete="off">
-      {displayDate && (
-        <div className="text-xs text-gray-400 font-medium mb-1.5 text-left tracking-wide">
-          {displayDate}
-        </div>
-      )}
       <input
         type="text"
         ref={dummyInputRef}
         style={{ position: "absolute", width: 0, height: 0, opacity: 0 }}
         aria-hidden="true"
       />
-      <div className="flex space-x-2">
-        <div className="relative flex-grow flex items-center">
-          <Input
-            type="text"
-            value={inputWord}
-            onChange={handleInputChange}
-            placeholder={errorMessage || "단어를 입력하세요"}
-            className={`w-full pr-[80px] ${
-              isError
-                ? "border-red-500 placeholder-red-500"
-                : "placeholder-gray-400"
-            }`}
-            disabled={isLoading}
-            ref={inputRef}
-            autoComplete="off"
-            autoCapitalize="none"
-            autoCorrect="off"
-          />
-          <div className="absolute right-2 flex items-center space-x-0.5 text-gray-500">
-            {hintButton}
-            {giveUpButton}
+      <div className="flex flex-row gap-2 mt-4 items-center h-12">
+        <div className="flex-grow relative h-full">
+          {/* 배경 레이어 */}
+          <div className="absolute inset-0 z-0 border-4 border-game-brown bg-white rounded-sm" />
+          
+          <div className="absolute inset-[4px] z-10 flex flex-row items-center">
+            <Input
+              type="text"
+              value={inputWord}
+              onChange={handleInputChange}
+              placeholder={errorMessage || "단어를 입력하세요"}
+              className={`flex-grow border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 h-full rounded-none text-lg font-bold bg-transparent px-2 ${
+                isError
+                  ? "placeholder-red-500 text-red-500"
+                  : "placeholder-gray-500 text-game-brown"
+              }`}
+              disabled={isLoading}
+              ref={inputRef}
+              autoComplete="off"
+              autoCapitalize="none"
+              autoCorrect="off"
+            />
+            
+            {/* 구분선 */}
+            <div className="w-[4px] h-full bg-game-brown flex-shrink-0" />
+            
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-12 h-full flex items-center justify-center bg-transparent hover:bg-game-yellow transition-colors disabled:opacity-50 flex-shrink-0 cursor-pointer rounded-r-sm"
+            >
+              {isLoading ? (
+                <span className="text-xs font-black">...</span>
+              ) : (
+                <CornerDownLeft size={24} className="font-black text-game-brown" />
+              )}
+            </button>
           </div>
         </div>
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="flex-shrink-0"
-        >
-          {isLoading ? "제출 중..." : "제출"}
-        </Button>
+        <div className="flex items-center gap-2 flex-shrink-0 h-full">
+          {hintButton}
+          {giveUpButton}
+        </div>
       </div>
     </form>
   );

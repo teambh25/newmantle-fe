@@ -66,43 +66,47 @@ const getTypeLabel = (type: Notification["type"]) => {
   }
 };
 
+import { CartoonFrame } from "@/components/ui/CartoonFrame";
+
 export default function NotificationFeed() {
   return (
-    <div className="w-full max-w-2xl mx-auto mt-16">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
+    <div className="w-full max-w-2xl mx-auto mt-4">
+      <h2 className="text-3xl font-black mb-6 text-black text-center uppercase tracking-widest">
         공지사항
       </h2>
-      <div className="space-y-4">
+      <div className="space-y-6">
         {notifications
           .sort(
             (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
           )
           .map((notification) => (
-            <div
+            <CartoonFrame
               key={notification.id}
-              className="border border-gray-200 rounded-lg p-4 bg-white hover:shadow-md transition-shadow"
+              className="p-5"
+              bgColor="bg-white"
+              shadow={false}
             >
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-3 border-b-2 border-dashed border-black pb-2">
                 <div className="flex items-center gap-2">
                   <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(
+                    className={`px-3 py-1 text-sm font-black uppercase border-2 border-black ${getTypeColor(
                       notification.type
                     )}`}
                   >
                     {getTypeLabel(notification.type)}
                   </span>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm font-bold text-gray-800 bg-gray-200 px-2 py-1 border-2 border-black">
                     {notification.date}
                   </span>
                 </div>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-xl font-black text-black mb-3">
                 {notification.title}
               </h3>
-              <p className="text-gray-700 whitespace-pre-line">
+              <p className="text-black font-bold whitespace-pre-line text-sm leading-relaxed">
                 {notification.content}
               </p>
-            </div>
+            </CartoonFrame>
           ))}
       </div>
     </div>

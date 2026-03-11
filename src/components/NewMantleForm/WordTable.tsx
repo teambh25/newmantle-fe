@@ -28,35 +28,35 @@ const WordTable: React.FC<WordTableProps> = ({ words, showAll }) => {
   };
 
   return (
-    <Table className="table-fixed">
-      <TableHeader>
+    <Table className="table-fixed bg-white border-none rounded-sm overflow-hidden">
+      <TableHeader className="border-b-2 border-game-brown">
         <TableRow>
-          <TableHead className="text-center w-12 sm:w-16">#</TableHead>
-          <TableHead className="text-center">단어</TableHead>
-          <TableHead className="text-center w-20 sm:w-24">순위</TableHead>
-          <TableHead className="text-center w-20 sm:w-24">유사도</TableHead>
+          <TableHead className="text-center w-12 sm:w-16 font-black text-game-brown">#</TableHead>
+          <TableHead className="text-center font-black text-game-brown">단어</TableHead>
+          <TableHead className="text-center w-24 sm:w-28 font-black text-game-brown">순위</TableHead>
+          <TableHead className="text-center w-24 sm:w-28 font-black text-game-brown">유사도</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {displayedWords.map((word, index) => (
           <TableRow
             key={index}
-            className={`${word.correct ? "bg-green-50" : ""} ${
-              index === 0 ? "bg-muted font-medium" : ""
+            className={`border-b border-gray-100 ${word.correct ? "bg-lime-400 font-black border-y-2 border-game-brown" : ""} ${
+              index === 0 && !word.correct ? "bg-game-yellow bg-opacity-30 font-black border-y-2 border-game-brown" : "font-bold text-game-brown"
             }`}
           >
-            <TableCell className="text-center py-2 w-12 sm:w-16">
+            <TableCell className="text-center py-3 w-12 sm:w-16">
               {word.attempt === -1 ? (
-                <Lightbulb size={16} className="inline" />
+                <Lightbulb size={18} className="inline font-bold" />
               ) : (
                 word.attempt
               )}
             </TableCell>
-            <TableCell className="text-center py-2 whitespace-nowrap overflow-hidden text-ellipsis">
+            <TableCell className="text-center py-3 whitespace-nowrap overflow-hidden text-ellipsis text-game-brown">
               {word.word}
             </TableCell>
             <TableCell
-              className={`text-center py-2 w-20 sm:w-24 ${getStyle(
+              className={`text-center py-3 w-24 sm:w-28 ${getStyle(
                 word.correct ? null : word.rank
               )}`}
             >
@@ -70,9 +70,9 @@ const WordTable: React.FC<WordTableProps> = ({ words, showAll }) => {
                 ? `${word.rank}위`
                 : "N/A"}
             </TableCell>
-            <TableCell className="text-center w-20 sm:w-24 py-2">
+            <TableCell className="text-center w-24 sm:w-28 py-3">
               {word.attempt === -1 && word.rank === 0 ? (
-                <span className="text-blue-600 font-bold">힌트</span>
+                <span className="text-blue-600 font-black">힌트</span>
               ) : (
                 <Similarity
                   similarity={word.similarity}
