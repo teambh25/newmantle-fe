@@ -65,10 +65,6 @@ export default function NewMantleForm() {
 
   return (
     <div className="w-full max-w-2xl">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold">{displayDate}</h2>
-        <h3 className="text-xl mt-2">정답은...?</h3>
-      </div>
       <div className="flex flex-col items-center mx-0">
         <GameResult
           givenUp={gameLogic.givenUp}
@@ -88,26 +84,28 @@ export default function NewMantleForm() {
           isError={gameLogic.isError}
           errorMessage={gameLogic.errorMessage}
           submitWord={gameLogic.submitWord}
+          displayDate={displayDate}
+          hintButton={
+            <HintButton
+              onHintRequest={gameLogic.requestHint}
+              disabled={
+                gameLogic.hintDisabled ||
+                gameLogic.gameCompleted ||
+                gameLogic.givenUp
+              }
+            />
+          }
+          giveUpButton={
+            <GiveUpButton
+              onGiveUp={gameLogic.giveUp}
+              disabled={
+                gameLogic.gameCompleted || gameLogic.givenUp
+              }
+              onInitialConsonantHint={gameLogic.requestInitialConsonantHint}
+              initialConsonantHintUsed={gameLogic.initialConsonantHintUsed}
+            />
+          }
         />
-        <div className="w-full mb-4 flex justify-center">
-          <HintButton
-            onHintRequest={gameLogic.requestHint}
-            disabled={
-              gameLogic.hintDisabled ||
-              gameLogic.gameCompleted ||
-              gameLogic.givenUp
-            }
-          />
-          <GiveUpButton
-            onGiveUp={gameLogic.giveUp}
-            disabled={
-              // gameLogic.hintUsed < 3 ||
-              gameLogic.gameCompleted || gameLogic.givenUp
-            }
-            onInitialConsonantHint={gameLogic.requestInitialConsonantHint}
-            initialConsonantHintUsed={gameLogic.initialConsonantHintUsed}
-          />
-        </div>
 
         <div className="w-full">
           {gameLogic.sortedWords.length > 0 ? (

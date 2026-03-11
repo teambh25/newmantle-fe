@@ -64,23 +64,25 @@ const GiveUpButton: React.FC<GiveUpButtonProps> = ({
 
   return (
     <>
-      <TooltipProvider>
-        <Tooltip open={showTooltip}>
+      <TooltipProvider delayDuration={150}>
+        <Tooltip open={disabled ? showTooltip : undefined}>
           <TooltipTrigger asChild>
             <span>
               <Button
+                type="button"
                 onClick={handleClick}
                 disabled={disabled}
-                variant="outline"
-                className="flex items-center space-x-2 ml-2"
+                variant="ghost"
+                size="icon"
+                className="flex-shrink-0 w-8 h-8"
+                title=""
               >
-                <Flag size={16} />
-                <span>포기하기</span>
+                <Flag size={20} />
               </Button>
             </span>
           </TooltipTrigger>
           <TooltipContent>
-            <p>힌트를 먼저 사용해보세요!</p>
+            {disabled && showTooltip ? <p>힌트를 먼저 사용해보세요!</p> : <p>포기</p>}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
