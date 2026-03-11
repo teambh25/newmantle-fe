@@ -10,6 +10,7 @@ interface GameFormProps {
   isError: boolean;
   errorMessage: string | null;
   submitWord: () => void;
+  displayDate?: string;
 }
 
 export const GameForm: React.FC<GameFormProps> = ({
@@ -20,6 +21,7 @@ export const GameForm: React.FC<GameFormProps> = ({
   isError,
   errorMessage,
   submitWord,
+  displayDate,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const dummyInputRef = useRef<HTMLInputElement>(null);
@@ -68,14 +70,19 @@ export const GameForm: React.FC<GameFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full mb-6" autoComplete="off">
+    <form onSubmit={handleSubmit} className="w-full mb-6 relative" autoComplete="off">
+      {displayDate && (
+        <div className="text-xs text-gray-400 font-medium mb-1.5 text-left tracking-wide">
+          {displayDate}
+        </div>
+      )}
+      <input
+        type="text"
+        ref={dummyInputRef}
+        style={{ position: "absolute", width: 0, height: 0, opacity: 0 }}
+        aria-hidden="true"
+      />
       <div className="flex space-x-2">
-        <input
-          type="text"
-          ref={dummyInputRef}
-          style={{ position: "absolute", width: 0, height: 0, opacity: 0 }}
-          aria-hidden="true"
-        />
         <Input
           type="text"
           value={inputWord}
