@@ -85,26 +85,27 @@ export default function NewMantleForm() {
           errorMessage={gameLogic.errorMessage}
           submitWord={gameLogic.submitWord}
           displayDate={displayDate}
+          hintButton={
+            <HintButton
+              onHintRequest={gameLogic.requestHint}
+              disabled={
+                gameLogic.hintDisabled ||
+                gameLogic.gameCompleted ||
+                gameLogic.givenUp
+              }
+            />
+          }
+          giveUpButton={
+            <GiveUpButton
+              onGiveUp={gameLogic.giveUp}
+              disabled={
+                gameLogic.gameCompleted || gameLogic.givenUp
+              }
+              onInitialConsonantHint={gameLogic.requestInitialConsonantHint}
+              initialConsonantHintUsed={gameLogic.initialConsonantHintUsed}
+            />
+          }
         />
-        <div className="w-full mb-4 flex justify-center">
-          <HintButton
-            onHintRequest={gameLogic.requestHint}
-            disabled={
-              gameLogic.hintDisabled ||
-              gameLogic.gameCompleted ||
-              gameLogic.givenUp
-            }
-          />
-          <GiveUpButton
-            onGiveUp={gameLogic.giveUp}
-            disabled={
-              // gameLogic.hintUsed < 3 ||
-              gameLogic.gameCompleted || gameLogic.givenUp
-            }
-            onInitialConsonantHint={gameLogic.requestInitialConsonantHint}
-            initialConsonantHintUsed={gameLogic.initialConsonantHintUsed}
-          />
-        </div>
 
         <div className="w-full">
           {gameLogic.sortedWords.length > 0 ? (
