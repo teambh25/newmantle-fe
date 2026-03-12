@@ -66,15 +66,11 @@ export default function NewMantleForm() {
       game_date: gameDate,
     });
     const link = `${baseUrl}?${utmParams.toString()}`;
-    const shareTitle = "뉴맨틀 게임 결과";
-    const shareText = `저는 오늘 뉴맨틀을 ${gameLogic.correctAttempts}트 만에 성공했습니다. 저를 이겨보세요.`;
 
     // Try native share first
     if (navigator.share) {
       try {
         await navigator.share({
-          title: shareTitle,
-          text: `\n${shareText}\n`,
           url: link,
         });
         logEvent("Result Shared", {
@@ -92,7 +88,7 @@ export default function NewMantleForm() {
       }
     }
 
-    navigator.clipboard.writeText(shareText + "\n" + link).then(
+    navigator.clipboard.writeText(link).then(
       () => {
         toast({
           title: "링크가 복사되었습니다!",
