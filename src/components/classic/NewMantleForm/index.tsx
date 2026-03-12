@@ -23,14 +23,21 @@ export default function NewMantleForm() {
 
   useEffect(() => {
     // Read shared_attempts from URL search params on mount
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && gameDate) {
       const params = new URLSearchParams(window.location.search);
+      const sharedDate = params.get("game_date");
+      
+      // 공유된 링크의 날짜가 현재 게임 날짜와 다르면 무시
+      if (sharedDate && sharedDate !== gameDate) {
+        return;
+      }
+
       const shared = params.get("shared_attempts");
       if (shared && !isNaN(parseInt(shared))) {
         setSharedAttempts(parseInt(shared));
       }
     }
-  }, []);
+  }, [gameDate]);
 
   useEffect(() => {
     if (gameDate) {
@@ -56,6 +63,7 @@ export default function NewMantleForm() {
       utm_medium: "share",
       utm_campaign: "game_completion",
       shared_attempts: gameLogic.correctAttempts.toString(),
+      game_date: gameDate,
     });
     const link = `${baseUrl}?${utmParams.toString()}`;
     const shareTitle = "뉴맨틀 게임 결과";
@@ -66,7 +74,7 @@ export default function NewMantleForm() {
       try {
         await navigator.share({
           title: shareTitle,
-          text: shareText,
+          text: `\n${shareText}\n`,
           url: link,
         });
         logEvent("Result Shared", {
@@ -84,7 +92,7 @@ export default function NewMantleForm() {
       }
     }
 
-    navigator.clipboard.writeText(link).then(
+    navigator.clipboard.writeText(shareText + "\n" + link).then(
       () => {
         toast({
           title: "링크가 복사되었습니다!",
