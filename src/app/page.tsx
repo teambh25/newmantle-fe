@@ -6,6 +6,7 @@ import HelpSection from "@/components/HelpSection";
 import { SettingsButton } from "@/components/SettingsButton";
 import { useUITheme } from "@/hooks/useUITheme";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 
 // Excel Components
 import ExcelGameDescription from "@/components/excel/GameDescription";
@@ -39,9 +40,9 @@ export default function Home() {
           {/* Excel Ribbon Top Bar */}
           <header className="w-full bg-[#217346] text-white px-4 py-2 flex items-center justify-between shrink-0 shadow-sm relative z-50">
              <div className="flex items-center space-x-4">
-               <div className="font-bold text-base flex items-center">
+               <Link href="/" className="font-bold text-base flex items-center hover:opacity-80 transition-opacity">
                  뉴맨틀 - 단어 추측 게임.xlsx
-               </div>
+               </Link>
                <nav className="hidden md:flex space-x-4 text-sm opacity-90">
                  <span className="cursor-pointer hover:opacity-100">File</span>
                  <span className="font-bold border-b-2 border-white opacity-100 pb-0.5">Home</span>
@@ -155,14 +156,14 @@ export default function Home() {
         <div className="flex flex-col min-h-screen font-sans">
           <main className="flex-grow flex flex-col items-center justify-start p-4 sm:p-6 md:p-8">
             <div className="w-full max-w-2xl flex flex-row items-center justify-between mb-6 mt-2 sm:mt-0">
-              <div className="flex flex-row items-end justify-start space-x-3">
+              <Link href="/" className="flex flex-row items-end justify-start space-x-3 hover:opacity-80 transition-opacity">
                 <h1 className="text-2xl sm:text-3xl font-bold text-blue-600 leading-none">
                   뉴맨틀
                 </h1>
                 <p className="text-base sm:text-lg text-gray-600 leading-none pb-0.5">
                   단어 추측 게임
                 </p>
-              </div>
+              </Link>
               <SettingsButton theme={theme} onThemeChange={setTheme} variant="classic" />
             </div>
             <div className="w-full max-w-2xl space-y-16 flex-grow flex flex-col pb-16">
