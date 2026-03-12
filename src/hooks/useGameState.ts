@@ -10,7 +10,7 @@ import { logEvent } from "@/utils/amplitude";
 
 const STORAGE_KEY = "newmantle_game_data";
 
-interface GameData {
+export interface GameData {
   submittedWords: SubmittedWord[];
   attempts: number;
   gameCompleted: boolean;
@@ -56,12 +56,8 @@ function getInitialGameState(): GameData {
   };
 }
 
-export function useGameLogic(gameDate: string) {
-  const [inputWord, setInputWord] = useState("");
+export function useGameState(gameDate: string) {
   const [gameState, setGameState] = useState<GameData>(getInitialGameState);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isError, setIsError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const startTimeRef = useRef<number>(Date.now());
   const { toast } = useToast();
   const [hintDisabled, setHintDisabled] = useState(false);
@@ -88,91 +84,77 @@ export function useGameLogic(gameDate: string) {
   }, [gameState.submittedWords]);
 
   const correctAttempts = useMemo(() => {
-    const correctWord = gameState.submittedWords.find(word => word.correct);
+    const correctWord = gameState.submittedWords.find((word) => word.correct);
     return correctWord?.attempt ?? gameState.attempts;
   }, [gameState.submittedWords, gameState.attempts]);
 
-  const submitWord = async () => {
-    const trimmedWord = inputWord.trim();
-    if (trimmedWord && !isLoading) {
-      setIsLoading(true);
-      setIsError(false);
-      setErrorMessage(null);
-      try {
-        const existingWordIndex = gameState.submittedWords.findIndex(
-          (word) => word.word.toLowerCase() === trimmedWord.toLowerCase()
-        );
+  const submitWordAction = async (word: string): Promise<{ error?: string }> => {
+    try {
+      const existingWordIndex = gameState.submittedWords.findIndex(
+        (w) => w.word.toLowerCase() === word.toLowerCase()
+      );
 
-        if (existingWordIndex !== -1) {
-          setIsError(true);
-          setErrorMessage("이미 제출한 단어입니다");
-          const existingWord = gameState.submittedWords[existingWordIndex];
-          setGameState((prev) => ({
-            ...prev,
-            submittedWords: [
-              existingWord,
-              ...prev.submittedWords.filter(
-                (_, index) => index !== existingWordIndex
-              ),
-            ],
-          }));
-        } else {
-          const newWord = await apiSubmitWord(
-            trimmedWord,
-            gameState.attempts + 1,
-            gameDate
-          );
-          logEvent("Word Submitted", {
-            word: trimmedWord,
-            attempt: gameState.attempts + 1,
-            similarity: newWord.similarity,
-            isCorrect: newWord.correct,
-          });
-
-          setGameState((prev) => ({
-            ...prev,
-            submittedWords: [newWord, ...prev.submittedWords],
-            attempts: prev.attempts + 1,
-            gameCompleted: prev.gameCompleted || newWord.correct,
-          }));
-
-          if (newWord.correct) {
-            toast({
-              title: "축하합니다!",
-              description: `${
-                gameState.attempts + 1
-              }번째 시도에 정답을 맞히셨습니다.`,
-            });
-            logEvent("Game Completed", {
-              attempts: gameState.attempts + 1,
-              timeSpent: (Date.now() - startTimeRef.current) / 1000,
-            });
-          }
-        }
-      } catch (error) {
-        setIsError(true);
-        if (error instanceof Error) {
-          if (error.message === "Invalid word") {
-            setErrorMessage("없는 단어입니다");
-          } else if (error.message === "Invalid date format") {
-            setErrorMessage("잘못된 날짜 형식입니다");
-          } else {
-            setErrorMessage("오류가 발생했습니다");
-          }
-        } else {
-          setErrorMessage("오류가 발생했습니다");
-        }
-      } finally {
-        setInputWord("");
-        setIsLoading(false);
+      if (existingWordIndex !== -1) {
+        const existingWord = gameState.submittedWords[existingWordIndex];
+        setGameState((prev) => ({
+          ...prev,
+          submittedWords: [
+            existingWord,
+            ...prev.submittedWords.filter(
+              (_, index) => index !== existingWordIndex
+            ),
+          ],
+        }));
+        return { error: "이미 제출한 단어입니다" };
       }
+
+      const newWord = await apiSubmitWord(
+        word,
+        gameState.attempts + 1,
+        gameDate
+      );
+      
+      logEvent("Word Submitted", {
+        word: word,
+        attempt: gameState.attempts + 1,
+        similarity: newWord.similarity,
+        isCorrect: newWord.correct,
+      });
+
+      setGameState((prev) => ({
+        ...prev,
+        submittedWords: [newWord, ...prev.submittedWords],
+        attempts: prev.attempts + 1,
+        gameCompleted: prev.gameCompleted || newWord.correct,
+      }));
+
+      if (newWord.correct) {
+        toast({
+          title: "축하합니다!",
+          description: `${gameState.attempts + 1}번째 시도에 정답을 맞히셨습니다.`,
+        });
+        logEvent("Game Completed", {
+          attempts: gameState.attempts + 1,
+          timeSpent: (Date.now() - startTimeRef.current) / 1000,
+        });
+      }
+
+      return {}; // success
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message === "Invalid word") {
+          return { error: "없는 단어입니다" };
+        } else if (error.message === "Invalid date format") {
+          return { error: "잘못된 날짜 형식입니다" };
+        }
+      }
+      return { error: "오류가 발생했습니다" };
     }
   };
 
   const requestHint = async () => {
     if (hintDisabled) return;
 
-    // 순위가 있는 단어들 중 가장 높은 순위의 단어를 찾습니다.
     const topRankedWord = sortedWords.reduce((highest, current) => {
       if (current.rank === undefined || current.rank === -1) return highest;
       if (!highest || current.rank < highest.rank) return current;
@@ -182,14 +164,11 @@ export function useGameLogic(gameDate: string) {
     let hintRank: number;
 
     if (!topRankedWord || topRankedWord.rank === -1) {
-      // 순위권 내 단어가 없으면 100위 단어를 힌트로 제공
       hintRank = 100;
     } else if (topRankedWord.rank <= 15) {
-      // 최고 순위가 15위 이하면 힌트 버튼 비활성화 (5위까지의 여유를 둠)
       setHintDisabled(true);
       return;
     } else {
-      // 현재 최고 순위보다 10 순위 높은 단어를 힌트로 제공
       hintRank = topRankedWord.rank - 10;
     }
 
@@ -214,8 +193,7 @@ export function useGameLogic(gameDate: string) {
       console.error("힌트 요청 중 오류 발생:", error);
       toast({
         title: "힌트 요청 실패",
-        description:
-          "힌트를 가져오는 중 오류가 발생했습니다. 다시 시도해주세요.",
+        description: "힌트를 가져오는 중 오류가 발생했습니다. 다시 시도해주세요.",
         variant: "destructive",
       });
     }
@@ -225,7 +203,7 @@ export function useGameLogic(gameDate: string) {
     try {
       const hintResponse = await getHint(new Date(gameDate), 0);
       const newHintWord: SubmittedWord = {
-        word:  hintResponse.hint,
+        word: hintResponse.hint,
         similarity: hintResponse.score,
         rank: 0,
         attempt: -1,
@@ -248,8 +226,7 @@ export function useGameLogic(gameDate: string) {
       console.error("초성 힌트 요청 중 오류 발생:", error);
       toast({
         title: "초성 힌트 요청 실패",
-        description:
-          "초성 힌트를 가져오는 중 오류가 발생했습니다. 다시 시도해주세요.",
+        description: "초성 힌트를 가져오는 중 오류가 발생했습니다. 다시 시도해주세요.",
         variant: "destructive",
       });
     }
@@ -281,8 +258,7 @@ export function useGameLogic(gameDate: string) {
       console.error("정답 가져오기 실패:", error);
       toast({
         title: "정답 가져오기 실패",
-        description:
-          "정답을 가져오는 중 오류가 발생했습니다. 다시 시도해주세요.",
+        description: "정답을 가져오는 중 오류가 발생했습니다. 다시 시도해주세요.",
         variant: "destructive",
       });
     }
@@ -296,17 +272,12 @@ export function useGameLogic(gameDate: string) {
   };
 
   return {
-    inputWord,
-    setInputWord,
     submittedWords: gameState.submittedWords,
-    isLoading,
     attempts: gameState.attempts,
     correctAttempts,
     gameCompleted: gameState.gameCompleted,
-    isError,
-    errorMessage,
     sortedWords,
-    submitWord,
+    submitWordAction,
     hintDisabled,
     requestHint,
     hintUsed: gameState.hintUsed,

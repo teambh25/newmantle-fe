@@ -5,18 +5,18 @@ import { useToast } from "@/components/ui/use-toast";
 import WordTable from "./WordTable";
 import { GameForm } from "./GameForm";
 import { GameResult } from "./GameResult";
-import { useGameLogic } from "@/hooks/useGameLogic";
+import { useGameState } from "@/hooks/useGameState";
 import { logEvent } from "@/utils/amplitude";
 import { useGameDate } from "@/hooks/useGameDate";
-import HintButton from "@/components/HintButton";
-import GiveUpButton from "@/components/GiveUpButton";
+import HintButton from "../HintButton";
+import GiveUpButton from "../GiveUpButton";
 
 export default function NewMantleForm() {
   const gameDate = useGameDate();
   const [displayDate, setDisplayDate] = useState("");
   const [showAllWords, setShowAllWords] = useState(false);
   const { toast } = useToast();
-  const gameLogic = useGameLogic(gameDate);
+  const gameLogic = useGameState(gameDate);
 
   useEffect(() => {
     if (gameDate) {
@@ -77,13 +77,8 @@ export default function NewMantleForm() {
         />
 
         <GameForm
-          inputWord={gameLogic.inputWord}
-          setInputWord={gameLogic.setInputWord}
-          isLoading={gameLogic.isLoading}
+          submitAction={gameLogic.submitWordAction}
           gameCompleted={gameLogic.gameCompleted}
-          isError={gameLogic.isError}
-          errorMessage={gameLogic.errorMessage}
-          submitWord={gameLogic.submitWord}
           displayDate={displayDate}
           hintButton={
             <HintButton

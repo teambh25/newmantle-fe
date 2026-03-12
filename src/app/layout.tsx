@@ -6,13 +6,53 @@ import "./globals.css";
 import localFont from "next/font/local";
 import { Toaster } from "@/components/ui/toaster";
 
-const inter = Inter({ subsets: ["latin"] });
+
+const monoplexKR = localFont({
+  src: [
+    {
+      path: "../../public/fonts/MonoplexKR/MonoplexKR-Thin.ttf",
+      weight: "100",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/MonoplexKR/MonoplexKR-ExtraLight.ttf",
+      weight: "200",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/MonoplexKR/MonoplexKR-Light.ttf",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/MonoplexKR/MonoplexKR-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/MonoplexKR/MonoplexKR-Medium.ttf",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/MonoplexKR/MonoplexKR-SemiBold.ttf",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/MonoplexKR/MonoplexKR-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  variable: "--font-monoplex",
+});
+
 const pretendard = localFont({
-  src: "./fonts/PretendardVariable.woff2",
+  src: "../../public/fonts/PretendardVariable.woff2",
   display: "swap",
   weight: "45 920",
   variable: "--font-pretendard",
-  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -54,16 +94,9 @@ export default function RootLayout({
           content="ca-pub-8556151022820405"
         >
         </meta>
-        {/* 폰트 프리로딩 */}
-        <link
-          rel="preload"
-          href="/fonts/PretendardVariable.woff2"
-          as="font"
-          type="font/woff2"
-          crossOrigin="anonymous"
-        />
       </head>
-      <body className={pretendard.className}>
+      <body className={`${monoplexKR.variable} ${pretendard.variable}`}>
+
         <AmplitudeInitializer />
         {children}
         <Toaster />

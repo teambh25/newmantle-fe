@@ -1,4 +1,4 @@
-interface Notification {
+export interface Notification {
   id: string;
   title: string;
   content: string;
@@ -6,7 +6,7 @@ interface Notification {
   type: "update" | "notice" | "event";
 }
 
-const notifications: Notification[] = [
+export const notifications: Notification[] = [
   {
     id: "1",
     title: "포기하기 버튼 관련 버그 수정 완료 및 사과문",
@@ -38,73 +38,12 @@ const notifications: Notification[] = [
     date: "2025-10-04",
     type: "update",
   },
+  {
+    id: "5",
+    title: "엑셀 테마 출시",
+    content:
+      "우측 상단 설정 버튼에서 테마를 변경할 수 있어요. 이제 사무실에서도 편하게 뉴맨틀을 즐길 수 있지만, 언제나 뒤를 조심해주세요.",
+    date: "2026-03-12",
+    type: "update",
+  },
 ];
-
-const getTypeColor = (type: Notification["type"]) => {
-  switch (type) {
-    case "update":
-      return "bg-green-100 text-green-800";
-    case "notice":
-      return "bg-blue-100 text-blue-800";
-    case "event":
-      return "bg-purple-100 text-purple-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-};
-
-const getTypeLabel = (type: Notification["type"]) => {
-  switch (type) {
-    case "update":
-      return "업데이트";
-    case "notice":
-      return "공지";
-    case "event":
-      return "이벤트";
-    default:
-      return "알림";
-  }
-};
-
-export default function NotificationFeed() {
-  return (
-    <div className="w-full max-w-2xl mx-auto mt-16">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
-        공지사항
-      </h2>
-      <div className="space-y-4">
-        {notifications
-          .sort(
-            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-          )
-          .map((notification) => (
-            <div
-              key={notification.id}
-              className="border border-gray-200 rounded-lg p-4 bg-white hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(
-                      notification.type
-                    )}`}
-                  >
-                    {getTypeLabel(notification.type)}
-                  </span>
-                  <span className="text-sm text-gray-500">
-                    {notification.date}
-                  </span>
-                </div>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {notification.title}
-              </h3>
-              <p className="text-gray-700 whitespace-pre-line">
-                {notification.content}
-              </p>
-            </div>
-          ))}
-      </div>
-    </div>
-  );
-}
