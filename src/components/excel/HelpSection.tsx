@@ -45,7 +45,7 @@ const ExcelHelpSection: React.FC<ExcelHelpSectionProps> = ({ startRow = 20 }) =>
             <AccordionContent className="p-0 border-none">
               <div className="excel-row bg-[#fcfcfc] border-b border-[#e1e1e1]">
                 <div className="sheet-cell-header bg-[#f3f2f1]">{startRow + 1 + index * 2 + 1}</div>
-                <div className="excel-cell col-span-4 px-3 py-4 text-[13px] text-gray-600 leading-relaxed bg-[#fcfcfc] border-r-0">
+                <div className="excel-cell col-span-4 px-3 py-2 text-[13px] text-gray-600 leading-relaxed bg-[#fcfcfc] border-r-0">
                   <div className="flex">
                     <span className="mr-2 text-blue-600 font-bold shrink-0">A.</span>
                     <div className="whitespace-pre-line">{faq.answer}</div>
