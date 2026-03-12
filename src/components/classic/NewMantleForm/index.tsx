@@ -17,19 +17,27 @@ export default function NewMantleForm() {
   const [displayDate, setDisplayDate] = useState("");
   const [showAllWords, setShowAllWords] = useState(false);
   const [sharedAttempts, setSharedAttempts] = useState<number | null>(null);
+  const [pendingWord, setPendingWord] = useState<string | null>(null);
   const { toast } = useToast();
   const gameLogic = useGameState(gameDate, "classic");
 
   useEffect(() => {
     // Read shared_attempts from URL search params on mount
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && gameDate) {
       const params = new URLSearchParams(window.location.search);
+      const sharedDate = params.get("game_date");
+      
+      // 공유된 링크의 날짜가 현재 게임 날짜와 다르면 무시
+      if (sharedDate && sharedDate !== gameDate) {
+        return;
+      }
+
       const shared = params.get("shared_attempts");
       if (shared && !isNaN(parseInt(shared))) {
         setSharedAttempts(parseInt(shared));
       }
     }
-  }, []);
+  }, [gameDate]);
 
   useEffect(() => {
     if (gameDate) {
@@ -55,6 +63,7 @@ export default function NewMantleForm() {
       utm_medium: "share",
       utm_campaign: "game_completion",
       shared_attempts: gameLogic.correctAttempts.toString(),
+      game_date: gameDate,
     });
     const link = `${baseUrl}?${utmParams.toString()}`;
     const shareTitle = "뉴맨틀 게임 결과";
@@ -65,7 +74,7 @@ export default function NewMantleForm() {
       try {
         await navigator.share({
           title: shareTitle,
-          text: shareText,
+          text: `\n${shareText}\n`,
           url: link,
         });
         logEvent("Result Shared", {
@@ -83,7 +92,7 @@ export default function NewMantleForm() {
       }
     }
 
-    navigator.clipboard.writeText(link).then(
+    navigator.clipboard.writeText(shareText + "\n" + link).then(
       () => {
         toast({
           title: "링크가 복사되었습니다!",
@@ -138,7 +147,17 @@ export default function NewMantleForm() {
         )}
 
         <GameForm
-          submitAction={gameLogic.submitWordAction}
+          submitAction={async (word) => {
+            let isDone = false;
+            const timer = setTimeout(() => {
+              if (!isDone) setPendingWord(word);
+            }, 300);
+            const res = await gameLogic.submitWordAction(word);
+            isDone = true;
+            clearTimeout(timer);
+            setPendingWord(null);
+            return res;
+          }}
           gameCompleted={gameLogic.gameCompleted}
           displayDate={displayDate}
           hintButton={
@@ -164,9 +183,14 @@ export default function NewMantleForm() {
         />
 
         <div className="w-full">
-          {gameLogic.sortedWords.length > 0 ? (
+          {gameLogic.sortedWords.length > 0 || pendingWord ? (
             <>
-              <WordTable words={gameLogic.sortedWords} showAll={showAllWords} />
+              <WordTable 
+                words={gameLogic.sortedWords} 
+                showAll={showAllWords} 
+                pendingWord={pendingWord}
+                pendingAttempt={gameLogic.attempts + 1}
+              />
               {gameLogic.sortedWords.length > 5 && (
                 <div className="text-center mt-4">
                   <Button

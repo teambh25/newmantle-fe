@@ -26,25 +26,25 @@ export function GameResult({
 
   return (
     <div className="w-full bg-[#f3f9f5] flex flex-col items-center text-center p-6">
-      <div className="bg-[#217346] text-white px-2 py-0.5 text-xs font-bold uppercase mb-4 self-start">
+      <div className="bg-[#217346] text-white px-2 py-0.5 text-xs font-bold uppercase mb-4">
         GAME_RESULT: {givenUp ? "GIVEN_UP" : "COMPLETED"}
       </div>
 
-      <p className="text-2xl font-bold text-[#217346] mb-2">
+      <p className="text-2xl font-bold text-[#217346] mb-2 text-center w-full">
         {givenUp ? "게임을 포기하셨습니다." : "정답을 맞혔습니다!"}
       </p>
-      <p className="text-base text-gray-700 mb-1">
+      <p className="text-base text-gray-700 mb-1 text-center w-full">
         {givenUp
           ? `${displaySolvedAttempts}번 시도 후 포기하셨습니다.`
           : `${displaySolvedAttempts}번째 만에 맞히셨네요.`}
       </p>
-      <p className="text-sm text-gray-500 italic mb-4">
+      <p className="text-sm text-gray-500 italic mb-4 text-center w-full">
         (내일은 새로운 단어로 도전할 수 있어요!)
       </p>
 
       {gameCompleted && !givenUp && (
         <div className="w-full max-w-md pt-4 border-t border-gray-200 mt-4">
-          <p className="text-base font-bold text-gray-700 mb-3">
+          <p className="text-base font-bold text-gray-700 mb-3 text-center w-full">
             오늘 정답은 어땠나요?
           </p>
           <div className="flex justify-center space-x-3">

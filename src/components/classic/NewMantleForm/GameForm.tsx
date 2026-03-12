@@ -31,11 +31,13 @@ export const GameForm: React.FC<GameFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="w-full mb-6 relative" autoComplete="off">
-      {displayDate && (
-        <div className="text-xs text-gray-400 font-medium mb-1.5 text-left tracking-wide">
-          {displayDate}
-        </div>
-      )}
+      <div className="flex items-center space-x-2 mb-1.5 min-h-[16px]">
+        {displayDate && (
+          <div className="text-xs text-gray-400 font-medium text-left tracking-wide">
+            {displayDate}
+          </div>
+        )}
+      </div>
       <input
         type="text"
         ref={dummyInputRef}
@@ -48,12 +50,11 @@ export const GameForm: React.FC<GameFormProps> = ({
             type="text"
             value={inputWord}
             onChange={handleInputChange}
-            placeholder={errorMessage || "단어를 입력하세요"}
-            className={`w-full pr-[80px] ${
-              isError
-                ? "border-red-500 placeholder-red-500"
+            placeholder={errorMessage || "단어 입력"}
+            className={`w-full pr-[80px] ${isError
+                ? "placeholder-red-500"
                 : "placeholder-gray-400"
-            }`}
+              }`}
             disabled={isLoading}
             ref={inputRef}
             autoComplete="off"
@@ -65,13 +66,15 @@ export const GameForm: React.FC<GameFormProps> = ({
             {giveUpButton}
           </div>
         </div>
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="flex-shrink-0"
-        >
-          {isLoading ? "제출 중..." : "제출"}
-        </Button>
+        <div className="flex-shrink-0 flex flex-col items-center justify-end">
+          <Button
+            type="submit"
+            disabled={isLoading}
+            className="w-full"
+          >
+            제출
+          </Button>
+        </div>
       </div>
     </form>
   );
