@@ -15,6 +15,7 @@ const SurveyForm: React.FC<SurveyFormProps> = ({ startRow = 21 }) => {
   const handleVote = (isPositive: boolean) => {
     logEvent("Survey Vote", {
       vote: isPositive ? "positive" : "negative",
+      theme: "excel",
     });
     setVoted(isPositive);
   };
@@ -36,7 +37,7 @@ const SurveyForm: React.FC<SurveyFormProps> = ({ startRow = 21 }) => {
         }
       );
       if (response.ok) {
-        logEvent("Feedback Submitted", { feedback });
+        logEvent("Feedback Submitted", { feedback, theme: "excel" });
         setFeedback("");
         alert("피드백이 제출되었습니다. 감사합니다!");
       } else {

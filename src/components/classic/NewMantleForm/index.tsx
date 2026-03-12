@@ -16,7 +16,7 @@ export default function NewMantleForm() {
   const [displayDate, setDisplayDate] = useState("");
   const [showAllWords, setShowAllWords] = useState(false);
   const { toast } = useToast();
-  const gameLogic = useGameState(gameDate);
+  const gameLogic = useGameState(gameDate, "classic");
 
   useEffect(() => {
     if (gameDate) {
@@ -30,6 +30,7 @@ export default function NewMantleForm() {
       vote: isPositive ? "positive" : "negative",
       attempts: gameLogic.correctAttempts,
       date: gameDate,
+      theme: "classic",
     });
     gameLogic.setAnswerSurveyVoted(isPositive);
   };
@@ -51,6 +52,7 @@ export default function NewMantleForm() {
         logEvent("Result Shared", {
           method: "Link Copy",
           attempts: gameLogic.correctAttempts,
+          theme: "classic",
         });
       },
       () => {
@@ -58,6 +60,7 @@ export default function NewMantleForm() {
         logEvent("Share Error", {
           method: "Link Copy",
           errorType: "Clipboard Write Failed",
+          theme: "classic",
         });
       }
     );
