@@ -43,7 +43,7 @@ export const GameForm: React.FC<GameFormProps> = ({
           onChange={handleInputChange}
           placeholder={errorMessage || "단어를 입력하세요..."}
           className="w-full h-full px-4 outline-none text-base bg-transparent font-sans text-black"
-          disabled={isLoading || gameCompleted}
+          disabled={isLoading}
           ref={inputRef}
           autoComplete="off"
           autoCapitalize="none"
@@ -64,7 +64,7 @@ export const GameForm: React.FC<GameFormProps> = ({
       <div className="flex items-center h-full border-l border-[#d4d4d4]">
         <button
           type="submit"
-          disabled={isLoading || gameCompleted}
+          disabled={isLoading}
           className="h-full px-8 bg-[#217346] text-white text-sm font-bold hover:bg-[#1a5a37] disabled:bg-gray-300 transition-colors uppercase tracking-tighter"
         >
           {isLoading ? "Wait" : "Enter"}

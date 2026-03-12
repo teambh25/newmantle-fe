@@ -13,6 +13,7 @@ const STORAGE_KEY = "newmantle_game_data";
 export interface GameData {
   submittedWords: SubmittedWord[];
   attempts: number;
+  solvedAttempts: number | null;
   gameCompleted: boolean;
   lastPlayedDate: string;
   hintUsed: number;
@@ -26,6 +27,7 @@ function getInitialGameState(): GameData {
     return {
       submittedWords: [],
       attempts: 0,
+      solvedAttempts: null,
       gameCompleted: false,
       lastPlayedDate: new Date().toDateString(),
       hintUsed: 0,
@@ -47,6 +49,7 @@ function getInitialGameState(): GameData {
   return {
     submittedWords: [],
     attempts: 0,
+    solvedAttempts: null,
     gameCompleted: false,
     lastPlayedDate: new Date().toDateString(),
     hintUsed: 0,
@@ -122,12 +125,21 @@ export function useGameState(gameDate: string, theme?: string) {
         theme,
       });
 
-      setGameState((prev) => ({
-        ...prev,
-        submittedWords: [newWord, ...prev.submittedWords],
-        attempts: prev.attempts + 1,
-        gameCompleted: prev.gameCompleted || newWord.correct,
-      }));
+      setGameState((prev) => {
+        const isCorrect = newWord.correct;
+        const alreadyCompleted = prev.gameCompleted || prev.givenUp;
+        const newSolvedAttempts = alreadyCompleted 
+          ? prev.solvedAttempts 
+          : (isCorrect ? prev.attempts + 1 : null);
+
+        return {
+          ...prev,
+          submittedWords: [newWord, ...prev.submittedWords],
+          attempts: prev.attempts + 1,
+          gameCompleted: prev.gameCompleted || isCorrect,
+          solvedAttempts: newSolvedAttempts,
+        };
+      });
 
       if (newWord.correct) {
         toast({
@@ -237,21 +249,25 @@ export function useGameState(gameDate: string, theme?: string) {
   const giveUp = async () => {
     try {
       const answer = await getRecentAnswer(new Date(gameDate));
-      setGameState((prev) => ({
-        ...prev,
-        submittedWords: [
-          {
-            word: answer,
-            similarity: 100,
-            rank: 0,
-            attempt: prev.attempts + 1,
-            correct: true,
-          },
-          ...prev.submittedWords,
-        ],
-        gameCompleted: true,
-        givenUp: true,
-      }));
+      setGameState((prev) => {
+        const currentAttempts = prev.attempts;
+        return {
+          ...prev,
+          submittedWords: [
+            {
+              word: answer,
+              similarity: 100,
+              rank: 0,
+              attempt: currentAttempts + 1,
+              correct: true,
+            },
+            ...prev.submittedWords,
+          ],
+          gameCompleted: true,
+          givenUp: true,
+          solvedAttempts: prev.solvedAttempts ?? currentAttempts,
+        };
+      });
       logEvent("Game Given Up", {
         attempts: gameState.attempts,
         hintUsed: gameState.hintUsed,
@@ -277,6 +293,7 @@ export function useGameState(gameDate: string, theme?: string) {
   return {
     submittedWords: gameState.submittedWords,
     attempts: gameState.attempts,
+    solvedAttempts: gameState.solvedAttempts,
     correctAttempts,
     gameCompleted: gameState.gameCompleted,
     sortedWords,

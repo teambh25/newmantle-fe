@@ -54,7 +54,7 @@ export const GameForm: React.FC<GameFormProps> = ({
                 ? "border-red-500 placeholder-red-500"
                 : "placeholder-gray-400"
             }`}
-            disabled={isLoading || gameCompleted}
+            disabled={isLoading}
             ref={inputRef}
             autoComplete="off"
             autoCapitalize="none"
@@ -67,7 +67,7 @@ export const GameForm: React.FC<GameFormProps> = ({
         </div>
         <Button
           type="submit"
-          disabled={isLoading || gameCompleted}
+          disabled={isLoading}
           className="flex-shrink-0"
         >
           {isLoading ? "제출 중..." : "제출"}
