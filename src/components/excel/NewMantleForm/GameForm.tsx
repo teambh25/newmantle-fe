@@ -7,6 +7,7 @@ interface GameFormProps {
   displayDate?: string;
   hintButton?: React.ReactNode;
   giveUpButton?: React.ReactNode;
+  currentCombo?: number;
 }
 
 export const GameForm: React.FC<GameFormProps> = ({
@@ -15,6 +16,7 @@ export const GameForm: React.FC<GameFormProps> = ({
   displayDate,
   hintButton,
   giveUpButton,
+  currentCombo = 0,
 }) => {
   const {
     inputWord,
@@ -29,8 +31,16 @@ export const GameForm: React.FC<GameFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="flex border-b border-[#d4d4d4] w-full bg-white items-stretch h-10 relative shadow-sm" autoComplete="off">
-      <div className="flex items-center justify-center w-[48px] border-r border-[#d4d4d4] text-[11px] font-sans text-gray-500 select-none bg-white font-medium text-center leading-tight">
+      <div className="flex items-center justify-center w-[48px] border-r border-[#d4d4d4] text-[11px] font-sans text-gray-500 select-none bg-white font-medium text-center leading-tight relative overflow-visible z-10">
         {displayDate?.replace(' ', '') || "B3"}
+        {currentCombo >= 2 && (
+          <div 
+            key={currentCombo}
+            className="absolute left-[54px] text-[11px] font-bold text-[#217346] whitespace-nowrap animate-in fade-in slide-in-from-bottom-2 duration-300 pointer-events-none drop-shadow-[0_0_2px_rgba(255,255,255,0.8)] bg-white/60 px-0.5 rounded"
+          >
+            {currentCombo} 콤보!
+          </div>
+        )}
       </div>
       <div className="flex items-center px-4 bg-[#f3f2f1] border-r border-[#d4d4d4] text-[#444] font-serif italic font-bold text-base select-none">
         fx
