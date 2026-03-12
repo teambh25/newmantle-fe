@@ -7,6 +7,7 @@ import { SettingsButton } from "@/components/SettingsButton";
 import { useUITheme } from "@/hooks/useUITheme";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import AuthButton from "@/components/AuthButton";
 
 // Excel Components
 import ExcelGameDescription from "@/components/excel/GameDescription";
@@ -54,7 +55,10 @@ export default function Home() {
                  <span className="cursor-pointer hover:opacity-100">View</span>
                </nav>
              </div>
-             <SettingsButton theme={theme} onThemeChange={setTheme} variant="excel" />
+             <div className="flex items-center space-x-4">
+               <AuthButton />
+               <SettingsButton theme={theme} onThemeChange={setTheme} variant="excel" />
+             </div>
           </header>
 
           {/* Quick Access / Ribbon Content Placeholder */}
@@ -148,8 +152,6 @@ export default function Home() {
               게임
             </div>
           </div>
-          
-
         </div>
       ) : (
         /* ──────────── 클래식 UI ──────────── */
@@ -164,7 +166,10 @@ export default function Home() {
                   단어 추측 게임
                 </p>
               </Link>
-              <SettingsButton theme={theme} onThemeChange={setTheme} variant="classic" />
+              <div className="flex items-center space-x-4">
+                <AuthButton />
+                <SettingsButton theme={theme} onThemeChange={setTheme} variant="classic" />
+              </div>
             </div>
             <div className="w-full max-w-2xl space-y-16 flex-grow flex flex-col pb-16">
               <ClassicNewMantleForm />

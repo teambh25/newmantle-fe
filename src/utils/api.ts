@@ -1,4 +1,16 @@
 import { formatDate } from "./date";
+import { createClient } from '@/utils/supabase/client';
+
+async function getAuthHeader(): Promise<Record<string, string>> {
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+
+  const headers: Record<string, string> = {};
+  if (session?.access_token) {
+    headers['Authorization'] = `Bearer ${session.access_token}`;
+  }
+  return headers;
+}
 
 export interface SubmittedWord {
   word: string;
@@ -25,24 +37,32 @@ export const submitWord = async (
   const timeoutId = setTimeout(() => controller.abort(), 3000);
 
   try {
+    const authHeader = await getAuthHeader();
     const response = await fetch(
-      `${API_BASE_URL}/quizzes/${gameDate}/guess/${encodedWord}`,
-      { signal: controller.signal }
+      `${API_BASE_URL}/v2/quizzes/${gameDate}/guess/${encodedWord}`,
+      {
+        signal: controller.signal,
+        headers: { ...authHeader }
+      }
     );
     clearTimeout(timeoutId);
-    if (response.status === 400) {
-      throw new Error("Invalid word");
+    if (response.status === 404) {
+      throw new Error("Date or word not found");
     }
     if (response.status === 422) {
       throw new Error("Invalid date format");
+    }
+    if (response.status === 500) {
+      throw new Error("Server error");
     }
     if (!response.ok) {
       throw new Error("API request failed");
     }
     const data = await response.json();
+
     return {
       word,
-      similarity: data.correct ? null : data.score,
+      similarity: data.score,
       rank: data.rank,
       attempt,
       correct: data.correct,
@@ -61,9 +81,13 @@ export const getHint = async (date: Date, rank: number): Promise<HintResponse> =
   const timeoutId = setTimeout(() => controller.abort(), 3000);
 
   try {
+    const authHeader = await getAuthHeader();
     const response = await fetch(
       `${API_BASE_URL}/quizzes/${formattedDate}/hint/${rank}`,
-      { signal: controller.signal }
+      {
+        signal: controller.signal,
+        headers: { ...authHeader }
+      }
     );
     clearTimeout(timeoutId);
     if (response.status === 400) {
@@ -94,9 +118,13 @@ export const getRecentAnswer = async (date: Date): Promise<string> => {
   const timeoutId = setTimeout(() => controller.abort(), 3000);
 
   try {
+    const authHeader = await getAuthHeader();
     const response = await fetch(
       `${API_BASE_URL}/quizzes/${formattedDate}/recent-answer`,
-      { signal: controller.signal }
+      {
+        signal: controller.signal,
+        headers: { ...authHeader }
+      }
     );
     clearTimeout(timeoutId);
     if (response.status === 400) {
