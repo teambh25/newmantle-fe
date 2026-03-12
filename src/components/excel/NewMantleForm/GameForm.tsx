@@ -34,7 +34,7 @@ export const GameForm: React.FC<GameFormProps> = ({
       <div className="flex items-center justify-center w-[48px] border-r border-[#d4d4d4] text-[11px] font-sans text-gray-500 select-none bg-white font-medium text-center leading-tight relative overflow-visible z-10">
         {displayDate?.replace(' ', '') || "B3"}
         {currentCombo >= 2 && (
-          <div 
+          <div
             key={currentCombo}
             className="absolute left-[54px] text-[11px] font-bold text-[#217346] whitespace-nowrap animate-in fade-in slide-in-from-bottom-2 duration-300 pointer-events-none drop-shadow-[0_0_2px_rgba(255,255,255,0.8)] bg-white/60 px-0.5 rounded"
           >
@@ -45,13 +45,13 @@ export const GameForm: React.FC<GameFormProps> = ({
       <div className="flex items-center px-4 bg-[#f3f2f1] border-r border-[#d4d4d4] text-[#444] font-serif italic font-bold text-base select-none">
         fx
       </div>
-      
+
       <div className="flex-grow flex items-center relative h-full">
-         <input
+        <input
           type="text"
           value={inputWord}
           onChange={handleInputChange}
-          placeholder={errorMessage || "단어를 입력하세요..."}
+          placeholder={errorMessage || "단어 입력"}
           className="w-full h-full px-4 outline-none text-base bg-transparent font-sans text-black"
           disabled={isLoading}
           ref={inputRef}
@@ -77,7 +77,7 @@ export const GameForm: React.FC<GameFormProps> = ({
           disabled={isLoading}
           className="h-full px-8 bg-[#217346] text-white text-sm font-bold hover:bg-[#1a5a37] disabled:bg-gray-300 transition-colors uppercase tracking-tighter"
         >
-          {isLoading ? "Wait" : "Enter"}
+          Enter
         </button>
       </div>
 

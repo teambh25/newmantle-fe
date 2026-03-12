@@ -1,16 +1,22 @@
 import React from "react";
 import Similarity from "../../classic/NewMantleForm/Similarity";
 import { SubmittedWord } from "@/utils/api";
-import { Lightbulb } from "lucide-react";
+import { Lightbulb, Loader2 } from "lucide-react";
 
 interface WordTableProps {
   words: SubmittedWord[];
   showAll: boolean;
   startIndex?: number;
+  pendingWord?: string | null;
+  pendingAttempt?: number;
 }
 
-const WordTable: React.FC<WordTableProps> = ({ words, showAll, startIndex = 2 }) => {
+const WordTable: React.FC<WordTableProps> = ({ words, showAll, startIndex = 2, pendingWord, pendingAttempt }) => {
   const displayedWords = showAll ? words : words.slice(0, 5);
+
+  let currentIndex = startIndex;
+  const pendingRowIndex = pendingWord ? currentIndex++ : null;
+  const wordStartIndex = currentIndex;
 
   const getStyle = (rank: number | null) => {
     if (rank === null) return "text-[#217346] font-bold";
@@ -22,12 +28,29 @@ const WordTable: React.FC<WordTableProps> = ({ words, showAll, startIndex = 2 })
 
   return (
     <>
+      {pendingWord && pendingAttempt && pendingRowIndex !== null && (
+        <div className="excel-row text-sm sm:text-base bg-[#f3f2f1] text-gray-400">
+          <div className="sheet-cell-header">{pendingRowIndex}</div>
+          <div className="excel-cell justify-center text-center">
+            {pendingAttempt}
+          </div>
+          <div className="excel-cell justify-center text-center overflow-hidden text-ellipsis whitespace-nowrap">
+            {pendingWord}
+          </div>
+          <div className="excel-cell justify-center text-center">
+            <Loader2 className="h-4 w-4 animate-spin mx-auto text-gray-400" />
+          </div>
+          <div className="excel-cell justify-center text-center">
+            <Loader2 className="h-4 w-4 animate-spin mx-auto text-gray-400" />
+          </div>
+        </div>
+      )}
       {displayedWords.map((word, index) => (
         <div
           key={index}
           className={`excel-row text-sm sm:text-base ${word.correct ? "bg-[#dff0d8]" : ""} hover:bg-[#f3f2f1] transition-colors`}
         >
-          <div className="sheet-cell-header">{index + startIndex}</div>
+          <div className="sheet-cell-header">{index + wordStartIndex}</div>
           <div className="excel-cell justify-center text-center">
             {word.attempt === -1 ? (
               <Lightbulb size={14} className="text-yellow-600" />

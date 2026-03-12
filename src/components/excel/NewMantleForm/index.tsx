@@ -17,6 +17,7 @@ export default function NewMantleForm() {
   const [displayDate, setDisplayDate] = useState("");
   const [showAllWords, setShowAllWords] = useState(false);
   const [sharedAttempts, setSharedAttempts] = useState<number | null>(null);
+  const [pendingWord, setPendingWord] = useState<string | null>(null);
   const { toast } = useToast();
   const gameLogic = useGameState(gameDate, "excel");
   const [mounted, setMounted] = useState(false);
@@ -161,7 +162,17 @@ export default function NewMantleForm() {
 
       {mounted && document.getElementById("excel-formula-bar") && createPortal(
         <GameForm
-          submitAction={gameLogic.submitWordAction}
+          submitAction={async (word) => {
+            let isDone = false;
+            const timer = setTimeout(() => {
+              if (!isDone) setPendingWord(word);
+            }, 300);
+            const res = await gameLogic.submitWordAction(word);
+            isDone = true;
+            clearTimeout(timer);
+            setPendingWord(null);
+            return res;
+          }}
           gameCompleted={gameLogic.gameCompleted}
           displayDate={displayDate}
           hintButton={
@@ -189,12 +200,18 @@ export default function NewMantleForm() {
         document.getElementById("excel-formula-bar")!
       )}
 
-      {gameLogic.sortedWords.length > 0 ? (
+      {gameLogic.sortedWords.length > 0 || pendingWord ? (
         <>
-          <WordTable words={gameLogic.sortedWords} showAll={showAllWords} startIndex={wordTableStartIndex} />
+          <WordTable 
+            words={gameLogic.sortedWords} 
+            showAll={showAllWords} 
+            startIndex={wordTableStartIndex} 
+            pendingWord={pendingWord}
+            pendingAttempt={gameLogic.attempts + 1}
+          />
           {gameLogic.sortedWords.length > 5 && (
             <div className="excel-row bg-white cursor-pointer hover:bg-gray-50" onClick={() => setShowAllWords(!showAllWords)}>
-              <div className="sheet-cell-header">{gameLogic.sortedWords.length + wordTableStartIndex}</div>
+              <div className="sheet-cell-header">{gameLogic.sortedWords.length + wordTableStartIndex + (pendingWord ? 1 : 0)}</div>
               <div className="excel-cell justify-center"></div>
               <div className="excel-cell justify-center text-[#217346] font-bold text-sm underline">
                 {showAllWords ? "접기" : "더보기"}

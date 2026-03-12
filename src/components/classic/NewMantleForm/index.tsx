@@ -17,6 +17,7 @@ export default function NewMantleForm() {
   const [displayDate, setDisplayDate] = useState("");
   const [showAllWords, setShowAllWords] = useState(false);
   const [sharedAttempts, setSharedAttempts] = useState<number | null>(null);
+  const [pendingWord, setPendingWord] = useState<string | null>(null);
   const { toast } = useToast();
   const gameLogic = useGameState(gameDate, "classic");
 
@@ -138,7 +139,17 @@ export default function NewMantleForm() {
         )}
 
         <GameForm
-          submitAction={gameLogic.submitWordAction}
+          submitAction={async (word) => {
+            let isDone = false;
+            const timer = setTimeout(() => {
+              if (!isDone) setPendingWord(word);
+            }, 300);
+            const res = await gameLogic.submitWordAction(word);
+            isDone = true;
+            clearTimeout(timer);
+            setPendingWord(null);
+            return res;
+          }}
           gameCompleted={gameLogic.gameCompleted}
           displayDate={displayDate}
           hintButton={
@@ -165,9 +176,14 @@ export default function NewMantleForm() {
         />
 
         <div className="w-full">
-          {gameLogic.sortedWords.length > 0 ? (
+          {gameLogic.sortedWords.length > 0 || pendingWord ? (
             <>
-              <WordTable words={gameLogic.sortedWords} showAll={showAllWords} />
+              <WordTable 
+                words={gameLogic.sortedWords} 
+                showAll={showAllWords} 
+                pendingWord={pendingWord}
+                pendingAttempt={gameLogic.attempts + 1}
+              />
               {gameLogic.sortedWords.length > 5 && (
                 <div className="text-center mt-4">
                   <Button
