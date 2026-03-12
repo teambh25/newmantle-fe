@@ -9,7 +9,6 @@ interface GameFormProps {
   displayDate?: string;
   hintButton?: React.ReactNode;
   giveUpButton?: React.ReactNode;
-  currentCombo?: number;
 }
 
 export const GameForm: React.FC<GameFormProps> = ({
@@ -18,7 +17,6 @@ export const GameForm: React.FC<GameFormProps> = ({
   displayDate,
   hintButton,
   giveUpButton,
-  currentCombo = 0,
 }) => {
   const {
     inputWord,
@@ -37,14 +35,6 @@ export const GameForm: React.FC<GameFormProps> = ({
         {displayDate && (
           <div className="text-xs text-gray-400 font-medium text-left tracking-wide">
             {displayDate}
-          </div>
-        )}
-        {currentCombo >= 2 && (
-          <div
-            key={currentCombo}
-            className="text-xs font-bold text-blue-600 whitespace-nowrap animate-in fade-in slide-in-from-bottom-2 duration-300"
-          >
-            {currentCombo} 콤보!
           </div>
         )}
       </div>

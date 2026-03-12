@@ -172,7 +172,6 @@ export default function NewMantleForm() {
               initialConsonantHintUsed={gameLogic.initialConsonantHintUsed}
             />
           }
-          currentCombo={gameLogic.currentCombo}
         />
 
         <div className="w-full">
