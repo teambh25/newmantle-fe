@@ -38,6 +38,12 @@ export function useGameForm(submitAction: (word: string) => Promise<{ error?: st
     const trimmedWord = inputWord.trim();
     if (!trimmedWord || isLoading) return;
 
+    // iOS 키보드 안 내려가게 하는 트릭 (핵심: API 호출(await) 전에 동기적으로 실행되어야 함)
+    // 원래 input이 disabled 되기 전에 dummy로 포커스를 옮겨서 키보드 상태를 유지
+    if (dummyInputRef.current) {
+      dummyInputRef.current.focus();
+    }
+
     setIsLoading(true);
     setIsError(false);
     setErrorMessage(null);
@@ -52,9 +58,8 @@ export function useGameForm(submitAction: (word: string) => Promise<{ error?: st
     setInputWord("");
     setIsLoading(false);
 
-    // iOS 버퍼 이슈 해결을 위한 트릭
+    // 결과를 받은 후(isLoading false) 다시 input으로 포커스
     if (dummyInputRef.current && inputRef.current) {
-      dummyInputRef.current.focus();
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           setFocusWithDebounce();
