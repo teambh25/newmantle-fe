@@ -49,24 +49,24 @@ const SurveyForm: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-2xl mt-8">
-      <h2 className="text-xl font-semibold mb-2 text-center">
+    <div className="w-full max-w-2xl">
+      <h2 className="text-xl font-bold mb-4 text-gray-800 text-left">
         게임이 재미있었나요?
       </h2>
       <div className="flex justify-center space-x-4">
-        <Button
-          variant={voted === false ? "default" : "outline"}
-          onClick={() => handleVote(false)}
-          disabled={voted !== null}
-        >
-          <ThumbsDown className="mr-2 h-4 w-4" /> 재미없다
-        </Button>
         <Button
           variant={voted === true ? "default" : "outline"}
           onClick={() => handleVote(true)}
           disabled={voted !== null}
         >
           <ThumbsUp className="mr-2 h-4 w-4" /> 재밌다
+        </Button>
+        <Button
+          variant={voted === false ? "default" : "outline"}
+          onClick={() => handleVote(false)}
+          disabled={voted !== null}
+        >
+          <ThumbsDown className="mr-2 h-4 w-4" /> 재미없다
         </Button>
       </div>
       {voted === false && (
