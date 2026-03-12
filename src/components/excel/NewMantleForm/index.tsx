@@ -184,6 +184,7 @@ export default function NewMantleForm() {
               initialConsonantHintUsed={gameLogic.initialConsonantHintUsed}
             />
           }
+          currentCombo={gameLogic.currentCombo}
         />,
         document.getElementById("excel-formula-bar")!
       )}

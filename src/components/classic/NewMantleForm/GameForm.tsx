@@ -9,6 +9,7 @@ interface GameFormProps {
   displayDate?: string;
   hintButton?: React.ReactNode;
   giveUpButton?: React.ReactNode;
+  currentCombo?: number;
 }
 
 export const GameForm: React.FC<GameFormProps> = ({
@@ -17,6 +18,7 @@ export const GameForm: React.FC<GameFormProps> = ({
   displayDate,
   hintButton,
   giveUpButton,
+  currentCombo = 0,
 }) => {
   const {
     inputWord,
@@ -31,11 +33,21 @@ export const GameForm: React.FC<GameFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="w-full mb-6 relative" autoComplete="off">
-      {displayDate && (
-        <div className="text-xs text-gray-400 font-medium mb-1.5 text-left tracking-wide">
-          {displayDate}
-        </div>
-      )}
+      <div className="flex items-center space-x-2 mb-1.5 min-h-[16px]">
+        {displayDate && (
+          <div className="text-xs text-gray-400 font-medium text-left tracking-wide">
+            {displayDate}
+          </div>
+        )}
+        {currentCombo >= 2 && (
+          <div 
+            key={currentCombo}
+            className="text-xs font-bold text-blue-600 whitespace-nowrap animate-in fade-in slide-in-from-bottom-2 duration-300"
+          >
+            {currentCombo} 콤보!
+          </div>
+        )}
+      </div>
       <input
         type="text"
         ref={dummyInputRef}
@@ -65,13 +77,15 @@ export const GameForm: React.FC<GameFormProps> = ({
             {giveUpButton}
           </div>
         </div>
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="flex-shrink-0"
-        >
-          {isLoading ? "제출 중..." : "제출"}
-        </Button>
+        <div className="flex-shrink-0 flex flex-col items-center justify-end">
+          <Button
+            type="submit"
+            disabled={isLoading}
+            className="w-full"
+          >
+            {isLoading ? "제출 중..." : "제출"}
+          </Button>
+        </div>
       </div>
     </form>
   );
