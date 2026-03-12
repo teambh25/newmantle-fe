@@ -33,15 +33,15 @@ export default function CompetitiveBar({
       <div className="w-full flex justify-center py-2 bg-white">
         <div className="w-full border border-[#d4d4d4] p-3 text-sm flex flex-col space-y-3">
           <div className="flex justify-between items-center text-[#444] font-bold">
-            <span>나의 시도: {currentAttempts}</span>
-            <span>친구의 기록: {sharedAttempts}</span>
+            <span className="text-[#217346]">나의 시도: {currentAttempts}</span>
+            <span className="text-red-700">친구의 기록: {sharedAttempts}</span>
           </div>
-          <div className="relative w-full h-3 bg-red-400 border border-gray-300">
+          <div className="relative w-full h-4 bg-red-100 border border-[#d4d4d4] overflow-hidden">
             <motion.div
               initial={{ width: "100%" }}
               animate={{ width: `${myBarWidth}%` }}
               className={`h-full ${
-                isTrailing ? "bg-[#217346]" : isTied ? "bg-[#217346]" : "bg-gray-500"
+                isTrailing ? "bg-[#217346]" : isTied ? "bg-[#217346]" : "bg-gray-400"
               }`}
             />
           </div>
@@ -52,30 +52,30 @@ export default function CompetitiveBar({
 
   // Classic Theme
   return (
-    <div className="w-full bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4 flex flex-col space-y-4">
+    <div className="w-full bg-white rounded-md border border-gray-200 p-4 mb-6 flex flex-col space-y-4">
       <div className="flex justify-between items-end">
         <div className="flex flex-col">
-          <span className="text-xs text-gray-500 mb-1">나의 시도</span>
+          <span className="text-xs text-gray-500 font-medium mb-1">나의 시도</span>
           <span className="text-2xl font-bold text-blue-600 leading-none">{currentAttempts}</span>
         </div>
-        <div className="text-center text-sm font-medium text-gray-700 px-2 pb-0.5">
+        <div className="text-center text-sm font-bold text-gray-300 pb-0.5">
           VS
         </div>
         <div className="flex flex-col items-end">
-          <span className="text-xs text-gray-500 mb-1">친구의 기록</span>
+          <span className="text-xs text-gray-500 font-medium mb-1">친구의 기록</span>
           <span className="text-2xl font-bold text-red-500 leading-none">{sharedAttempts}</span>
         </div>
       </div>
 
-      <div className="relative w-full h-4 bg-red-400 rounded-full overflow-hidden shadow-inner flex">
+      <div className="relative w-full h-3 bg-red-100 rounded-full overflow-hidden flex shadow-inner border border-gray-100">
         {/* Progress Fill (My Bar) */}
         <motion.div
           initial={{ width: "100%" }}
           animate={{ width: `${myBarWidth}%` }}
           transition={{ type: "spring", stiffness: 60, damping: 15 }}
-          className={`h-full rounded-r-full ${
+          className={`h-full rounded-full ${
             gameCompleted && currentAttempts <= sharedAttempts ? "bg-green-500" :
-            isTrailing ? "bg-blue-500" : isTied ? "bg-yellow-400" : "bg-gray-400"
+            isTrailing ? "bg-blue-500" : isTied ? "bg-yellow-400" : "bg-gray-300"
           }`}
           style={{ transformOrigin: "left" }}
         />
