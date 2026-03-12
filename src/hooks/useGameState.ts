@@ -56,15 +56,15 @@ function getInitialGameState(): GameData {
   };
 }
 
-export function useGameState(gameDate: string) {
+export function useGameState(gameDate: string, theme?: string) {
   const [gameState, setGameState] = useState<GameData>(getInitialGameState);
   const startTimeRef = useRef<number>(Date.now());
   const { toast } = useToast();
   const [hintDisabled, setHintDisabled] = useState(false);
 
   useEffect(() => {
-    logEvent("Game Started", { date: gameDate });
-  }, [gameDate]);
+    logEvent("Game Started", { date: gameDate, theme });
+  }, [gameDate, theme]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
@@ -119,6 +119,7 @@ export function useGameState(gameDate: string) {
         attempt: gameState.attempts + 1,
         similarity: newWord.similarity,
         isCorrect: newWord.correct,
+        theme,
       });
 
       setGameState((prev) => ({
@@ -136,6 +137,7 @@ export function useGameState(gameDate: string) {
         logEvent("Game Completed", {
           attempts: gameState.attempts + 1,
           timeSpent: (Date.now() - startTimeRef.current) / 1000,
+          theme,
         });
       }
 
@@ -188,7 +190,7 @@ export function useGameState(gameDate: string) {
         hintUsed: prev.hintUsed + 1,
       }));
 
-      logEvent("Hint Requested", { hintRank });
+      logEvent("Hint Requested", { hintRank, theme });
     } catch (error) {
       console.error("힌트 요청 중 오류 발생:", error);
       toast({
@@ -221,7 +223,7 @@ export function useGameState(gameDate: string) {
         description: "",
       });
 
-      logEvent("Initial Consonant Hint Requested");
+      logEvent("Initial Consonant Hint Requested", { theme });
     } catch (error) {
       console.error("초성 힌트 요청 중 오류 발생:", error);
       toast({
@@ -253,6 +255,7 @@ export function useGameState(gameDate: string) {
       logEvent("Game Given Up", {
         attempts: gameState.attempts,
         hintUsed: gameState.hintUsed,
+        theme,
       });
     } catch (error) {
       console.error("정답 가져오기 실패:", error);
