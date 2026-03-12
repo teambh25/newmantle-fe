@@ -84,6 +84,7 @@ export default function NewMantleForm() {
               givenUp={gameLogic.givenUp}
               gameCompleted={gameLogic.gameCompleted}
               attempts={gameLogic.attempts}
+              solvedAttempts={gameLogic.solvedAttempts}
               correctAttempts={gameLogic.correctAttempts}
               answerSurveyVoted={gameLogic.answerSurveyVoted}
               onAnswerSurveyVote={handleAnswerSurveyVote}

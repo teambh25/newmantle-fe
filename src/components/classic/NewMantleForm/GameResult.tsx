@@ -6,6 +6,7 @@ interface GameResultProps {
   givenUp: boolean;
   gameCompleted: boolean;
   attempts: number;
+  solvedAttempts: number | null;
   correctAttempts: number;
   answerSurveyVoted: boolean | null;
   onAnswerSurveyVote: (isPositive: boolean) => void;
@@ -16,6 +17,7 @@ export function GameResult({
   givenUp,
   gameCompleted,
   attempts,
+  solvedAttempts,
   correctAttempts,
   answerSurveyVoted,
   onAnswerSurveyVote,
@@ -23,15 +25,17 @@ export function GameResult({
 }: GameResultProps) {
   if (!gameCompleted && !givenUp) return null;
 
+  const displaySolvedAttempts = solvedAttempts ?? correctAttempts;
+
   return (
     <div className="w-full mb-6 p-4 bg-green-100 border border-green-500 text-green-700 rounded-md">
       <p className="font-bold">
-        {givenUp ? "게임을 포기하셨습니다." : "정답을 맞췄습니다!"}
+        {givenUp ? "게임을 포기하셨습니다." : "정답을 맞혔습니다!"}
       </p>
       <p>
         {givenUp
-          ? `${attempts}번 시도하셨습니다.`
-          : `${correctAttempts}번째 만에 맞히셨네요.`}
+          ? `${displaySolvedAttempts}번 시도 후 포기하셨습니다.`
+          : `${displaySolvedAttempts}번째 만에 맞히셨네요.`}
       </p>
       <p>(내일은 새로운 단어로 도전할 수 있어요!)</p>
 
