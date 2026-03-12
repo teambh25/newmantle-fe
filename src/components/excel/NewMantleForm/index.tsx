@@ -59,7 +59,7 @@ export default function NewMantleForm() {
     });
     const link = `${baseUrl}?${utmParams.toString()}`;
     const shareTitle = "뉴맨틀 게임 결과";
-    const shareText = `제가 뉴맨틀 단어를 ${gameLogic.correctAttempts}번 만에 맞혔습니다! 당신의 실력은?`;
+    const shareText = `저는 오늘 뉴맨틀을 ${gameLogic.correctAttempts}트 만에 성공했습니다. 저를 이겨보세요.`;
 
     if (navigator.share) {
       try {
@@ -105,6 +105,7 @@ export default function NewMantleForm() {
   const showGameResult = gameLogic.gameCompleted || gameLogic.givenUp;
   let currentIndex = 2;
   const gameResultIndex = showGameResult ? currentIndex++ : null;
+  const challengeLinkIndex = showGameResult ? currentIndex++ : null;
   const competitiveBarIndex = sharedAttempts !== null ? currentIndex++ : null;
   const wordTableStartIndex = currentIndex;
 
@@ -122,8 +123,24 @@ export default function NewMantleForm() {
               correctAttempts={gameLogic.correctAttempts}
               answerSurveyVoted={gameLogic.answerSurveyVoted}
               onAnswerSurveyVote={handleAnswerSurveyVote}
-              onCopyLink={handleCopyLink}
             />
+          </div>
+        </div>
+      )}
+
+      {challengeLinkIndex !== null && (
+        <div className="excel-row">
+          <div className="sheet-cell-header">{challengeLinkIndex}</div>
+          <div className="excel-cell col-span-4 p-5 flex flex-col items-center">
+            <p className="text-[13px] text-gray-700 font-bold mb-3">
+              친구는 나보다 빨리 맞힐까요?
+            </p>
+            <button
+              onClick={handleCopyLink}
+              className="px-8 py-2 bg-[#217346] text-white text-sm font-bold hover:bg-[#1a5a37] transition-all border border-[#1a5a37]"
+            >
+              🥊 도전장 보내기
+            </button>
           </div>
         </div>
       )}
@@ -131,9 +148,9 @@ export default function NewMantleForm() {
       {competitiveBarIndex !== null && sharedAttempts !== null && (
         <div className="excel-row">
           <div className="sheet-cell-header">{competitiveBarIndex}</div>
-          <div className="excel-cell col-span-4 p-0 bg-white border-[#d4d4d4]">
+          <div className="excel-cell col-span-4 p-0 bg-white border-b border-[#d4d4d4]">
             <CompetitiveBar
-              currentAttempts={gameLogic.attempts}
+              currentAttempts={gameLogic.solvedAttempts ?? gameLogic.correctAttempts}
               sharedAttempts={sharedAttempts}
               theme="excel"
               gameCompleted={gameLogic.gameCompleted || gameLogic.givenUp}
