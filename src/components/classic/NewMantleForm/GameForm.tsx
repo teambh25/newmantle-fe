@@ -1,77 +1,33 @@
-import React, { useRef, useEffect, useCallback } from "react";
+import React from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useGameForm } from "@/hooks/useGameForm";
 
 interface GameFormProps {
-  inputWord: string;
-  setInputWord: (value: string) => void;
-  isLoading: boolean;
+  submitAction: (word: string) => Promise<{ error?: string }>;
   gameCompleted: boolean;
-  isError: boolean;
-  errorMessage: string | null;
-  submitWord: () => void;
   displayDate?: string;
   hintButton?: React.ReactNode;
   giveUpButton?: React.ReactNode;
 }
 
 export const GameForm: React.FC<GameFormProps> = ({
-  inputWord,
-  setInputWord,
-  isLoading,
+  submitAction,
   gameCompleted,
-  isError,
-  errorMessage,
-  submitWord,
   displayDate,
   hintButton,
   giveUpButton,
 }) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const dummyInputRef = useRef<HTMLInputElement>(null);
-  const focusTimeoutRef = useRef<number | null>(null);
-
-  const setFocusWithDebounce = useCallback(() => {
-    if (focusTimeoutRef.current !== null) {
-      clearTimeout(focusTimeoutRef.current);
-    }
-    focusTimeoutRef.current = window.setTimeout(() => {
-      if (inputRef.current) {
-        inputRef.current.focus({ preventScroll: true });
-      }
-    }, 50);
-  }, []);
-
-  useEffect(() => {
-    setFocusWithDebounce();
-  }, [inputWord, setFocusWithDebounce]);
-
-  useEffect(() => {
-    return () => {
-      if (focusTimeoutRef.current !== null) {
-        clearTimeout(focusTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    submitWord();
-
-    // iOS 버퍼 이슈 해결을 위한 트릭
-    if (dummyInputRef.current && inputRef.current) {
-      dummyInputRef.current.focus();
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setFocusWithDebounce();
-        });
-      });
-    }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputWord(e.target.value);
-  };
+  const {
+    inputWord,
+    isLoading,
+    isError,
+    errorMessage,
+    inputRef,
+    dummyInputRef,
+    handleInputChange,
+    handleSubmit,
+  } = useGameForm(submitAction);
 
   return (
     <form onSubmit={handleSubmit} className="w-full mb-6 relative" autoComplete="off">
@@ -98,7 +54,7 @@ export const GameForm: React.FC<GameFormProps> = ({
                 ? "border-red-500 placeholder-red-500"
                 : "placeholder-gray-400"
             }`}
-            disabled={isLoading}
+            disabled={isLoading || gameCompleted}
             ref={inputRef}
             autoComplete="off"
             autoCapitalize="none"
@@ -111,7 +67,7 @@ export const GameForm: React.FC<GameFormProps> = ({
         </div>
         <Button
           type="submit"
-          disabled={isLoading}
+          disabled={isLoading || gameCompleted}
           className="flex-shrink-0"
         >
           {isLoading ? "제출 중..." : "제출"}

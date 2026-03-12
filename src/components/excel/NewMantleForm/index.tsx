@@ -1,22 +1,27 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { createPortal } from "react-dom";
 import { useToast } from "@/components/ui/use-toast";
 import WordTable from "./WordTable";
 import { GameForm } from "./GameForm";
 import { GameResult } from "./GameResult";
-import { useGameLogic } from "@/hooks/useGameLogic";
+import { useGameState } from "@/hooks/useGameState";
 import { logEvent } from "@/utils/amplitude";
 import { useGameDate } from "@/hooks/useGameDate";
-import HintButton from "@/components/HintButton";
-import GiveUpButton from "@/components/GiveUpButton";
+import HintButton from "../HintButton";
+import GiveUpButton from "../GiveUpButton";
 
 export default function NewMantleForm() {
   const gameDate = useGameDate();
   const [displayDate, setDisplayDate] = useState("");
   const [showAllWords, setShowAllWords] = useState(false);
   const { toast } = useToast();
-  const gameLogic = useGameLogic(gameDate);
+  const gameLogic = useGameState(gameDate);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (gameDate) {
@@ -63,27 +68,32 @@ export default function NewMantleForm() {
     );
   };
 
-  return (
-    <div className="w-full max-w-2xl">
-      <div className="flex flex-col items-center mx-0">
-        <GameResult
-          givenUp={gameLogic.givenUp}
-          gameCompleted={gameLogic.gameCompleted}
-          attempts={gameLogic.attempts}
-          correctAttempts={gameLogic.correctAttempts}
-          answerSurveyVoted={gameLogic.answerSurveyVoted}
-          onAnswerSurveyVote={handleAnswerSurveyVote}
-          onCopyLink={handleCopyLink}
-        />
+  const showGameResult = gameLogic.gameCompleted || gameLogic.givenUp;
+  const wordTableStartIndex = showGameResult ? 3 : 2;
 
+  return (
+    <>
+      {showGameResult && (
+        <div className="excel-row">
+          <div className="sheet-cell-header">2</div>
+          <div className="excel-cell col-span-4 p-0">
+            <GameResult
+              givenUp={gameLogic.givenUp}
+              gameCompleted={gameLogic.gameCompleted}
+              attempts={gameLogic.attempts}
+              correctAttempts={gameLogic.correctAttempts}
+              answerSurveyVoted={gameLogic.answerSurveyVoted}
+              onAnswerSurveyVote={handleAnswerSurveyVote}
+              onCopyLink={handleCopyLink}
+            />
+          </div>
+        </div>
+      )}
+
+      {mounted && document.getElementById("excel-formula-bar") && createPortal(
         <GameForm
-          inputWord={gameLogic.inputWord}
-          setInputWord={gameLogic.setInputWord}
-          isLoading={gameLogic.isLoading}
+          submitAction={gameLogic.submitWordAction}
           gameCompleted={gameLogic.gameCompleted}
-          isError={gameLogic.isError}
-          errorMessage={gameLogic.errorMessage}
-          submitWord={gameLogic.submitWord}
           displayDate={displayDate}
           hintButton={
             <HintButton
@@ -105,30 +115,33 @@ export default function NewMantleForm() {
               initialConsonantHintUsed={gameLogic.initialConsonantHintUsed}
             />
           }
-        />
+        />,
+        document.getElementById("excel-formula-bar")!
+      )}
 
-        <div className="w-full">
-          {gameLogic.sortedWords.length > 0 ? (
-            <>
-              <WordTable words={gameLogic.sortedWords} showAll={showAllWords} />
-              {gameLogic.sortedWords.length > 5 && (
-                <div className="text-center mt-4">
-                  <Button
-                    onClick={() => setShowAllWords(!showAllWords)}
-                    variant="outline"
-                  >
-                    {showAllWords ? "접기" : "더보기"}
-                  </Button>
-                </div>
-              )}
-            </>
-          ) : (
-            <p className="text-gray-500 text-center">
-              아직 제출한 단어가 없습니다.
-            </p>
+      {gameLogic.sortedWords.length > 0 ? (
+        <>
+          <WordTable words={gameLogic.sortedWords} showAll={showAllWords} startIndex={wordTableStartIndex} />
+          {gameLogic.sortedWords.length > 5 && (
+            <div className="excel-row bg-white cursor-pointer hover:bg-gray-50" onClick={() => setShowAllWords(!showAllWords)}>
+              <div className="sheet-cell-header">{gameLogic.sortedWords.length + wordTableStartIndex}</div>
+              <div className="excel-cell justify-center"></div>
+              <div className="excel-cell justify-center text-[#217346] font-bold text-sm underline">
+                {showAllWords ? "접기" : "더보기"}
+              </div>
+              <div className="excel-cell justify-center"></div>
+              <div className="excel-cell justify-center border-r-0"></div>
+            </div>
           )}
+        </>
+      ) : (
+        <div className="excel-row bg-white">
+          <div className="sheet-cell-header">{wordTableStartIndex}</div>
+          <div className="excel-cell col-span-4 justify-center text-gray-400 py-12 bg-gray-50 text-sm text-center border-b border-gray-100 italic">
+            제출된 데이터가 없습니다. (Empty Sheet)
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 }

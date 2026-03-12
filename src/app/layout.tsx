@@ -48,6 +48,13 @@ const monoplexKR = localFont({
   variable: "--font-monoplex",
 });
 
+const pretendard = localFont({
+  src: "../../public/fonts/PretendardVariable.woff2",
+  display: "swap",
+  weight: "45 920",
+  variable: "--font-pretendard",
+});
+
 export const metadata: Metadata = {
   title: "뉴맨틀",
   description: "단어 맞히기 게임",
@@ -88,7 +95,7 @@ export default function RootLayout({
         >
         </meta>
       </head>
-      <body className={monoplexKR.variable}>
+      <body className={`${monoplexKR.variable} ${pretendard.variable}`}>
 
         <AmplitudeInitializer />
         {children}
