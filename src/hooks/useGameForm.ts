@@ -9,6 +9,7 @@ export function useGameForm(submitAction: (word: string) => Promise<{ error?: st
   const inputRef = useRef<HTMLInputElement>(null);
   const dummyInputRef = useRef<HTMLInputElement>(null);
   const focusTimeoutRef = useRef<number | null>(null);
+  const isInitialMount = useRef(true);
 
   const setFocusWithDebounce = useCallback(() => {
     if (focusTimeoutRef.current !== null) {
@@ -22,6 +23,10 @@ export function useGameForm(submitAction: (word: string) => Promise<{ error?: st
   }, []);
 
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
     setFocusWithDebounce();
   }, [inputWord, setFocusWithDebounce]);
 
