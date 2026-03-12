@@ -1,15 +1,24 @@
-import { createClient } from '@/utils/supabase/server'
-import { redirect } from 'next/navigation'
+'use client'
 
-export default async function AuthButton() {
+import { createClient } from '@/utils/supabase/client'
+import { useEffect, useState } from 'react'
+import { User } from '@supabase/supabase-js'
+
+export default function AuthButton() {
+    const [user, setUser] = useState<User | null>(null)
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
 
-    const signOut = async () => {
-        'use server'
-        const supabase = createClient()
+    useEffect(() => {
+        const fetchUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+            setUser(user)
+        }
+        fetchUser()
+    }, [supabase])
+
+    const handleSignOut = async () => {
         await supabase.auth.signOut()
-        return redirect('/')
+        window.location.reload()
     }
 
     return user ? (
@@ -17,11 +26,12 @@ export default async function AuthButton() {
             <span className="text-sm text-gray-700 font-medium">
                 {user.user_metadata?.full_name || user.email?.split('@')[0]}님
             </span>
-            <form action={signOut}>
-                <button className="text-sm px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition font-semibold">
-                    로그아웃
-                </button>
-            </form>
+            <button 
+                onClick={handleSignOut}
+                className="text-sm px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition font-semibold"
+            >
+                로그아웃
+            </button>
         </div>
     ) : (
         <a href="/login" className="text-sm px-3 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition font-semibold">
