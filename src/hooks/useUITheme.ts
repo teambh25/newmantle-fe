@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { logEvent, setUserProperty } from "@/utils/amplitude";
 
 export type UITheme = "classic" | "excel";
 
@@ -13,8 +14,10 @@ export function useUITheme() {
     const saved = localStorage.getItem(STORAGE_KEY) as UITheme | null;
     if (saved === "classic" || saved === "excel") {
       setTheme(saved);
+      setUserProperty("theme", saved);
     } else {
       setTheme("classic");
+      setUserProperty("theme", "classic");
     }
     setMounted(true);
   }, []);
@@ -26,6 +29,8 @@ export function useUITheme() {
       else next = "classic";
       
       localStorage.setItem(STORAGE_KEY, next);
+      setUserProperty("theme", next);
+      logEvent("Theme Changed", { theme: next });
       return next;
     });
   };
@@ -33,6 +38,8 @@ export function useUITheme() {
   const setThemeValue = (value: UITheme) => {
     setTheme(value);
     localStorage.setItem(STORAGE_KEY, value);
+    setUserProperty("theme", value);
+    logEvent("Theme Switched", { theme: value });
   };
 
   return { theme, toggleTheme, setTheme: setThemeValue, mounted };

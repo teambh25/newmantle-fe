@@ -12,3 +12,12 @@ export const logEvent = (
 ) => {
   amplitude.track(eventName, eventProperties);
 };
+
+export const setUserProperty = (
+  propertyName: string,
+  propertyValue: any
+) => {
+  const identify = new amplitude.Identify();
+  identify.set(propertyName, propertyValue);
+  amplitude.identify(identify);
+};
