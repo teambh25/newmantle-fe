@@ -117,12 +117,20 @@ export default function NewMantleForm() {
           correctAttempts={gameLogic.correctAttempts}
           answerSurveyVoted={gameLogic.answerSurveyVoted}
           onAnswerSurveyVote={handleAnswerSurveyVote}
-          onCopyLink={handleCopyLink}
         />
+
+        {(gameLogic.gameCompleted || gameLogic.givenUp) && (
+          <div className="w-full mb-8 text-center">
+            <p className="text-gray-700 mb-3 text-sm font-medium">친구는 나보다 빨리 맞힐까요?</p>
+            <Button onClick={handleCopyLink} className="mx-auto">
+              🥊 도전장 보내기
+            </Button>
+          </div>
+        )}
 
         {sharedAttempts !== null && (
           <CompetitiveBar
-            currentAttempts={gameLogic.attempts}
+            currentAttempts={gameLogic.solvedAttempts ?? gameLogic.correctAttempts}
             sharedAttempts={sharedAttempts}
             theme="classic"
             gameCompleted={gameLogic.gameCompleted || gameLogic.givenUp}

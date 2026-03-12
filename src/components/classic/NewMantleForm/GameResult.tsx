@@ -10,7 +10,6 @@ interface GameResultProps {
   correctAttempts: number;
   answerSurveyVoted: boolean | null;
   onAnswerSurveyVote: (isPositive: boolean) => void;
-  onCopyLink: () => void;
 }
 
 export function GameResult({
@@ -21,7 +20,6 @@ export function GameResult({
   correctAttempts,
   answerSurveyVoted,
   onAnswerSurveyVote,
-  onCopyLink,
 }: GameResultProps) {
   if (!gameCompleted && !givenUp) return null;
 
@@ -65,10 +63,6 @@ export function GameResult({
           )}
         </div>
       )}
-
-      <Button onClick={onCopyLink} className="mt-4">
-        친구에게 공유하기
-      </Button>
     </div>
   );
 }

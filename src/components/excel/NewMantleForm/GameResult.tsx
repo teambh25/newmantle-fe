@@ -9,7 +9,6 @@ interface GameResultProps {
   correctAttempts: number;
   answerSurveyVoted: boolean | null;
   onAnswerSurveyVote: (isPositive: boolean) => void;
-  onCopyLink: () => void;
 }
 
 export function GameResult({
@@ -20,7 +19,6 @@ export function GameResult({
   correctAttempts,
   answerSurveyVoted,
   onAnswerSurveyVote,
-  onCopyLink,
 }: GameResultProps) {
   if (!gameCompleted && !givenUp) return null;
 
@@ -54,8 +52,8 @@ export function GameResult({
               onClick={() => onAnswerSurveyVote(true)}
               disabled={answerSurveyVoted !== null}
               className={`flex items-center space-x-2 px-4 py-2 border text-sm font-bold transition-colors ${answerSurveyVoted === true
-                  ? "bg-[#217346] text-white border-[#217346]"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-[#f3f2f1] disabled:opacity-50"
+                ? "bg-[#217346] text-white border-[#217346]"
+                : "bg-white text-gray-700 border-gray-300 hover:bg-[#f3f2f1] disabled:opacity-50"
                 }`}
             >
               <ThumbsUp size={16} /> <span>좋았다</span>
@@ -64,8 +62,8 @@ export function GameResult({
               onClick={() => onAnswerSurveyVote(false)}
               disabled={answerSurveyVoted !== null}
               className={`flex items-center space-x-2 px-4 py-2 border text-sm font-bold transition-colors ${answerSurveyVoted === false
-                  ? "bg-red-600 text-white border-red-600"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-[#f3f2f1] disabled:opacity-50"
+                ? "bg-red-600 text-white border-red-600"
+                : "bg-white text-gray-700 border-gray-300 hover:bg-[#f3f2f1] disabled:opacity-50"
                 }`}
             >
               <ThumbsDown size={16} /> <span>별로였다</span>
@@ -78,13 +76,6 @@ export function GameResult({
           )}
         </div>
       )}
-
-      <button
-        onClick={onCopyLink}
-        className="mt-8 px-8 py-2.5 bg-[#217346] text-white text-sm font-bold hover:bg-[#1a5a37] shadow-sm transition-all active:translate-y-px border border-[#1a5a37]"
-      >
-        친구에게 공유하기
-      </button>
     </div>
   );
 }
