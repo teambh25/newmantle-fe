@@ -7,6 +7,7 @@ import {
 } from "@/utils/api";
 import { useToast } from "@/components/ui/use-toast";
 import { logEvent } from "@/utils/amplitude";
+import { triggerConfetti } from "@/utils/confetti";
 
 const STORAGE_KEY = "newmantle_game_data";
 
@@ -171,6 +172,9 @@ export function useGameState(gameDate: string, theme?: string) {
           timeSpent: (Date.now() - startTimeRef.current) / 1000,
           theme,
         });
+        if (!gameState.givenUp) {
+          triggerConfetti();
+        }
       }
 
       return {}; // success
