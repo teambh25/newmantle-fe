@@ -10,17 +10,26 @@ import { logEvent } from "@/utils/amplitude";
 import { useGameDate } from "@/hooks/useGameDate";
 import HintButton from "../HintButton";
 import GiveUpButton from "../GiveUpButton";
+import CompetitiveBar from "@/components/CompetitiveBar";
 
 export default function NewMantleForm() {
   const gameDate = useGameDate();
   const [displayDate, setDisplayDate] = useState("");
   const [showAllWords, setShowAllWords] = useState(false);
+  const [sharedAttempts, setSharedAttempts] = useState<number | null>(null);
   const { toast } = useToast();
   const gameLogic = useGameState(gameDate, "excel");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const shared = params.get("shared_attempts");
+      if (shared && !isNaN(parseInt(shared))) {
+        setSharedAttempts(parseInt(shared));
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -40,14 +49,36 @@ export default function NewMantleForm() {
     gameLogic.setAnswerSurveyVoted(isPositive);
   };
 
-  const handleCopyLink = () => {
+  const handleCopyLink = async () => {
     const baseUrl = window.location.origin;
     const utmParams = new URLSearchParams({
       utm_source: "newmantle",
       utm_medium: "share",
       utm_campaign: "game_completion",
+      shared_attempts: gameLogic.correctAttempts.toString(),
     });
     const link = `${baseUrl}?${utmParams.toString()}`;
+    const shareTitle = "뉴맨틀 게임 결과";
+    const shareText = `제가 뉴맨틀 단어를 ${gameLogic.correctAttempts}번 만에 맞혔습니다! 당신의 실력은?`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: link,
+        });
+        logEvent("Result Shared", {
+          method: "Native Share",
+          attempts: gameLogic.correctAttempts,
+          theme: "excel",
+        });
+        return;
+      } catch (err) {
+        if ((err as Error).name === "AbortError") return;
+      }
+    }
+
     navigator.clipboard.writeText(link).then(
       () => {
         toast({
@@ -72,14 +103,17 @@ export default function NewMantleForm() {
   };
 
   const showGameResult = gameLogic.gameCompleted || gameLogic.givenUp;
-  const wordTableStartIndex = showGameResult ? 3 : 2;
+  let currentIndex = 2;
+  const gameResultIndex = showGameResult ? currentIndex++ : null;
+  const competitiveBarIndex = sharedAttempts !== null ? currentIndex++ : null;
+  const wordTableStartIndex = currentIndex;
 
   return (
     <>
-      {showGameResult && (
+      {gameResultIndex !== null && (
         <div className="excel-row">
-          <div className="sheet-cell-header">2</div>
-          <div className="excel-cell col-span-4 p-0">
+          <div className="sheet-cell-header">{gameResultIndex}</div>
+          <div className="excel-cell col-span-4 p-0 border-b-0 border-[#d4d4d4]">
             <GameResult
               givenUp={gameLogic.givenUp}
               gameCompleted={gameLogic.gameCompleted}
@@ -89,6 +123,20 @@ export default function NewMantleForm() {
               answerSurveyVoted={gameLogic.answerSurveyVoted}
               onAnswerSurveyVote={handleAnswerSurveyVote}
               onCopyLink={handleCopyLink}
+            />
+          </div>
+        </div>
+      )}
+
+      {competitiveBarIndex !== null && sharedAttempts !== null && (
+        <div className="excel-row">
+          <div className="sheet-cell-header">{competitiveBarIndex}</div>
+          <div className="excel-cell col-span-4 p-0 bg-white border-[#d4d4d4]">
+            <CompetitiveBar
+              currentAttempts={gameLogic.attempts}
+              sharedAttempts={sharedAttempts}
+              theme="excel"
+              gameCompleted={gameLogic.gameCompleted || gameLogic.givenUp}
             />
           </div>
         </div>

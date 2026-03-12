@@ -10,13 +10,26 @@ import { logEvent } from "@/utils/amplitude";
 import { useGameDate } from "@/hooks/useGameDate";
 import HintButton from "../HintButton";
 import GiveUpButton from "../GiveUpButton";
+import CompetitiveBar from "@/components/CompetitiveBar";
 
 export default function NewMantleForm() {
   const gameDate = useGameDate();
   const [displayDate, setDisplayDate] = useState("");
   const [showAllWords, setShowAllWords] = useState(false);
+  const [sharedAttempts, setSharedAttempts] = useState<number | null>(null);
   const { toast } = useToast();
   const gameLogic = useGameState(gameDate, "classic");
+
+  useEffect(() => {
+    // Read shared_attempts from URL search params on mount
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const shared = params.get("shared_attempts");
+      if (shared && !isNaN(parseInt(shared))) {
+        setSharedAttempts(parseInt(shared));
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (gameDate) {
@@ -35,14 +48,41 @@ export default function NewMantleForm() {
     gameLogic.setAnswerSurveyVoted(isPositive);
   };
 
-  const handleCopyLink = () => {
+  const handleCopyLink = async () => {
     const baseUrl = window.location.origin;
     const utmParams = new URLSearchParams({
       utm_source: "newmantle",
       utm_medium: "share",
       utm_campaign: "game_completion",
+      shared_attempts: gameLogic.correctAttempts.toString(),
     });
     const link = `${baseUrl}?${utmParams.toString()}`;
+    const shareTitle = "뉴맨틀 게임 결과";
+    const shareText = `제가 뉴맨틀 단어를 ${gameLogic.correctAttempts}번 만에 맞혔습니다! 당신의 실력은?`;
+
+    // Try native share first
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: link,
+        });
+        logEvent("Result Shared", {
+          method: "Native Share",
+          attempts: gameLogic.correctAttempts,
+          theme: "classic",
+        });
+        return; // Success! No toast needed for native share.
+      } catch (err) {
+        if ((err as Error).name === "AbortError") {
+          // User cancelled the share, do nothing
+          return;
+        }
+        // Fallback to clipboard if share failed
+      }
+    }
+
     navigator.clipboard.writeText(link).then(
       () => {
         toast({
@@ -79,6 +119,15 @@ export default function NewMantleForm() {
           onAnswerSurveyVote={handleAnswerSurveyVote}
           onCopyLink={handleCopyLink}
         />
+
+        {sharedAttempts !== null && (
+          <CompetitiveBar
+            currentAttempts={gameLogic.attempts}
+            sharedAttempts={sharedAttempts}
+            theme="classic"
+            gameCompleted={gameLogic.gameCompleted || gameLogic.givenUp}
+          />
+        )}
 
         <GameForm
           submitAction={gameLogic.submitWordAction}
