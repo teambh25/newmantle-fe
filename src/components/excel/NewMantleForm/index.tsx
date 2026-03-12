@@ -59,7 +59,7 @@ export default function NewMantleForm() {
     });
     const link = `${baseUrl}?${utmParams.toString()}`;
     const shareTitle = "뉴맨틀 게임 결과";
-    const shareText = `제가 뉴맨틀 단어를 ${gameLogic.correctAttempts}번 만에 맞혔습니다! 당신의 실력은?`;
+    const shareText = `저는 오늘 뉴맨틀을 ${gameLogic.correctAttempts}트 만에 성공했습니다. 저를 이겨보세요.`;
 
     if (navigator.share) {
       try {
