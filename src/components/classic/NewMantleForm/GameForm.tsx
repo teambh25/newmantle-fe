@@ -40,7 +40,7 @@ export const GameForm: React.FC<GameFormProps> = ({
           </div>
         )}
         {currentCombo >= 2 && (
-          <div 
+          <div
             key={currentCombo}
             className="text-xs font-bold text-blue-600 whitespace-nowrap animate-in fade-in slide-in-from-bottom-2 duration-300"
           >
@@ -60,12 +60,11 @@ export const GameForm: React.FC<GameFormProps> = ({
             type="text"
             value={inputWord}
             onChange={handleInputChange}
-            placeholder={errorMessage || "단어를 입력하세요"}
-            className={`w-full pr-[80px] ${
-              isError
-                ? "border-red-500 placeholder-red-500"
+            placeholder={errorMessage || "단어 입력"}
+            className={`w-full pr-[80px] ${isError
+                ? "placeholder-red-500"
                 : "placeholder-gray-400"
-            }`}
+              }`}
             disabled={isLoading}
             ref={inputRef}
             autoComplete="off"
@@ -83,7 +82,7 @@ export const GameForm: React.FC<GameFormProps> = ({
             disabled={isLoading}
             className="w-full"
           >
-            {isLoading ? "제출 중..." : "제출"}
+            제출
           </Button>
         </div>
       </div>

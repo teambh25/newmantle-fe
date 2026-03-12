@@ -56,8 +56,10 @@ export function useGameForm(submitAction: (word: string) => Promise<{ error?: st
     const result = await submitAction(trimmedWord);
 
     if (result && result.error) {
-      setIsError(true);
-      setErrorMessage(result.error);
+      if (result.error !== "이미 제출한 단어입니다") {
+        setIsError(true);
+        setErrorMessage(result.error);
+      }
     }
     
     setInputWord("");

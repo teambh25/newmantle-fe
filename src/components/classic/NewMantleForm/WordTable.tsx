@@ -9,14 +9,16 @@ import {
 } from "@/components/ui/table";
 import Similarity from "./Similarity";
 import { SubmittedWord } from "@/utils/api";
-import { Lightbulb } from "lucide-react";
+import { Lightbulb, Loader2 } from "lucide-react";
 
 interface WordTableProps {
   words: SubmittedWord[];
   showAll: boolean;
+  pendingWord?: string | null;
+  pendingAttempt?: number;
 }
 
-const WordTable: React.FC<WordTableProps> = ({ words, showAll }) => {
+const WordTable: React.FC<WordTableProps> = ({ words, showAll, pendingWord, pendingAttempt }) => {
   const displayedWords = showAll ? words : words.slice(0, 5);
 
   const getStyle = (rank: number | null) => {
@@ -38,6 +40,22 @@ const WordTable: React.FC<WordTableProps> = ({ words, showAll }) => {
         </TableRow>
       </TableHeader>
       <TableBody>
+        {pendingWord && pendingAttempt && (
+          <TableRow className="bg-muted/50 text-gray-400">
+            <TableCell className="text-center py-2 w-12 sm:w-16">
+              {pendingAttempt}
+            </TableCell>
+            <TableCell className="text-center py-2 whitespace-nowrap overflow-hidden text-ellipsis">
+              {pendingWord}
+            </TableCell>
+            <TableCell className="text-center w-20 sm:w-24 py-2">
+              <Loader2 className="h-4 w-4 animate-spin mx-auto text-gray-400" />
+            </TableCell>
+            <TableCell className="text-center w-20 sm:w-24 py-2">
+              <Loader2 className="h-4 w-4 animate-spin mx-auto text-gray-400" />
+            </TableCell>
+          </TableRow>
+        )}
         {displayedWords.map((word, index) => (
           <TableRow
             key={index}

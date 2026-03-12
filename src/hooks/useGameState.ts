@@ -64,7 +64,6 @@ export function useGameState(gameDate: string, theme?: string) {
   const [gameState, setGameState] = useState<GameData>(getInitialGameState);
   const startTimeRef = useRef<number>(Date.now());
   const { toast } = useToast();
-  const [hintDisabled, setHintDisabled] = useState(false);
 
   useEffect(() => {
     logEvent("Game Started", { date: gameDate, theme });
@@ -86,6 +85,16 @@ export function useGameState(gameDate: string, theme?: string) {
     });
     return [firstWord, ...sortedRestWords];
   }, [gameState.submittedWords]);
+
+  const hintDisabled = useMemo(() => {
+    const topRankedWord = sortedWords.reduce((highest, current) => {
+      if (current.rank === undefined || current.rank === -1) return highest;
+      if (!highest || current.rank < highest.rank) return current;
+      return highest;
+    }, null as SubmittedWord | null);
+
+    return topRankedWord ? topRankedWord.rank <= 15 : false;
+  }, [sortedWords]);
 
   const correctAttempts = useMemo(() => {
     const correctWord = gameState.submittedWords.find((word) => word.correct);
@@ -202,9 +211,8 @@ export function useGameState(gameDate: string, theme?: string) {
     let hintRank: number;
 
     if (!topRankedWord || topRankedWord.rank === -1) {
-      hintRank = 100;
+      hintRank = 1000;
     } else if (topRankedWord.rank <= 15) {
-      setHintDisabled(true);
       return;
     } else {
       hintRank = topRankedWord.rank - 10;
