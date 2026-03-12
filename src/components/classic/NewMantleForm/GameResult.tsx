@@ -26,20 +26,20 @@ export function GameResult({
   const displaySolvedAttempts = solvedAttempts ?? correctAttempts;
 
   return (
-    <div className="w-full mb-6 p-4 bg-green-100 border border-green-500 text-green-700 rounded-md">
-      <p className="font-bold">
+    <div className="w-full mb-6 p-4 bg-green-100 border border-green-500 text-green-700 rounded-md flex flex-col items-center text-center">
+      <p className="font-bold text-center w-full">
         {givenUp ? "게임을 포기하셨습니다." : "정답을 맞혔습니다!"}
       </p>
-      <p>
+      <p className="text-center w-full">
         {givenUp
           ? `${displaySolvedAttempts}번 시도 후 포기하셨습니다.`
           : `${displaySolvedAttempts}번째 만에 맞히셨네요.`}
       </p>
-      <p>(내일은 새로운 단어로 도전할 수 있어요!)</p>
+      <p className="text-center w-full">(내일은 새로운 단어로 도전할 수 있어요!)</p>
 
       {gameCompleted && !givenUp && (
-        <div className="mt-4">
-          <p className="text-sm font-medium mb-2">오늘 정답은 어땠나요?</p>
+        <div className="mt-4 w-full">
+          <p className="text-sm font-medium mb-2 text-center w-full">오늘 정답은 어땠나요?</p>
           <div className="flex justify-center space-x-2">
             <Button
               variant={answerSurveyVoted === true ? "default" : "outline"}

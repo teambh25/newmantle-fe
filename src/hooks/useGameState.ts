@@ -101,26 +101,6 @@ export function useGameState(gameDate: string, theme?: string) {
     return correctWord?.attempt ?? gameState.attempts;
   }, [gameState.submittedWords, gameState.attempts]);
 
-  const currentCombo = useMemo(() => {
-    const chronologicalWords = [...gameState.submittedWords]
-      .filter((w) => w.attempt !== -1)
-      .sort((a, b) => a.attempt - b.attempt);
-
-    let combo = 0;
-    let prevSim = -Infinity;
-
-    for (const w of chronologicalWords) {
-      const sim = w.similarity ?? (w.correct ? 100 : 0);
-      if (sim > prevSim) {
-        combo++;
-      } else {
-        combo = 1;
-      }
-      prevSim = sim;
-    }
-    return combo >= 2 ? combo : 0;
-  }, [gameState.submittedWords]);
-
   const submitWordAction = async (word: string): Promise<{ error?: string }> => {
     try {
       const existingWordIndex = gameState.submittedWords.findIndex(
@@ -327,7 +307,6 @@ export function useGameState(gameDate: string, theme?: string) {
     attempts: gameState.attempts,
     solvedAttempts: gameState.solvedAttempts,
     correctAttempts,
-    currentCombo,
     gameCompleted: gameState.gameCompleted,
     sortedWords,
     submitWordAction,
