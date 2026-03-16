@@ -126,7 +126,7 @@ export function useGameState(gameDate: string, theme?: string) {
         gameState.attempts + 1,
         gameDate
       );
-      
+
       logEvent("Word Submitted", {
         word: word,
         attempt: gameState.attempts + 1,
@@ -138,8 +138,8 @@ export function useGameState(gameDate: string, theme?: string) {
       setGameState((prev) => {
         const isCorrect = newWord.correct;
         const alreadyCompleted = prev.gameCompleted || prev.givenUp;
-        const newSolvedAttempts = alreadyCompleted 
-          ? prev.solvedAttempts 
+        const newSolvedAttempts = alreadyCompleted
+          ? prev.solvedAttempts
           : (isCorrect ? prev.attempts + 1 : null);
 
         return {
@@ -191,7 +191,7 @@ export function useGameState(gameDate: string, theme?: string) {
     let hintRank: number;
 
     if (!topRankedWord || topRankedWord.rank === -1) {
-      hintRank = 1000;
+      hintRank = 900;
     } else if (topRankedWord.rank <= 15) {
       return;
     } else {
