@@ -6,12 +6,17 @@ import { User } from '@supabase/supabase-js'
 
 export default function AuthButton() {
     const [user, setUser] = useState<User | null>(null)
+    const [nickname, setNickname] = useState<string | null>(null)
     const supabase = createClient()
 
     useEffect(() => {
         const fetchUser = async () => {
             const { data: { user } } = await supabase.auth.getUser()
             setUser(user)
+            if (user) {
+                const { data: profile } = await supabase.from('profiles').select('nickname').eq('id', user.id).single()
+                if (profile?.nickname) setNickname(profile.nickname)
+            }
         }
         fetchUser()
     }, [supabase])
@@ -24,7 +29,7 @@ export default function AuthButton() {
     return user ? (
         <div className="flex items-center gap-3">
             <span className="text-sm text-gray-700 font-medium">
-                {user.user_metadata?.nickname || user.email?.split('@')[0]}님
+                {nickname || user.email?.split('@')[0]}님
             </span>
             <button 
                 onClick={handleSignOut}
