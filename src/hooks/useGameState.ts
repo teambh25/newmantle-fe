@@ -260,18 +260,19 @@ export function useGameState(gameDate: string, theme?: string) {
 
   const giveUp = async () => {
     try {
-      const answer = await getRecentAnswer(new Date(gameDate));
+      const answerData = await getRecentAnswer(new Date(gameDate));
       setGameState((prev) => {
         const currentAttempts = prev.attempts;
         return {
           ...prev,
           submittedWords: [
             {
-              word: answer,
+              word: answerData.word,
               similarity: 100,
               rank: 0,
               attempt: currentAttempts + 1,
               correct: true,
+              answer: answerData,
             },
             ...prev.submittedWords,
           ],
