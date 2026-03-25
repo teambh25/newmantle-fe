@@ -8,6 +8,7 @@ import { useUITheme } from "@/hooks/useUITheme";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import AuthButton from "@/components/AuthButton";
+import NicknameSetupModal from "@/components/NicknameSetupModal";
 
 // Excel Components
 import ExcelGameDescription from "@/components/excel/GameDescription";
@@ -35,6 +36,7 @@ export default function Home() {
 
   return (
     <>
+      <NicknameSetupModal />
       {isExcel ? (
         /* ──────────── 엑셀 UI ──────────── */
         <div className="flex flex-col h-screen excel-theme select-none overflow-hidden">

@@ -24,7 +24,7 @@ export default function AuthButton() {
     return user ? (
         <div className="flex items-center gap-3">
             <span className="text-sm text-gray-700 font-medium">
-                {user.user_metadata?.full_name || user.email?.split('@')[0]}님
+                {user.user_metadata?.nickname || user.email?.split('@')[0]}님
             </span>
             <button 
                 onClick={handleSignOut}
