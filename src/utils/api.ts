@@ -12,12 +12,19 @@ async function getAuthHeader(): Promise<Record<string, string>> {
   return headers;
 }
 
+export interface AnswerData {
+  word: string;
+  tag: string;
+  description: string;
+}
+
 export interface SubmittedWord {
   word: string;
   similarity: number | null;
   rank: number;
   attempt: number;
   correct: boolean;
+  answer?: AnswerData | null;
 }
 
 export interface HintResponse {
@@ -66,6 +73,7 @@ export const submitWord = async (
       rank: data.rank,
       attempt,
       correct: data.correct,
+      answer: data.correct ? data.answer : null,
     };
   } catch (error) {
     if ((error as Error).name === "AbortError") {
@@ -112,7 +120,7 @@ export const getHint = async (date: Date, rank: number): Promise<HintResponse> =
   }
 };
 
-export const getRecentAnswer = async (date: Date): Promise<string> => {
+export const getRecentAnswer = async (date: Date): Promise<AnswerData> => {
   const formattedDate = formatDate(date);
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 3000);
@@ -120,48 +128,29 @@ export const getRecentAnswer = async (date: Date): Promise<string> => {
   try {
     const authHeader = await getAuthHeader();
     const response = await fetch(
-      `${API_BASE_URL}/quizzes/${formattedDate}/recent-answer`,
+      `${API_BASE_URL}/v2/quizzes/${formattedDate}/give-up`,
       {
         signal: controller.signal,
         headers: { ...authHeader }
       }
     );
     clearTimeout(timeoutId);
-    if (response.status === 400) {
+    if (response.status === 404) {
       throw new Error("Quiz not found for this date");
     }
     if (response.status === 422) {
-      throw new Error("Invalid date format");
+      throw new Error("Future date or invalid format");
     }
     if (!response.ok) {
       throw new Error("API request failed");
     }
 
-    // Prefer text response; fallback to JSON string if provided.
-    const contentType = response.headers.get("content-type") || "";
-    if (contentType.includes("application/json")) {
-      const data = await response.json();
-      // If API returns a raw JSON string (e.g., "정답"), handle both string and {answer}
-      if (typeof data === "string") {
-        return JSON.parse(`"${data}"`);
-      }
-      if (typeof data?.answer === "string") {
-        return JSON.parse(`"${data.answer}"`);
-      }
-      throw new Error("Unexpected response format");
-    }
-
-    const text = await response.text();
-    // Try to decode any escaped unicode inside quotes, else return as-is
-    const trimmed = text.trim();
-    if ((trimmed.startsWith("\"") && trimmed.endsWith("\"")) || trimmed.includes("\\u")) {
-      try {
-        return JSON.parse(trimmed);
-      } catch {
-        // ignore and return raw text
-      }
-    }
-    return trimmed;
+    const data = await response.json();
+    return {
+      word: data.word,
+      tag: data.tag,
+      description: data.description,
+    };
   } catch (error) {
     if ((error as Error).name === "AbortError") {
       throw new Error("Request timeout");
