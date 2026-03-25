@@ -20,9 +20,10 @@ export default function NicknameSetupModal() {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.user) {
-        if (!session.user.user_metadata?.nickname) {
+        setUserContext(session.user)
+        const { data: profile } = await supabase.from('profiles').select('nickname').eq('id', session.user.id).single()
+        if (!profile?.nickname) {
           setIsOpen(true)
-          setUserContext(session.user)
         }
       }
     }
@@ -66,9 +67,7 @@ export default function NicknameSetupModal() {
       return
     }
 
-    // 2. Update user_metadata
-    await supabase.auth.updateUser({ data: { nickname } })
-
+    // Update complete
     setIsOpen(false)
     window.location.reload()
   }
