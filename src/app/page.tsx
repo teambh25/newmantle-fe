@@ -9,6 +9,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import AuthButton from "@/components/AuthButton";
 import NicknameSetupModal from "@/components/NicknameSetupModal";
+import { BarChart3 } from "lucide-react";
 
 // Excel Components
 import ExcelGameDescription from "@/components/excel/GameDescription";
@@ -59,6 +60,13 @@ export default function Home() {
              </div>
              <div className="flex items-center space-x-4">
                <AuthButton />
+               <Link 
+                 href="/stats" 
+                 className="w-8 h-8 flex items-center justify-center border border-gray-300 bg-[#f3f2f1] text-[#217346] hover:bg-[#e1dfdd] rounded-sm transition-all" 
+                 title="통계"
+               >
+                 <BarChart3 size={20} />
+               </Link>
                <SettingsButton theme={theme} onThemeChange={setTheme} variant="excel" />
              </div>
           </header>
@@ -170,6 +178,13 @@ export default function Home() {
               </Link>
               <div className="flex items-center space-x-4">
                 <AuthButton />
+                <Link 
+                  href="/stats" 
+                  className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all" 
+                  title="통계"
+                >
+                  <BarChart3 size={20} />
+                </Link>
                 <SettingsButton theme={theme} onThemeChange={setTheme} variant="classic" />
               </div>
             </div>

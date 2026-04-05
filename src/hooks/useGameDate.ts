@@ -5,7 +5,10 @@ export function useGameDate() {
   const [gameDate, setGameDate] = useState<string>("");
 
   useEffect(() => {
-    setGameDate(formatDate(new Date()));
+    // 테스트용으로 어제 날짜 반환
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    setGameDate(formatDate(yesterday));
   }, []);
 
   return gameDate;

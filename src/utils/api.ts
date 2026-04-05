@@ -54,7 +54,7 @@ export const submitWord = async (
     );
     clearTimeout(timeoutId);
     if (response.status === 404) {
-      throw new Error("Date or word not found");
+      throw new Error("Invalid guess request");
     }
     if (response.status === 422) {
       throw new Error("Invalid date format");
@@ -91,15 +91,15 @@ export const getHint = async (date: Date, rank: number): Promise<HintResponse> =
   try {
     const authHeader = await getAuthHeader();
     const response = await fetch(
-      `${API_BASE_URL}/quizzes/${formattedDate}/hint/${rank}`,
+      `${API_BASE_URL}/v2/quizzes/${formattedDate}/hint/${rank}`,
       {
         signal: controller.signal,
         headers: { ...authHeader }
       }
     );
     clearTimeout(timeoutId);
-    if (response.status === 400) {
-      throw new Error("Quiz not found for this date");
+    if (response.status === 404) {
+      throw new Error("Invalid hint request");
     }
     if (response.status === 422) {
       throw new Error("Invalid date format or rank");
@@ -158,3 +158,35 @@ export const getRecentAnswer = async (date: Date): Promise<AnswerData> => {
     throw error;
   }
 };
+
+import { StatOverviewResp } from "../types/stats";
+
+export const fetchStatsOverview = async (startDate: string, endDate: string): Promise<StatOverviewResp> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    const authHeader = await getAuthHeader();
+    const response = await fetch(
+      `${API_BASE_URL}/v2/stats?start_date=${startDate}&end_date=${endDate}`,
+      {
+        signal: controller.signal,
+        headers: { ...authHeader }
+      }
+    );
+    clearTimeout(timeoutId);
+    if (response.status === 401) {
+      throw new Error("Authentication failed");
+    }
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    if ((error as Error).name === "AbortError") {
+      throw new Error("Request timeout");
+    }
+    throw error;
+  }
+};
+
