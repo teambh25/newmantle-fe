@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import AmplitudeInitializer from "@/components/AmplitudeInitializer";
+import ReactQueryProvider from "@/components/providers/ReactQueryProvider";
 
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -96,10 +97,11 @@ export default function RootLayout({
         </meta>
       </head>
       <body className={`${monoplexKR.variable} ${pretendard.variable}`}>
-
-        <AmplitudeInitializer />
-        {children}
-        <Toaster />
+        <ReactQueryProvider>
+          <AmplitudeInitializer />
+          {children}
+          <Toaster />
+        </ReactQueryProvider>
       </body>
     </html>
   );

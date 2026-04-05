@@ -28,7 +28,7 @@ export default function NicknameSetupModal() {
       }
     }
     checkUser()
-  }, [supabase.auth])
+  }, [supabase])
 
   useEffect(() => {
     if (!nickname) {
