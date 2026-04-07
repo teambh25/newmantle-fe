@@ -6,6 +6,10 @@ export default function LoginPage() {
     const supabase = createClient()
 
     const handleGoogleLogin = async () => {
+        const guestId = localStorage.getItem('newmantle_guest_id');
+        if (guestId) {
+            localStorage.setItem('newmantle_pending_link', '1');
+        }
         await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {

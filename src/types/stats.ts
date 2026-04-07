@@ -18,3 +18,9 @@ export interface StatOverviewResp {
   summary: StatSummary;
 }
 
+export interface SharerStats {
+  date: string;
+  status: CalendarStatus;
+  guess_count: number;
+  hint_count: number;
+}
