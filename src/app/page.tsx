@@ -5,6 +5,7 @@ import ClassicFooter from "@/components/classic/Footer";
 import HelpSection from "@/components/HelpSection";
 import { SettingsButton } from "@/components/SettingsButton";
 import { useUITheme } from "@/hooks/useUITheme";
+import { useGuestLink } from "@/hooks/useGuestLink";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import AuthButton from "@/components/AuthButton";
@@ -27,6 +28,7 @@ const ExcelNewMantleForm = dynamic(() => import("@/components/excel/NewMantleFor
 
 export default function Home() {
   const { theme, setTheme, mounted } = useUITheme();
+  useGuestLink();
 
   // hydration 전(localStorage 읽기 전)에는 아무것도 렌더링하지 않아 디자인 깜빡임(FOUC) 방지
   if (!mounted) {

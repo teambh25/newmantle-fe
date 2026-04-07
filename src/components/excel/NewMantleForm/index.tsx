@@ -11,12 +11,16 @@ import { useGameDate } from "@/hooks/useGameDate";
 import HintButton from "../HintButton";
 import GiveUpButton from "../GiveUpButton";
 import CompetitiveBar from "@/components/CompetitiveBar";
+import { fetchSharerStats } from "@/utils/api";
+import { createClient } from "@/utils/supabase/client";
 
 export default function NewMantleForm() {
   const gameDate = useGameDate();
   const [displayDate, setDisplayDate] = useState("");
   const [showAllWords, setShowAllWords] = useState(false);
   const [sharedAttempts, setSharedAttempts] = useState<number | null>(null);
+  const [sharerHintCount, setSharerHintCount] = useState<number | null>(null);
+  const [isLoadingSharerStats, setIsLoadingSharerStats] = useState(false);
   const [pendingWord, setPendingWord] = useState<string | null>(null);
   const { toast } = useToast();
   const gameLogic = useGameState(gameDate, "excel");
@@ -40,6 +44,22 @@ export default function NewMantleForm() {
       if (shared && !isNaN(parseInt(shared))) {
         setSharedAttempts(parseInt(shared));
       }
+
+      const sharerType = params.get("sharer_type") as "guest" | "user" | null;
+      const sharerId = params.get("sharer_id");
+      const fetchDate = sharedDate ?? gameDate;
+      if (sharerType && sharerId && fetchDate) {
+        setIsLoadingSharerStats(true);
+        fetchSharerStats(sharerType, sharerId, fetchDate)
+          .then((stats) => setSharerHintCount(stats.hint_count))
+          .catch(() => {})
+          .finally(() => setIsLoadingSharerStats(false));
+      }
+
+      // 파라미터를 읽은 후 URL을 클린하게 정리
+      if (params.has("shared_attempts") || params.has("sharer_id")) {
+        history.replaceState(null, "", window.location.pathname);
+      }
     }
   }, [gameDate]);
 
@@ -62,12 +82,25 @@ export default function NewMantleForm() {
 
   const handleCopyLink = async () => {
     const baseUrl = window.location.origin;
+
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    let sharerId: string | null = null;
+    let sharerType: "guest" | "user" = "guest";
+    if (session?.user?.id) {
+      sharerId = session.user.id;
+      sharerType = "user";
+    } else {
+      sharerId = localStorage.getItem('newmantle_guest_id');
+    }
+
     const utmParams = new URLSearchParams({
       utm_source: "newmantle",
       utm_medium: "share",
       utm_campaign: "game_completion",
       shared_attempts: gameLogic.correctAttempts.toString(),
       game_date: gameDate,
+      ...(sharerId ? { sharer_type: sharerType, sharer_id: sharerId } : {}),
     });
     const link = `${baseUrl}?${utmParams.toString()}`;
 
@@ -160,6 +193,8 @@ export default function NewMantleForm() {
             <CompetitiveBar
               currentAttempts={gameLogic.solvedAttempts ?? gameLogic.correctAttempts}
               sharedAttempts={sharedAttempts}
+              sharedHintCount={sharerHintCount}
+              isLoadingSharerStats={isLoadingSharerStats}
               theme="excel"
               gameCompleted={gameLogic.gameCompleted || gameLogic.givenUp}
             />

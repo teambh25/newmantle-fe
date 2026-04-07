@@ -5,11 +5,20 @@ async function getAuthHeader(): Promise<Record<string, string>> {
   const supabase = createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
-  const headers: Record<string, string> = {};
   if (session?.access_token) {
-    headers['Authorization'] = `Bearer ${session.access_token}`;
+    return { 'Authorization': `Bearer ${session.access_token}` };
   }
-  return headers;
+
+  if (typeof window !== 'undefined') {
+    let guestId = localStorage.getItem('newmantle_guest_id');
+    if (!guestId) {
+      guestId = crypto.randomUUID();
+      localStorage.setItem('newmantle_guest_id', guestId);
+    }
+    return { 'X-Guest-Id': guestId };
+  }
+
+  return {};
 }
 
 export interface AnswerData {
@@ -159,7 +168,41 @@ export const getRecentAnswer = async (date: Date): Promise<AnswerData> => {
   }
 };
 
-import { StatOverviewResp } from "../types/stats";
+import { StatOverviewResp, SharerStats } from "../types/stats";
+
+export const linkGuestStats = async (guestId: string): Promise<void> => {
+  const authHeader = await getAuthHeader();
+  const response = await fetch(`${API_BASE_URL}/v2/stats/link`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeader },
+    body: JSON.stringify({ guest_id: guestId }),
+  });
+  if (!response.ok && response.status !== 204) {
+    throw new Error(`link failed: ${response.status}`);
+  }
+};
+
+export const fetchSharerStats = async (
+  sharerType: "guest" | "user",
+  sharerId: string,
+  date: string
+): Promise<SharerStats> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3000);
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/v2/stats/${sharerType}/${sharerId}/${date}`,
+      { signal: controller.signal }
+    );
+    clearTimeout(timeoutId);
+    if (response.status === 404) throw new Error("STATS_NOT_FOUND");
+    if (!response.ok) throw new Error(`fetchSharerStats failed: ${response.status}`);
+    return await response.json() as SharerStats;
+  } catch (error) {
+    if ((error as Error).name === "AbortError") throw new Error("Request timeout");
+    throw error;
+  }
+};
 
 export const fetchStatsOverview = async (startDate: string, endDate: string): Promise<StatOverviewResp> => {
   const controller = new AbortController();
