@@ -26,7 +26,7 @@ const Footer: React.FC = () => {
         </div>
         <Separator className="my-4" />
         <p className="text-center text-sm text-gray-500">
-          © 2024 뉴맨틀. All rights reserved.
+          © 2026 뉴맨틀. All rights reserved.
         </p>
       </div>
     </footer>
