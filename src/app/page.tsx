@@ -5,8 +5,12 @@ import ClassicFooter from "@/components/classic/Footer";
 import HelpSection from "@/components/HelpSection";
 import { SettingsButton } from "@/components/SettingsButton";
 import { useUITheme } from "@/hooks/useUITheme";
+import { useGuestLink } from "@/hooks/useGuestLink";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import AuthButton from "@/components/AuthButton";
+import NicknameSetupModal from "@/components/NicknameSetupModal";
+import { BarChart3 } from "lucide-react";
 
 // Excel Components
 import ExcelGameDescription from "@/components/excel/GameDescription";
@@ -24,6 +28,7 @@ const ExcelNewMantleForm = dynamic(() => import("@/components/excel/NewMantleFor
 
 export default function Home() {
   const { theme, setTheme, mounted } = useUITheme();
+  useGuestLink();
 
   // hydration 전(localStorage 읽기 전)에는 아무것도 렌더링하지 않아 디자인 깜빡임(FOUC) 방지
   if (!mounted) {
@@ -34,6 +39,7 @@ export default function Home() {
 
   return (
     <>
+      <NicknameSetupModal />
       {isExcel ? (
         /* ──────────── 엑셀 UI ──────────── */
         <div className="flex flex-col h-screen excel-theme select-none overflow-hidden">
@@ -54,7 +60,17 @@ export default function Home() {
                  <span className="cursor-pointer hover:opacity-100">View</span>
                </nav>
              </div>
-             <SettingsButton theme={theme} onThemeChange={setTheme} variant="excel" />
+             <div className="flex items-center space-x-4">
+               <AuthButton />
+               <Link 
+                 href="/stats" 
+                 className="w-8 h-8 flex items-center justify-center border border-gray-300 bg-[#f3f2f1] text-[#217346] hover:bg-[#e1dfdd] rounded-sm transition-all" 
+                 title="통계"
+               >
+                 <BarChart3 size={20} />
+               </Link>
+               <SettingsButton theme={theme} onThemeChange={setTheme} variant="excel" />
+             </div>
           </header>
 
           {/* Quick Access / Ribbon Content Placeholder */}
@@ -148,8 +164,6 @@ export default function Home() {
               게임
             </div>
           </div>
-          
-
         </div>
       ) : (
         /* ──────────── 클래식 UI ──────────── */
@@ -164,7 +178,17 @@ export default function Home() {
                   단어 추측 게임
                 </p>
               </Link>
-              <SettingsButton theme={theme} onThemeChange={setTheme} variant="classic" />
+              <div className="flex items-center space-x-4">
+                <AuthButton />
+                <Link 
+                  href="/stats" 
+                  className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all" 
+                  title="통계"
+                >
+                  <BarChart3 size={20} />
+                </Link>
+                <SettingsButton theme={theme} onThemeChange={setTheme} variant="classic" />
+              </div>
             </div>
             <div className="w-full max-w-2xl space-y-16 flex-grow flex flex-col pb-16">
               <ClassicNewMantleForm />

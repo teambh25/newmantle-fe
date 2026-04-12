@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 interface CompetitiveBarProps {
   currentAttempts: number;
   sharedAttempts: number;
+  sharedHintCount: number | null;
+  isLoadingSharerStats: boolean;
   theme: "classic" | "excel";
   gameCompleted: boolean;
 }
@@ -11,6 +13,8 @@ interface CompetitiveBarProps {
 export default function CompetitiveBar({
   currentAttempts,
   sharedAttempts,
+  sharedHintCount,
+  isLoadingSharerStats,
   theme,
   gameCompleted,
 }: CompetitiveBarProps) {
@@ -65,6 +69,11 @@ export default function CompetitiveBar({
               }`}
             />
           </div>
+          {isLoadingSharerStats ? (
+            <div className="text-[11px] text-gray-400 text-right animate-pulse">기록 불러오는 중...</div>
+          ) : sharedHintCount !== null ? (
+            <div className="text-[11px] text-[#444] text-right">친구 힌트 {sharedHintCount}회 사용</div>
+          ) : null}
         </div>
       </div>
     );
@@ -109,7 +118,12 @@ export default function CompetitiveBar({
           style={{ transformOrigin: "left" }}
         />
       </div>
-      
+      {isLoadingSharerStats ? (
+        <div className="text-xs text-gray-400 text-right animate-pulse">기록 불러오는 중...</div>
+      ) : sharedHintCount !== null ? (
+        <div className="text-xs text-gray-400 text-right">친구 힌트 {sharedHintCount}회 사용</div>
+      ) : null}
+
     </div>
   );
 }

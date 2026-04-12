@@ -1,4 +1,31 @@
 import { formatDate } from "./date";
+import { createClient } from '@/utils/supabase/client';
+
+async function getAuthHeader(): Promise<Record<string, string>> {
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (session?.access_token) {
+    return { 'Authorization': `Bearer ${session.access_token}` };
+  }
+
+  if (typeof window !== 'undefined') {
+    let guestId = localStorage.getItem('newmantle_guest_id');
+    if (!guestId) {
+      guestId = crypto.randomUUID();
+      localStorage.setItem('newmantle_guest_id', guestId);
+    }
+    return { 'X-Guest-Id': guestId };
+  }
+
+  return {};
+}
+
+export interface AnswerData {
+  word: string;
+  tag: string;
+  description: string;
+}
 
 export interface SubmittedWord {
   word: string;
@@ -6,6 +33,7 @@ export interface SubmittedWord {
   rank: number;
   attempt: number;
   correct: boolean;
+  answer?: AnswerData | null;
 }
 
 export interface HintResponse {
@@ -25,27 +53,36 @@ export const submitWord = async (
   const timeoutId = setTimeout(() => controller.abort(), 3000);
 
   try {
+    const authHeader = await getAuthHeader();
     const response = await fetch(
-      `${API_BASE_URL}/quizzes/${gameDate}/guess/${encodedWord}`,
-      { signal: controller.signal }
+      `${API_BASE_URL}/v2/quizzes/${gameDate}/guess/${encodedWord}`,
+      {
+        signal: controller.signal,
+        headers: { ...authHeader }
+      }
     );
     clearTimeout(timeoutId);
-    if (response.status === 400) {
-      throw new Error("Invalid word");
+    if (response.status === 404) {
+      throw new Error("Invalid guess request");
     }
     if (response.status === 422) {
       throw new Error("Invalid date format");
+    }
+    if (response.status === 500) {
+      throw new Error("Server error");
     }
     if (!response.ok) {
       throw new Error("API request failed");
     }
     const data = await response.json();
+
     return {
       word,
-      similarity: data.correct ? null : data.score,
+      similarity: data.score,
       rank: data.rank,
       attempt,
       correct: data.correct,
+      answer: data.correct ? data.answer : null,
     };
   } catch (error) {
     if ((error as Error).name === "AbortError") {
@@ -61,13 +98,17 @@ export const getHint = async (date: Date, rank: number): Promise<HintResponse> =
   const timeoutId = setTimeout(() => controller.abort(), 3000);
 
   try {
+    const authHeader = await getAuthHeader();
     const response = await fetch(
-      `${API_BASE_URL}/quizzes/${formattedDate}/hint/${rank}`,
-      { signal: controller.signal }
+      `${API_BASE_URL}/v2/quizzes/${formattedDate}/hint/${rank}`,
+      {
+        signal: controller.signal,
+        headers: { ...authHeader }
+      }
     );
     clearTimeout(timeoutId);
-    if (response.status === 400) {
-      throw new Error("Quiz not found for this date");
+    if (response.status === 404) {
+      throw new Error("Invalid hint request");
     }
     if (response.status === 422) {
       throw new Error("Invalid date format or rank");
@@ -88,52 +129,37 @@ export const getHint = async (date: Date, rank: number): Promise<HintResponse> =
   }
 };
 
-export const getRecentAnswer = async (date: Date): Promise<string> => {
+export const getRecentAnswer = async (date: Date): Promise<AnswerData> => {
   const formattedDate = formatDate(date);
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 3000);
 
   try {
+    const authHeader = await getAuthHeader();
     const response = await fetch(
-      `${API_BASE_URL}/quizzes/${formattedDate}/recent-answer`,
-      { signal: controller.signal }
+      `${API_BASE_URL}/v2/quizzes/${formattedDate}/give-up`,
+      {
+        signal: controller.signal,
+        headers: { ...authHeader }
+      }
     );
     clearTimeout(timeoutId);
-    if (response.status === 400) {
+    if (response.status === 404) {
       throw new Error("Quiz not found for this date");
     }
     if (response.status === 422) {
-      throw new Error("Invalid date format");
+      throw new Error("Future date or invalid format");
     }
     if (!response.ok) {
       throw new Error("API request failed");
     }
 
-    // Prefer text response; fallback to JSON string if provided.
-    const contentType = response.headers.get("content-type") || "";
-    if (contentType.includes("application/json")) {
-      const data = await response.json();
-      // If API returns a raw JSON string (e.g., "정답"), handle both string and {answer}
-      if (typeof data === "string") {
-        return JSON.parse(`"${data}"`);
-      }
-      if (typeof data?.answer === "string") {
-        return JSON.parse(`"${data.answer}"`);
-      }
-      throw new Error("Unexpected response format");
-    }
-
-    const text = await response.text();
-    // Try to decode any escaped unicode inside quotes, else return as-is
-    const trimmed = text.trim();
-    if ((trimmed.startsWith("\"") && trimmed.endsWith("\"")) || trimmed.includes("\\u")) {
-      try {
-        return JSON.parse(trimmed);
-      } catch {
-        // ignore and return raw text
-      }
-    }
-    return trimmed;
+    const data = await response.json();
+    return {
+      word: data.word,
+      tag: data.tag,
+      description: data.description,
+    };
   } catch (error) {
     if ((error as Error).name === "AbortError") {
       throw new Error("Request timeout");
@@ -141,3 +167,69 @@ export const getRecentAnswer = async (date: Date): Promise<string> => {
     throw error;
   }
 };
+
+import { StatOverviewResp, SharerStats } from "../types/stats";
+
+export const linkGuestStats = async (guestId: string): Promise<void> => {
+  const authHeader = await getAuthHeader();
+  const response = await fetch(`${API_BASE_URL}/v2/stats/link`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeader },
+    body: JSON.stringify({ guest_id: guestId }),
+  });
+  if (!response.ok && response.status !== 204) {
+    throw new Error(`link failed: ${response.status}`);
+  }
+};
+
+export const fetchSharerStats = async (
+  sharerType: "guest" | "user",
+  sharerId: string,
+  date: string
+): Promise<SharerStats> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3000);
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/v2/stats/${sharerType}/${sharerId}/${date}`,
+      { signal: controller.signal }
+    );
+    clearTimeout(timeoutId);
+    if (response.status === 404) throw new Error("STATS_NOT_FOUND");
+    if (!response.ok) throw new Error(`fetchSharerStats failed: ${response.status}`);
+    return await response.json() as SharerStats;
+  } catch (error) {
+    if ((error as Error).name === "AbortError") throw new Error("Request timeout");
+    throw error;
+  }
+};
+
+export const fetchStatsOverview = async (startDate: string, endDate: string): Promise<StatOverviewResp> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    const authHeader = await getAuthHeader();
+    const response = await fetch(
+      `${API_BASE_URL}/v2/stats?start_date=${startDate}&end_date=${endDate}`,
+      {
+        signal: controller.signal,
+        headers: { ...authHeader }
+      }
+    );
+    clearTimeout(timeoutId);
+    if (response.status === 401) {
+      throw new Error("Authentication failed");
+    }
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    if ((error as Error).name === "AbortError") {
+      throw new Error("Request timeout");
+    }
+    throw error;
+  }
+};
+

@@ -169,7 +169,7 @@ export function useGameState(gameDate: string, theme?: string) {
       return {}; // success
     } catch (error) {
       if (error instanceof Error) {
-        if (error.message === "Invalid word") {
+        if (error.message === "Invalid guess request") {
           return { error: "없는 단어입니다" };
         } else if (error.message === "Invalid date format") {
           return { error: "잘못된 날짜 형식입니다" };
@@ -195,7 +195,7 @@ export function useGameState(gameDate: string, theme?: string) {
     } else if (topRankedWord.rank <= 15) {
       return;
     } else {
-      hintRank = topRankedWord.rank - 10;
+      hintRank = topRankedWord.rank - 100;
     }
 
     try {
@@ -260,18 +260,19 @@ export function useGameState(gameDate: string, theme?: string) {
 
   const giveUp = async () => {
     try {
-      const answer = await getRecentAnswer(new Date(gameDate));
+      const answerData = await getRecentAnswer(new Date(gameDate));
       setGameState((prev) => {
         const currentAttempts = prev.attempts;
         return {
           ...prev,
           submittedWords: [
             {
-              word: answer,
+              word: answerData.word,
               similarity: 100,
               rank: 0,
               attempt: currentAttempts + 1,
               correct: true,
+              answer: answerData,
             },
             ...prev.submittedWords,
           ],
