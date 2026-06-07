@@ -93,7 +93,7 @@ export function useGameState(gameDate: string, theme?: string) {
       return highest;
     }, null as SubmittedWord | null);
 
-    return topRankedWord ? topRankedWord.rank <= 15 : false;
+    return topRankedWord ? topRankedWord.rank <= 20 : false;
   }, [sortedWords]);
 
   const correctAttempts = useMemo(() => {
@@ -192,10 +192,9 @@ export function useGameState(gameDate: string, theme?: string) {
 
     if (!topRankedWord || topRankedWord.rank === -1) {
       hintRank = 900;
-    } else if (topRankedWord.rank <= 15) {
-      return;
     } else {
-      hintRank = topRankedWord.rank - 100;
+      const subtract = topRankedWord.rank > 100 ? 100 : 20;
+      hintRank = Math.max(20, topRankedWord.rank - subtract);
     }
 
     try {
