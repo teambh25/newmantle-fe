@@ -11,6 +11,14 @@ import { triggerConfetti } from "@/utils/confetti";
 
 const STORAGE_KEY = "newmantle_game_data";
 
+function getTopRankedWord(words: SubmittedWord[]): SubmittedWord | null {
+  return words.reduce((highest, current) => {
+    if (current.rank === undefined || current.rank <= 0) return highest;
+    if (!highest || current.rank < highest.rank) return current;
+    return highest;
+  }, null as SubmittedWord | null);
+}
+
 export interface GameData {
   submittedWords: SubmittedWord[];
   attempts: number;
@@ -87,12 +95,7 @@ export function useGameState(gameDate: string, theme?: string) {
   }, [gameState.submittedWords]);
 
   const hintDisabled = useMemo(() => {
-    const topRankedWord = sortedWords.reduce((highest, current) => {
-      if (current.rank === undefined || current.rank === -1) return highest;
-      if (!highest || current.rank < highest.rank) return current;
-      return highest;
-    }, null as SubmittedWord | null);
-
+    const topRankedWord = getTopRankedWord(sortedWords);
     return topRankedWord ? topRankedWord.rank <= 20 : false;
   }, [sortedWords]);
 
@@ -182,11 +185,7 @@ export function useGameState(gameDate: string, theme?: string) {
   const requestHint = async () => {
     if (hintDisabled) return;
 
-    const topRankedWord = sortedWords.reduce((highest, current) => {
-      if (current.rank === undefined || current.rank === -1) return highest;
-      if (!highest || current.rank < highest.rank) return current;
-      return highest;
-    }, null as SubmittedWord | null);
+    const topRankedWord = getTopRankedWord(sortedWords);
 
     let hintRank: number;
 
