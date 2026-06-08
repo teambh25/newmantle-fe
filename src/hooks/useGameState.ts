@@ -190,7 +190,7 @@ export function useGameState(gameDate: string, theme?: string) {
 
     let hintRank: number;
 
-    if (!topRankedWord || topRankedWord.rank === -1) {
+    if (!topRankedWord) {
       hintRank = 900;
     } else {
       const subtract = topRankedWord.rank > 100 ? 100 : 20;
