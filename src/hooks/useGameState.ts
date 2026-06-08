@@ -5,6 +5,7 @@ import {
   getHint,
   getRecentAnswer,
 } from "@/utils/api";
+import { formatDate } from "@/utils/date";
 import { useToast } from "@/components/ui/use-toast";
 import { logEvent } from "@/utils/amplitude";
 import { triggerConfetti } from "@/utils/confetti";
@@ -38,7 +39,7 @@ function getInitialGameState(): GameData {
       attempts: 0,
       solvedAttempts: null,
       gameCompleted: false,
-      lastPlayedDate: new Date().toDateString(),
+      lastPlayedDate: formatDate(new Date()),
       hintUsed: 0,
       givenUp: false,
       initialConsonantHintUsed: false,
@@ -49,7 +50,7 @@ function getInitialGameState(): GameData {
   const storedData = localStorage.getItem(STORAGE_KEY);
   if (storedData) {
     const parsedData: GameData = JSON.parse(storedData);
-    const today = new Date().toDateString();
+    const today = formatDate(new Date());
     if (parsedData.lastPlayedDate === today) {
       return parsedData;
     }
@@ -60,7 +61,7 @@ function getInitialGameState(): GameData {
     attempts: 0,
     solvedAttempts: null,
     gameCompleted: false,
-    lastPlayedDate: new Date().toDateString(),
+    lastPlayedDate: formatDate(new Date()),
     hintUsed: 0,
     givenUp: false,
     initialConsonantHintUsed: false,
