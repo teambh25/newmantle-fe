@@ -2,7 +2,7 @@
 
 ## Context
 
-- `docs/spec/hint-giveup.md`(이하 spec)의 **변경사항** 열을 코드에 반영한다
+- `docs/spec/hint-giveup.md`(이하 spec)의 **규칙** 열을 코드에 반영한다
 - 검증은 `docs/tasks/hint-giveup-fix/verification.md`(이하 verification)가 맡는다. verification은 기능 기준으로만 적혀 있고 함수·상태 이름은 정하지 않으므로, 테스트 코드는 아래 이름을 기준으로 쓴다
 - 기준 코드: `bugfix` 브랜치 미커밋 상태 (`useGameState.ts`에 `getTopRankedWord`, `getNextHintRank`, 상수가 이미 들어가 있음)
 
