@@ -44,7 +44,7 @@ export function isHintDisabled(topRank: number | null): boolean
 **일반 힌트 (A, D-2, D-3)**
 - `hintDisabled = isHintDisabled(getTopRank(words))`
 - `requestHint`: `hintRank = getNextHintRank(getTopRank(words))`
-- 힌트 단어 중복 방지(`findWordIndex`/`moveWordToTop`) 제거 → 그대로 앞에 추가 (`docs/tasks/bug.md` 6번에서 정한 것)
+- 힌트 단어 중복 방지(`findWordIndex`/`moveWordToTop`) 제거 → 그대로 앞에 추가 (`problem.md` P-5에서 정한 것)
 - 잠금: `hintPendingRef`(useRef)로 즉시 막고, UI용으로 `hintPending` state를 같이 둔다. `try/finally`로 해제
   - state만 쓰면 같은 틱 안에서 두 번 호출될 때 막지 못함 (렌더 전 클로저가 이전 값을 봄). 테스트도 `requestHint()`를 연달아 부르는 방식이라 ref가 필요
 
