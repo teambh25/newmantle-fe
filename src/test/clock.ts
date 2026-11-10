@@ -3,6 +3,8 @@ import { afterEach, vi } from "vitest";
 
 export const KST_AFTERNOON = "2026-11-10T05:00:00Z"; // KST 11/10 14:00, LA 11/9 21:00
 export const SAME_DAY = "2026-11-10T10:00:00Z"; // KST 11/10 19:00, LA 11/10 02:00
+export const KST_BEFORE_MIDNIGHT = "2026-11-10T14:59:59Z"; // KST 11/10 23:59:59, LA 11/10 06:59:59
+export const KST_MIDNIGHT = "2026-11-10T15:00:00Z"; // KST 11/11 00:00, LA 11/10 07:00
 
 const originalTZ = process.env.TZ;
 

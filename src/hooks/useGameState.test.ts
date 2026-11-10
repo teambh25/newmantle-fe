@@ -36,6 +36,16 @@ describe("A. 일반 힌트", () => {
     expect(h.game.hintDisabled).toBe(true);
   });
 
+  it("A-5-2: 300 → 50 → 120 → 순위 밖 순서로 입력 후 힌트 → 38위 (최고 순위는 가장 작은 순위 숫자)", async () => {
+    const h = renderGame();
+    await h.submit(presets.nextWord(), 300);
+    await h.submit(presets.nextWord(), 50);
+    await h.submit(presets.nextWord(), 120);
+    await h.submit(presets.nextWord(), -1);
+    await h.hint();
+    expect(gameServer.normalHintRanks()).toEqual([38]);
+  });
+
   it("A-6-1: 최고 순위 20이면 힌트 요청해도 서버에 요청하지 않음", async () => {
     const h = renderGame();
     await presets.TOP(h, 20);
@@ -130,6 +140,21 @@ describe("C. 포기", () => {
     expect(h.game.solvedAttempts).toBe(0);
     expect(h.game.correctAttempts).toBe(0);
     expect(correctRows(h)[0].attempt).toBe(0);
+  });
+
+  it("C-4-5: 입력 3개 + 일반 힌트 2회 + 초성 힌트 후 포기 → 기록·정답 행·Game Given Up 모두 3 (힌트는 세지 않음)", async () => {
+    const h = renderGame();
+    for (let i = 0; i < 3; i++) await h.submit(presets.nextWord(), -1);
+    await h.hint();
+    await h.hint();
+    await h.consonant();
+    await h.giveUp();
+    expect(h.game.solvedAttempts).toBe(3);
+    expect(h.game.correctAttempts).toBe(3);
+    expect(correctRows(h)[0].attempt).toBe(3);
+    expect(amplitudeEvents("Game Given Up")).toEqual([
+      expect.objectContaining({ attempts: 3 }),
+    ]);
   });
 
   it("C-5-1: 포기 후 단어 2개 더 제출 → 목록에 들어가지만 기록·포기 상태 유지, 축하 효과 없음", async () => {
@@ -317,7 +342,7 @@ describe("E-1. Amplitude", () => {
     ]);
   });
 
-  it("E-1-3: 초성 힌트 후 포기 → Game Given Up에 힌트 횟수, 초성 true", async () => {
+  it("E-1-3: 일반 힌트 1회 + 초성 힌트 후 포기 → Game Given Up에 힌트 1, 초성 true", async () => {
     const h = renderGame();
     await h.hint();
     await h.consonant();
@@ -327,7 +352,13 @@ describe("E-1. Amplitude", () => {
     ]);
   });
 
-  it("E-1-4: 초성 힌트 없이 포기 → Game Given Up에 초성 false", async () => {
+  it("E-1-5: 초성 힌트 요청 성공 → Initial Consonant Hint Requested 1회", async () => {
+    const h = renderGame();
+    await h.consonant();
+    expect(amplitudeEvents("Initial Consonant Hint Requested")).toHaveLength(1);
+  });
+
+  it("E-1-4: 힌트 없이 포기 → Game Given Up에 힌트 0, 초성 false", async () => {
     const h = renderGame();
     await h.giveUp();
     expect(amplitudeEvents("Game Given Up")).toEqual([

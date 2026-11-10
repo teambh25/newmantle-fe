@@ -104,4 +104,16 @@ describe("기록 저장", () => {
       spy.mockRestore();
     }
   });
+
+  it("S-8: 깨진 JSON에서 시작 → 단어 제출 → 정상 JSON으로 덮어써지고, 다시 마운트해도 단어 유지", async () => {
+    localStorage.setItem(STORAGE_KEY, "{abc");
+    const h = renderGame();
+    await h.submit("사과", 120);
+    expect(() => JSON.parse(localStorage.getItem(STORAGE_KEY)!)).not.toThrow();
+    h.unmount();
+
+    const reloaded = renderGame();
+    expect(reloaded.game.attempts).toBe(1);
+    expect(reloaded.game.submittedWords.map((w) => w.word)).toEqual(["사과"]);
+  });
 });

@@ -140,7 +140,7 @@ describe("B. 초성 힌트 / 확인 창", () => {
     expect(opts.all).toHaveLength(2);
   });
 
-  it("B-5-2: 초성 힌트를 받고 새로고침(다시 렌더링) → 포기 버튼 확인 창에 초성 선택지 없음", async () => {
+  it("B-5-2: 초성 힌트를 받고 새로고침(다시 마운트) → 포기 버튼 확인 창에 초성 선택지 없음", async () => {
     const first = await setup();
     await takeConsonantHint(first.user);
     first.unmount();
@@ -204,6 +204,16 @@ describe("C. 포기", () => {
       expect(giveUpButton()).toBeEnabled();
     });
 
+    it("C-2-2: 바깥 클릭으로 닫기 → 요청 없음, 상태 변화 없음", async () => {
+      const { user } = await prepare();
+      const before = requestsSnapshot();
+      await openGiveUpDialog(user);
+      await user.click(document.body);
+      await waitFor(() => expect(dialog()).not.toBeInTheDocument());
+      expect(requestsSnapshot()).toEqual(before);
+      expect(giveUpButton()).toBeEnabled();
+    });
+
     it("C-2-4: 창이 열리면 포커스는 계속 플레이 쪽 선택지 (포기 선택지 아님)", async () => {
       const { user } = await prepare();
       await openGiveUpDialog(user);
@@ -224,6 +234,15 @@ describe("C. 포기", () => {
     expect(gameServer.count("hint")).toBe(hintsBefore);
     expect(gameServer.count("give-up")).toBe(0);
     expect(giveUpButton()).toBeEnabled();
+  });
+
+  it("C-2-6: 초성 사용 후 포기 선택 → 포기 요청 1회, 정답 공개, 게임 종료", async () => {
+    const { user } = await setup();
+    await takeConsonantHint(user);
+    await giveUpViaDialog(user);
+    expect(gameServer.count("give-up")).toBe(1);
+    expect(screen.getAllByText(ANSWER.word).length).toBeGreaterThan(0);
+    expect(giveUpButton()).toBeDisabled();
   });
 
   it("C-2-5: 확인 창에 포기 결과 안내 문구가 있음 (내용은 검증하지 않음)", async () => {
@@ -390,6 +409,18 @@ describe("D. 공통 / 예외", () => {
     expect(givenUpShown()).toBe(false);
   });
 
+  it("D-3-4: 초성 힌트 요청 실패 후 → 포기 버튼 다시 활성, 확인 창에 초성 선택지 남아 있음", async () => {
+    const { user } = await setup();
+    const held = gameServer.holdNext("hint", (r) => r.rank === 0);
+    await openGiveUpDialog(user);
+    await user.click(dialogOptions().consonant!);
+    await waitFor(() => expect(giveUpButton()).toBeDisabled());
+    await held.fail();
+    await waitFor(() => expect(giveUpButton()).toBeEnabled());
+    await openGiveUpDialog(user);
+    expect(dialogOptions().consonant).toBeDefined();
+  });
+
   it("D-4-1: 포기 버튼 → 창 닫기 → 새로고침 → 포기 버튼 → 확인 창이 뜸 (바로 지급되지 않음)", async () => {
     const first = await setup();
     await openGiveUpDialog(first.user);
@@ -401,5 +432,28 @@ describe("D. 공통 / 예외", () => {
     await openGiveUpDialog(user);
     expect(dialogOptions().consonant).toBeDefined();
     expect(gameServer.count("hint")).toBe(0);
+  });
+
+  it("D-4-2: 포기 후 새로고침 → 포기 결과 표시 유지, 힌트·포기 버튼 비활성", async () => {
+    const first = await setup();
+    await submitWord(first.user, "하나", -1);
+    await giveUpViaDialog(first.user);
+    first.unmount();
+
+    await setup();
+    expect(givenUpShown()).toBe(true);
+    expect(hintButton()).toBeDisabled();
+    expect(giveUpButton()).toBeDisabled();
+  });
+
+  it("D-4-3: 2번째에 정답 후 새로고침 → 힌트·포기 버튼 비활성", async () => {
+    const first = await setup();
+    await submitWord(first.user, "아무말", -1);
+    await submitWord(first.user, ANSWER.word);
+    first.unmount();
+
+    await setup();
+    expect(hintButton()).toBeDisabled();
+    expect(giveUpButton()).toBeDisabled();
   });
 });

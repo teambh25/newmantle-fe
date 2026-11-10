@@ -38,7 +38,7 @@ npx vitest run src/utils/gameRules.test.ts
 npx vitest run -t "A-5-1"
 ```
 
-Test files live next to the code they test (`*.test.ts`, `*.test.tsx`). Test case IDs follow `docs/tasks/hint-giveup-fix/verification.md`.
+Test files live next to the code they test (`*.test.ts`, `*.test.tsx`). Test case IDs follow each task's `docs/tasks/<task>/verification.md`. The test harness (fake game server, helpers, mocking rules, TDD workflow) is documented in `src/test/README.md`.
 
 ## Learn More
 

@@ -38,6 +38,7 @@
   - S-5: 이전 형식 날짜(이어받기 대상)이고 필드가 빠진 객체 → S-4와 같은 결과
   - S-6: `localStorage.getItem`이 예외를 던지게 mock → 빈 게임으로 마운트
   - S-7: `localStorage.setItem`이 예외를 던지게 mock → 단어 제출이 정상 동작
+  - S-8: 깨진 JSON에서 시작 → 단어 제출 → 저장값이 정상 JSON으로 덮어써지고, 다시 마운트하면 그 단어가 유지됨 ("다음 날에도 계속 실패"하지 않음)
 
 ### 8. "Game Started" 이벤트 중복 기록 — ✅
 - 문제: `useGameDate`가 `""`로 시작했다가 effect에서 KST 날짜를 넣으므로, `[gameDate, theme]` effect가 두 번 실행되어 이벤트가 두 번 기록된다
@@ -71,3 +72,5 @@
   - T-6: 힌트 요청 실패 → 20초 → 단어 제출 → 10초 → 정답 → `timeSinceFirstAction === 10`
   - T-7: 첫 제출 후 두 번째 행동에서 `firstActionAt`이 바뀌지 않음 (저장된 값 확인)
   - T-8: 오늘 날짜이고 `firstActionAt`이 없는 구데이터로 마운트 → 제출 → 10초 → 정답 → `timeSinceFirstAction === 10` (배포 당일 동작)
+  - T-9: T-8의 구데이터로 마운트 → 이미 있는 단어 재제출 → 20초 → 새 단어 제출 → 10초 → 정답 → `timeSinceFirstAction === 10` (재제출은 첫 행동이 아님. 구데이터가 아니면 재제출이 첫 행동이 될 수 없어 이 경로로만 확인 가능)
+  - T-10: 초성 힌트 요청 실패 → 20초 → 단어 제출 → 10초 → 정답 → `timeSinceFirstAction === 10`
