@@ -1,6 +1,7 @@
 import React from "react";
 import { format, subDays, startOfWeek, addDays, differenceInDays } from "date-fns";
 import { CalendarEntry, CalendarStatus } from "@/types/stats";
+import { getKSTToday } from "@/utils/date";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface StatsCalendarProps {
@@ -24,7 +25,8 @@ const labelMap = {
 };
 
 export const StatsCalendar: React.FC<StatsCalendarProps> = ({ calendar }) => {
-  const today = new Date();
+  // 퀴즈 날짜는 KST 기준이므로 기기 타임존과 무관하게 KST 오늘까지 표시한다.
+  const today = getKSTToday();
   
   // Show exactly 15 weeks
   const WEEKS_TO_SHOW = 15;

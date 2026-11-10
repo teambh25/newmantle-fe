@@ -8,7 +8,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { logEvent } from "@/utils/amplitude";
 import { triggerConfetti } from "@/utils/confetti";
-import { getKSTDateString } from "@/utils/date";
+import { getKSTDateString, toLegacyDateString } from "@/utils/date";
 import { getNextHintRank, getTopRank, isHintDisabled } from "@/utils/gameRules";
 
 const STORAGE_KEY = "newmantle_game_data";
@@ -63,7 +63,9 @@ function getInitialGameState(): GameData {
     }
     // 이전 버전은 lastPlayedDate를 로컬 toDateString()으로 저장했다.
     // 배포 당일 진행 중이던 기록이 날아가지 않도록 한 번만 새 형식으로 이어받는다.
-    if (parsedData.lastPlayedDate === new Date().toDateString()) {
+    // 이전 버전은 퀴즈 날짜도 로컬 날짜였으므로 저장된 날짜 = 그 기록의 퀴즈 날짜.
+    // 기기 로컬 오늘이 아니라 KST 오늘과 비교해야 다른 날짜 퀴즈의 기록을 이어받지 않는다.
+    if (parsedData.lastPlayedDate === toLegacyDateString(today)) {
       return { ...parsedData, lastPlayedDate: today };
     }
   }
