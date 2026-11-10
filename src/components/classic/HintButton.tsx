@@ -23,6 +23,7 @@ const HintButton: React.FC<HintButtonProps> = ({ onHintRequest, disabled }) => {
               type="button"
               onClick={onHintRequest}
               disabled={disabled}
+              aria-label="힌트"
               variant="ghost"
               size="icon"
               className="flex-shrink-0 w-8 h-8"

@@ -8,8 +8,19 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { logEvent } from "@/utils/amplitude";
 import { triggerConfetti } from "@/utils/confetti";
+import { getKSTDateString } from "@/utils/date";
+import { getNextHintRank, getTopRank, isHintDisabled } from "@/utils/gameRules";
 
 const STORAGE_KEY = "newmantle_game_data";
+
+function findWordIndex(words: SubmittedWord[], word: string): number {
+  const target = word.toLowerCase();
+  return words.findIndex((w) => w.word.toLowerCase() === target);
+}
+
+function moveWordToTop(words: SubmittedWord[], index: number): SubmittedWord[] {
+  return [words[index], ...words.filter((_, i) => i !== index)];
+}
 
 export interface GameData {
   submittedWords: SubmittedWord[];
@@ -23,36 +34,14 @@ export interface GameData {
   answerSurveyVoted: boolean | null;
 }
 
-function getInitialGameState(): GameData {
-  if (typeof window === "undefined") {
-    return {
-      submittedWords: [],
-      attempts: 0,
-      solvedAttempts: null,
-      gameCompleted: false,
-      lastPlayedDate: new Date().toDateString(),
-      hintUsed: 0,
-      givenUp: false,
-      initialConsonantHintUsed: false,
-      answerSurveyVoted: null,
-    };
-  }
-
-  const storedData = localStorage.getItem(STORAGE_KEY);
-  if (storedData) {
-    const parsedData: GameData = JSON.parse(storedData);
-    const today = new Date().toDateString();
-    if (parsedData.lastPlayedDate === today) {
-      return parsedData;
-    }
-  }
-
+function createEmptyGameState(): GameData {
   return {
     submittedWords: [],
     attempts: 0,
     solvedAttempts: null,
     gameCompleted: false,
-    lastPlayedDate: new Date().toDateString(),
+    // 퀴즈 날짜(KST)와 같은 기준으로 저장해야 해외 접속 시에도 올바른 날에 리셋된다.
+    lastPlayedDate: getKSTDateString(),
     hintUsed: 0,
     givenUp: false,
     initialConsonantHintUsed: false,
@@ -60,10 +49,39 @@ function getInitialGameState(): GameData {
   };
 }
 
+function getInitialGameState(): GameData {
+  if (typeof window === "undefined") {
+    return createEmptyGameState();
+  }
+
+  const storedData = localStorage.getItem(STORAGE_KEY);
+  if (storedData) {
+    const parsedData: GameData = JSON.parse(storedData);
+    const today = getKSTDateString();
+    if (parsedData.lastPlayedDate === today) {
+      return parsedData;
+    }
+    // 이전 버전은 lastPlayedDate를 로컬 toDateString()으로 저장했다.
+    // 배포 당일 진행 중이던 기록이 날아가지 않도록 한 번만 새 형식으로 이어받는다.
+    if (parsedData.lastPlayedDate === new Date().toDateString()) {
+      return { ...parsedData, lastPlayedDate: today };
+    }
+  }
+
+  return createEmptyGameState();
+}
+
 export function useGameState(gameDate: string, theme?: string) {
   const [gameState, setGameState] = useState<GameData>(getInitialGameState);
   const startTimeRef = useRef<number>(Date.now());
   const { toast } = useToast();
+
+  // 요청 중 잠금 (D-2). ref는 같은 틱 안의 연속 호출을 막고, state는 버튼 비활성에 쓴다.
+  // 초성 힌트와 포기는 같은 버튼이므로 하나의 잠금을 공유한다.
+  const hintPendingRef = useRef(false);
+  const giveUpPendingRef = useRef(false);
+  const [hintPending, setHintPending] = useState(false);
+  const [giveUpPending, setGiveUpPending] = useState(false);
 
   useEffect(() => {
     logEvent("Game Started", { date: gameDate, theme });
@@ -86,15 +104,10 @@ export function useGameState(gameDate: string, theme?: string) {
     return [firstWord, ...sortedRestWords];
   }, [gameState.submittedWords]);
 
-  const hintDisabled = useMemo(() => {
-    const topRankedWord = sortedWords.reduce((highest, current) => {
-      if (current.rank === undefined || current.rank === -1) return highest;
-      if (!highest || current.rank < highest.rank) return current;
-      return highest;
-    }, null as SubmittedWord | null);
-
-    return topRankedWord ? topRankedWord.rank <= 15 : false;
-  }, [sortedWords]);
+  const hintDisabled = useMemo(
+    () => isHintDisabled(getTopRank(gameState.submittedWords)),
+    [gameState.submittedWords]
+  );
 
   const correctAttempts = useMemo(() => {
     const correctWord = gameState.submittedWords.find((word) => word.correct);
@@ -103,21 +116,16 @@ export function useGameState(gameDate: string, theme?: string) {
 
   const submitWordAction = async (word: string): Promise<{ error?: string }> => {
     try {
-      const existingWordIndex = gameState.submittedWords.findIndex(
-        (w) => w.word.toLowerCase() === word.toLowerCase()
-      );
-
-      if (existingWordIndex !== -1) {
-        const existingWord = gameState.submittedWords[existingWordIndex];
-        setGameState((prev) => ({
-          ...prev,
-          submittedWords: [
-            existingWord,
-            ...prev.submittedWords.filter(
-              (_, index) => index !== existingWordIndex
-            ),
-          ],
-        }));
+      if (findWordIndex(gameState.submittedWords, word) !== -1) {
+        setGameState((prev) => {
+          // 인덱스는 최신 상태(prev) 기준으로 다시 계산한다.
+          const index = findWordIndex(prev.submittedWords, word);
+          if (index === -1) return prev;
+          return {
+            ...prev,
+            submittedWords: moveWordToTop(prev.submittedWords, index),
+          };
+        });
         return { error: "이미 제출한 단어입니다" };
       }
 
@@ -159,6 +167,8 @@ export function useGameState(gameDate: string, theme?: string) {
         logEvent("Game Completed", {
           attempts: gameState.attempts + 1,
           timeSpent: (Date.now() - startTimeRef.current) / 1000,
+          hintUsed: gameState.hintUsed,
+          initialConsonantHintUsed: gameState.initialConsonantHintUsed,
           theme,
         });
         if (!gameState.givenUp) {
@@ -180,26 +190,15 @@ export function useGameState(gameDate: string, theme?: string) {
   };
 
   const requestHint = async () => {
-    if (hintDisabled) return;
+    if (hintDisabled || hintPendingRef.current) return;
 
-    const topRankedWord = sortedWords.reduce((highest, current) => {
-      if (current.rank === undefined || current.rank === -1) return highest;
-      if (!highest || current.rank < highest.rank) return current;
-      return highest;
-    }, null as SubmittedWord | null);
+    // 힌트는 항상 현재 최고 순위보다 높게 주므로, 받은 힌트 단어도 다음 기준이 된다 (A-7).
+    const hintRank = getNextHintRank(getTopRank(gameState.submittedWords));
 
-    let hintRank: number;
-
-    if (!topRankedWord || topRankedWord.rank === -1) {
-      hintRank = 900;
-    } else if (topRankedWord.rank <= 15) {
-      return;
-    } else {
-      hintRank = topRankedWord.rank - 100;
-    }
-
+    hintPendingRef.current = true;
+    setHintPending(true);
     try {
-      const hintResponse = await getHint(new Date(gameDate), hintRank);
+      const hintResponse = await getHint(gameDate, hintRank);
       const newHintWord: SubmittedWord = {
         word: hintResponse.hint,
         similarity: hintResponse.score,
@@ -222,12 +221,20 @@ export function useGameState(gameDate: string, theme?: string) {
         description: "힌트를 가져오는 중 오류가 발생했습니다. 다시 시도해주세요.",
         variant: "destructive",
       });
+    } finally {
+      hintPendingRef.current = false;
+      setHintPending(false);
     }
   };
 
   const requestInitialConsonantHint = async () => {
+    // 하루 1회 (B-5). 포기와 잠금을 공유한다 (D-2).
+    if (gameState.initialConsonantHintUsed || giveUpPendingRef.current) return;
+
+    giveUpPendingRef.current = true;
+    setGiveUpPending(true);
     try {
-      const hintResponse = await getHint(new Date(gameDate), 0);
+      const hintResponse = await getHint(gameDate, 0);
       const newHintWord: SubmittedWord = {
         word: hintResponse.hint,
         similarity: hintResponse.score,
@@ -255,12 +262,21 @@ export function useGameState(gameDate: string, theme?: string) {
         description: "초성 힌트를 가져오는 중 오류가 발생했습니다. 다시 시도해주세요.",
         variant: "destructive",
       });
+    } finally {
+      giveUpPendingRef.current = false;
+      setGiveUpPending(false);
     }
   };
 
   const giveUp = async () => {
+    if (gameState.gameCompleted || gameState.givenUp || giveUpPendingRef.current) {
+      return;
+    }
+
+    giveUpPendingRef.current = true;
+    setGiveUpPending(true);
     try {
-      const answerData = await getRecentAnswer(new Date(gameDate));
+      const answerData = await getRecentAnswer(gameDate);
       setGameState((prev) => {
         const currentAttempts = prev.attempts;
         return {
@@ -270,7 +286,8 @@ export function useGameState(gameDate: string, theme?: string) {
               word: answerData.word,
               similarity: 100,
               rank: 0,
-              attempt: currentAttempts + 1,
+              // 포기는 입력이 아니므로 +1 하지 않는다 (C-4).
+              attempt: currentAttempts,
               correct: true,
               answer: answerData,
             },
@@ -284,6 +301,7 @@ export function useGameState(gameDate: string, theme?: string) {
       logEvent("Game Given Up", {
         attempts: gameState.attempts,
         hintUsed: gameState.hintUsed,
+        initialConsonantHintUsed: gameState.initialConsonantHintUsed,
         theme,
       });
     } catch (error) {
@@ -293,6 +311,9 @@ export function useGameState(gameDate: string, theme?: string) {
         description: "정답을 가져오는 중 오류가 발생했습니다. 다시 시도해주세요.",
         variant: "destructive",
       });
+    } finally {
+      giveUpPendingRef.current = false;
+      setGiveUpPending(false);
     }
   };
 
@@ -313,9 +334,11 @@ export function useGameState(gameDate: string, theme?: string) {
     submitWordAction,
     hintDisabled,
     requestHint,
+    hintPending,
     hintUsed: gameState.hintUsed,
     givenUp: gameState.givenUp,
     giveUp,
+    giveUpPending,
     initialConsonantHintUsed: gameState.initialConsonantHintUsed,
     requestInitialConsonantHint,
     answerSurveyVoted: gameState.answerSurveyVoted,

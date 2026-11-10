@@ -41,8 +41,7 @@ src/
 │   ├── ui/                # Reusable UI components (shadcn/ui)
 │   ├── AmplitudeInitializer.tsx  # Analytics setup
 │   ├── GameDescription.tsx       # Game rules and FAQ
-│   ├── HintButton.tsx           # Hint request functionality
-│   ├── GiveUpButton.tsx         # Give up functionality
+│   ├── classic/, excel/      # Theme-specific game UI (NewMantleForm, HintButton, GiveUpButton)
 │   └── Footer.tsx               # App footer
 ├── utils/
 │   ├── api.ts             # API client for backend communication
@@ -61,11 +60,15 @@ src/
 
 ### API Integration
 - Base URL configured via `NEXT_PUBLIC_API_BASE_URL` environment variable
-- Three main endpoints:
-  - `POST /quizzes/{date}/guess/{word}` - Submit word guesses
-  - `GET /quizzes/{date}/hint/{rank}` - Get hints based on rank
-  - `GET /quizzes/{date}/recent-answer` - Get previous day's answer
-- All requests have 3-second timeout with AbortController
+- Spec: `docs/api/game-v2.md` (game API), `docs/api/openapi.json` (full OpenAPI schema). v1 `/quizzes/...` endpoints are deprecated; use v2 only
+- Auth required: `Authorization: Bearer <Supabase JWT>` or `X-Guest-Id: <uuid>` (exactly one)
+- `{date}` is a KST `YYYY-MM-DD` string; only today and yesterday (KST) are accessible, others return 422
+- Game endpoints:
+  - `GET /v2/quizzes/{date}/guess/{word}` - Submit a guess. `rank` is 1~999 when ranked, `-1` when out of rank, `null` when correct
+  - `GET /v2/quizzes/{date}/hint/{rank}` - Word at the given rank (`0 <= rank <= 999`); `rank=0` returns the answer's initial consonants
+  - `GET /v2/quizzes/{date}/give-up` - Returns the answer
+- Hint / give-up game rules: `docs/spec/hint-giveup.md`
+- Game requests have a 3-second timeout with AbortController
 
 ### State Management
 - Uses React built-in state (useState, useEffect)

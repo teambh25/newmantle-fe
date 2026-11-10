@@ -1,4 +1,3 @@
-import { formatDate } from "./date";
 import { createClient } from '@/utils/supabase/client';
 
 async function getAuthHeader(): Promise<Record<string, string>> {
@@ -92,8 +91,9 @@ export const submitWord = async (
   }
 };
 
-export const getHint = async (date: Date, rank: number): Promise<HintResponse> => {
-  const formattedDate = formatDate(date);
+// gameDate: KST 기준 YYYY-MM-DD 문자열 (Date로 변환하면 타임존에 따라 날짜가 밀림)
+export const getHint = async (gameDate: string, rank: number): Promise<HintResponse> => {
+  const formattedDate = gameDate;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 3000);
 
@@ -129,8 +129,9 @@ export const getHint = async (date: Date, rank: number): Promise<HintResponse> =
   }
 };
 
-export const getRecentAnswer = async (date: Date): Promise<AnswerData> => {
-  const formattedDate = formatDate(date);
+// gameDate: KST 기준 YYYY-MM-DD 문자열
+export const getRecentAnswer = async (gameDate: string): Promise<AnswerData> => {
+  const formattedDate = gameDate;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 3000);
 
