@@ -12,7 +12,7 @@
 
 진행 순서: #7 → #8 → #11 (항목별 커밋). #11은 #7의 기본값 병합으로 구데이터에 새 필드가 채워지는 것을 전제로 한다.
 
-테스트 위치: `src/hooks/useGameState.test.ts` (`src/test/gameHarness.ts`의 `renderGame`, `amplitudeEvents` 사용). 저장소를 미리 채워야 하는 경우는 `useGameState.lastPlayedDate.test.ts`처럼 마운트 전에 `localStorage`에 값을 넣는다.
+테스트 위치: #7은 `src/hooks/useGameState.storage.test.ts`, #8·#11은 `src/hooks/useGameState.events.test.ts` (`src/test/gameHarness.ts`의 `renderGame`, `amplitudeEvents` 사용). 저장소를 미리 채워야 하는 경우는 `useGameState.lastPlayedDate.test.ts`처럼 마운트 전에 `localStorage`에 값을 넣는다.
 
 ### 7. localStorage 파싱 실패 시 게임이 뜨지 않음 — ✅
 - 문제
@@ -32,14 +32,14 @@
   - 저장 effect의 `setItem`도 try/catch로 감싼다(용량 초과, 저장소 차단). 실패해도 게임은 계속 진행된다
 - 테스트
   - S-1: 깨진 JSON(`"{abc"`) 저장 → 마운트 시 예외 없이 빈 게임
-  - S-2: `"null"`, `"123"`, `"\"abc\""` 저장 → 빈 게임
+  - S-2: `"null"` 저장 → 빈 게임 (숫자·문자열·배열은 `lastPlayedDate`가 없어 수정 전에도 빈 게임이 되므로 제외)
   - S-3: `submittedWords`가 배열이 아닌 객체(오늘 날짜) → 빈 게임
   - S-4: 오늘 날짜이고 `hintUsed`, `givenUp`, `initialConsonantHintUsed` 등이 빠진 구버전 객체 → 기존 단어·시도 횟수는 유지되고, 힌트 1회 후 `hintUsed === 1`
   - S-5: 이전 형식 날짜(이어받기 대상)이고 필드가 빠진 객체 → S-4와 같은 결과
   - S-6: `localStorage.getItem`이 예외를 던지게 mock → 빈 게임으로 마운트
   - S-7: `localStorage.setItem`이 예외를 던지게 mock → 단어 제출이 정상 동작
 
-### 8. "Game Started" 이벤트 중복 기록 — 🔧
+### 8. "Game Started" 이벤트 중복 기록 — ✅
 - 문제: `useGameDate`가 `""`로 시작했다가 effect에서 KST 날짜를 넣으므로, `[gameDate, theme]` effect가 두 번 실행되어 이벤트가 두 번 기록된다
 - 영향: Amplitude 기록만. 게임 동작에는 영향 없음
 - 수정: effect 첫 줄에서 `gameDate`가 비어 있으면 return

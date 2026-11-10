@@ -107,6 +107,8 @@ export function useGameState(gameDate: string, theme?: string) {
   const [giveUpPending, setGiveUpPending] = useState(false);
 
   useEffect(() => {
+    // useGameDate는 ""로 시작해 마운트 후 날짜를 채운다. 빈 값일 때 기록하면 두 번 기록된다.
+    if (!gameDate) return;
     logEvent("Game Started", { date: gameDate, theme });
   }, [gameDate, theme]);
 
