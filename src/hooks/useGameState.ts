@@ -49,24 +49,45 @@ function createEmptyGameState(): GameData {
   };
 }
 
+// 저장된 기록을 읽는다. 저장소 차단·깨진 JSON·형식이 다른 값이면 null.
+// 렌더링 중(useState 초기화)에 실행되므로 여기서 예외가 나면 게임 화면이 뜨지 않는다.
+function readStoredGame(): Partial<GameData> | null {
+  try {
+    const storedData = localStorage.getItem(STORAGE_KEY);
+    if (!storedData) return null;
+    const parsed: unknown = JSON.parse(storedData);
+    if (
+      typeof parsed !== "object" ||
+      parsed === null ||
+      !Array.isArray((parsed as Partial<GameData>).submittedWords)
+    ) {
+      return null;
+    }
+    return parsed as Partial<GameData>;
+  } catch {
+    return null;
+  }
+}
+
 function getInitialGameState(): GameData {
   if (typeof window === "undefined") {
     return createEmptyGameState();
   }
 
-  const storedData = localStorage.getItem(STORAGE_KEY);
+  const storedData = readStoredGame();
   if (storedData) {
-    const parsedData: GameData = JSON.parse(storedData);
     const today = getKSTDateString();
-    if (parsedData.lastPlayedDate === today) {
-      return parsedData;
+    // 구버전 기록에 없는 필드는 기본값으로 채운다.
+    const restored = { ...createEmptyGameState(), ...storedData };
+    if (storedData.lastPlayedDate === today) {
+      return restored;
     }
     // 이전 버전은 lastPlayedDate를 로컬 toDateString()으로 저장했다.
     // 배포 당일 진행 중이던 기록이 날아가지 않도록 한 번만 새 형식으로 이어받는다.
     // 이전 버전은 퀴즈 날짜도 로컬 날짜였으므로 저장된 날짜 = 그 기록의 퀴즈 날짜.
     // 기기 로컬 오늘이 아니라 KST 오늘과 비교해야 다른 날짜 퀴즈의 기록을 이어받지 않는다.
-    if (parsedData.lastPlayedDate === toLegacyDateString(today)) {
-      return { ...parsedData, lastPlayedDate: today };
+    if (storedData.lastPlayedDate === toLegacyDateString(today)) {
+      return { ...restored, lastPlayedDate: today };
     }
   }
 
@@ -90,7 +111,11 @@ export function useGameState(gameDate: string, theme?: string) {
   }, [gameDate, theme]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
+    } catch {
+      // 저장소 차단·용량 초과. 저장만 못 할 뿐 게임은 계속 진행한다.
+    }
   }, [gameState]);
 
   const sortedWords = useMemo(() => {
