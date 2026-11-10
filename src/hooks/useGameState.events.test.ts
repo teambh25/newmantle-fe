@@ -1,4 +1,4 @@
-// 로직 레벨: Amplitude 이벤트 기록 (docs/tasks/bug.md #8, #11)
+// 로직 레벨: Amplitude 이벤트 기록 (docs/tasks/game-state-fix/bug.md #8, #11)
 import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useGameState } from "@/hooks/useGameState";

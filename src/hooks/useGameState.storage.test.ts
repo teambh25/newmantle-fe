@@ -1,4 +1,4 @@
-// 로직 레벨: 저장된 기록 읽기·쓰기 실패 처리 (docs/tasks/bug.md #7)
+// 로직 레벨: 저장된 기록 읽기·쓰기 실패 처리 (docs/tasks/game-state-fix/bug.md #7)
 import { describe, expect, it, vi } from "vitest";
 import { GAME_DATE, renderGame } from "@/test/gameHarness";
 import { toLegacyDateString } from "@/utils/date";
