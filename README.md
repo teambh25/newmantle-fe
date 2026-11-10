@@ -20,6 +20,26 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
 
+## Testing
+
+Tests use [Vitest](https://vitest.dev/) with React Testing Library.
+
+```bash
+# Run all tests once
+npm test
+
+# Re-run tests on file changes
+npm run test:watch
+
+# Run a single test file
+npx vitest run src/utils/gameRules.test.ts
+
+# Run tests whose name matches a pattern (e.g. a case ID)
+npx vitest run -t "A-5-1"
+```
+
+Test files live next to the code they test (`*.test.ts`, `*.test.tsx`). Test case IDs follow `docs/tasks/hint-giveup-fix/verification.md`.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

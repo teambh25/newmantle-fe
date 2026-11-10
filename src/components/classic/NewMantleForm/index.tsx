@@ -197,7 +197,8 @@ export default function NewMantleForm() {
               disabled={
                 gameLogic.hintDisabled ||
                 gameLogic.gameCompleted ||
-                gameLogic.givenUp
+                gameLogic.givenUp ||
+                gameLogic.hintPending
               }
             />
           }
@@ -205,7 +206,9 @@ export default function NewMantleForm() {
             <GiveUpButton
               onGiveUp={gameLogic.giveUp}
               disabled={
-                gameLogic.gameCompleted || gameLogic.givenUp
+                gameLogic.gameCompleted ||
+                gameLogic.givenUp ||
+                gameLogic.giveUpPending
               }
               onInitialConsonantHint={gameLogic.requestInitialConsonantHint}
               initialConsonantHintUsed={gameLogic.initialConsonantHintUsed}
