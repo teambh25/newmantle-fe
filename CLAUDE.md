@@ -20,7 +20,32 @@ npm start
 
 # Run linting
 npm run lint
+
+# Run tests (Vitest)
+npm test
+npx vitest run -t "A-5-1"   # run by case ID
 ```
+
+## Testing
+
+Harness guide: `src/test/README.md` (fake game server, `renderGame`, presets, clock/timezone helpers, mock setup). Read it before writing tests.
+
+### Workflow: TDD
+1. Write the test cases in the task's `docs/tasks/<task>/verification.md` first (ID / level / precondition / action / expected), based on the spec or problem decisions, not on the implementation
+2. Write the tests, prefixing each test name with its case ID
+3. Run them and confirm they **fail for the right reason** (missing behavior, not a typo or missing mock). A test that passes before implementation does not distinguish the bug, so revisit the case
+4. Implement until they pass, then record the result in the verification doc's result log
+- When adding tests to code that already exists, do not edit implementation files to see them fail. Check that in an isolated copy (git worktree) and only after asking
+
+### What to test
+- Test behavior, not implementation details: assert on requests sent to the server, hook return values, what is visible on screen, stored `localStorage` values, and Amplitude events. Not on internal state/ref names, call order, or component structure
+- Find screen elements by role and accessible name. Do not assert on copy (toast/notice text), only on presence and which options exist
+- Do not verify the same rule at both logic and screen levels
+
+### Mocking
+- Mock only external boundaries: game server (fake `fetch` in `src/test/fakeGameServer.ts`), Supabase, Amplitude, confetti, time/timezone. Use real app code for hooks, components, `utils`, and UI libraries
+- Do not `vi.mock` `api.ts` or hooks. Intercepting at HTTP keeps tests valid when the client changes and lets tests check request paths
+- Per-file overrides (e.g. a logged-in Supabase session) go in that test file with `vi.mock`, and must include every method the rendered screen calls
 
 ## Architecture
 
@@ -48,6 +73,7 @@ src/
 │   ├── amplitude.ts       # Analytics tracking utilities
 │   └── date.ts            # Date formatting utilities
 ├── hooks/                 # Custom React hooks
+├── test/                  # Test harness (see src/test/README.md); *.test.ts(x) live next to the code
 └── static/                # Static assets
 ```
 
