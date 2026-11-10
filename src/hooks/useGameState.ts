@@ -32,6 +32,8 @@ export interface GameData {
   givenUp: boolean;
   initialConsonantHintUsed: boolean;
   answerSurveyVoted: boolean | null;
+  // 그날 첫 행동(단어 제출·일반 힌트·초성 힌트 성공) 시각, ms. 새로고침해도 유지된다.
+  firstActionAt: number | null;
 }
 
 function createEmptyGameState(): GameData {
@@ -46,6 +48,7 @@ function createEmptyGameState(): GameData {
     givenUp: false,
     initialConsonantHintUsed: false,
     answerSurveyVoted: null,
+    firstActionAt: null,
   };
 }
 
@@ -96,6 +99,7 @@ function getInitialGameState(): GameData {
 
 export function useGameState(gameDate: string, theme?: string) {
   const [gameState, setGameState] = useState<GameData>(getInitialGameState);
+  // 이번 페이지 로드 시각. timeSpent(연속 플레이 시간) 기준이며 새로고침하면 다시 잰다.
   const startTimeRef = useRef<number>(Date.now());
   const { toast } = useToast();
 
@@ -164,6 +168,8 @@ export function useGameState(gameDate: string, theme?: string) {
         gameDate
       );
 
+      const now = Date.now();
+
       logEvent("Word Submitted", {
         word: word,
         attempt: gameState.attempts + 1,
@@ -185,6 +191,7 @@ export function useGameState(gameDate: string, theme?: string) {
           attempts: prev.attempts + 1,
           gameCompleted: prev.gameCompleted || isCorrect,
           solvedAttempts: newSolvedAttempts,
+          firstActionAt: prev.firstActionAt ?? now,
         };
       });
 
@@ -195,7 +202,9 @@ export function useGameState(gameDate: string, theme?: string) {
         });
         logEvent("Game Completed", {
           attempts: gameState.attempts + 1,
-          timeSpent: (Date.now() - startTimeRef.current) / 1000,
+          timeSpent: (now - startTimeRef.current) / 1000,
+          // 첫 행동부터 정답까지 실제 경과 시간. 첫 행동이 곧 정답이면 0
+          timeSinceFirstAction: (now - (gameState.firstActionAt ?? now)) / 1000,
           hintUsed: gameState.hintUsed,
           initialConsonantHintUsed: gameState.initialConsonantHintUsed,
           theme,
@@ -240,6 +249,7 @@ export function useGameState(gameDate: string, theme?: string) {
         ...prev,
         submittedWords: [newHintWord, ...prev.submittedWords],
         hintUsed: prev.hintUsed + 1,
+        firstActionAt: prev.firstActionAt ?? Date.now(),
       }));
 
       logEvent("Hint Requested", { hintRank, theme });
@@ -276,6 +286,7 @@ export function useGameState(gameDate: string, theme?: string) {
         ...prev,
         submittedWords: [newHintWord, ...prev.submittedWords],
         initialConsonantHintUsed: true,
+        firstActionAt: prev.firstActionAt ?? Date.now(),
       }));
 
       toast({

@@ -48,7 +48,7 @@
   - G-1: `gameDate=""`로 렌더 → `rerender`로 날짜 설정 → `Game Started` 1회, `date`는 그 날짜
   - G-2: `gameDate=""`로만 렌더 → `Game Started` 0회
 
-### 11. timeSpent가 새로고침 시 초기화됨 — 🔧
+### 11. timeSpent가 새로고침 시 초기화됨 — ✅
 - 문제: `timeSpent`는 훅 마운트 시점(`startTimeRef`)부터 측정한다 → 중간에 새로고침하면 0부터 다시 시작해, 실제로 푸는 데 걸린 시간을 알 수 없다
 - 영향: Amplitude 기록만
 - 결정
@@ -67,7 +67,7 @@
   - T-2: 일반 힌트로 시작 → 10초 → 정답 → `timeSinceFirstAction === 10`
   - T-3: 초성 힌트로 시작 → 10초 → 정답 → `timeSinceFirstAction === 10`
   - T-4: 첫 행동이 정답 → `timeSinceFirstAction === 0`
-  - T-5: 없는 단어 제출(실패) → 20초 → 단어 제출 성공 → 10초 → 정답 → `timeSinceFirstAction === 10` (실패는 첫 행동이 아님)
+  - T-5: 단어 제출 실패(서버 오류. 가짜 서버에 "없는 단어" 응답이 없어 대신 씀. 훅에서는 같은 catch 경로) → 20초 → 단어 제출 성공 → 10초 → 정답 → `timeSinceFirstAction === 10` (실패는 첫 행동이 아님)
   - T-6: 힌트 요청 실패 → 20초 → 단어 제출 → 10초 → 정답 → `timeSinceFirstAction === 10`
   - T-7: 첫 제출 후 두 번째 행동에서 `firstActionAt`이 바뀌지 않음 (저장된 값 확인)
   - T-8: 오늘 날짜이고 `firstActionAt`이 없는 구데이터로 마운트 → 제출 → 10초 → 정답 → `timeSinceFirstAction === 10` (배포 당일 동작)
