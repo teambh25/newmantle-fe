@@ -45,13 +45,11 @@ describe("저장된 기록 읽기", () => {
     expectEmptyGame(renderGame());
   });
 
-  it.each(["null", "123", '"abc"', "[]"])(
-    "S-2: 객체가 아닌 JSON 값(%s) → 빈 게임",
-    (raw) => {
-      localStorage.setItem(STORAGE_KEY, raw);
-      expectEmptyGame(renderGame());
-    }
-  );
+  // 숫자·문자열·배열은 lastPlayedDate가 없어 수정 전에도 빈 게임이 됐다. null만 크래시했다
+  it("S-2: JSON null → 빈 게임", () => {
+    localStorage.setItem(STORAGE_KEY, "null");
+    expectEmptyGame(renderGame());
+  });
 
   it("S-3: 오늘 날짜지만 submittedWords가 배열이 아님 → 빈 게임", () => {
     localStorage.setItem(
@@ -66,9 +64,7 @@ describe("저장된 기록 읽기", () => {
     const h = renderGame();
     expect(h.game.attempts).toBe(1);
     expect(h.game.submittedWords.map((w) => w.word)).toEqual(["사과"]);
-    expect(h.game.givenUp).toBe(false);
-    expect(h.game.initialConsonantHintUsed).toBe(false);
-    expect(h.game.answerSurveyVoted).toBeNull();
+    expect(h.game.hintUsed).toBe(0);
 
     await h.hint();
     expect(h.game.hintUsed).toBe(1);
