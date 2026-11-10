@@ -130,7 +130,8 @@ describe("Game Completed 플레이 시간", () => {
     expect(storedFirstActionAt()).toBe(first);
   });
 
-  it("T-8: 첫 행동 시각이 없는 오늘 기록(배포 당일) → 배포 후 첫 행동부터 잼", async () => {
+  // 배포 전 형식: firstActionAt이 없는 오늘 기록
+  function storeTodayWithoutFirstActionAt() {
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
@@ -147,9 +148,38 @@ describe("Game Completed 플레이 시간", () => {
         answerSurveyVoted: null,
       })
     );
+  }
+
+  it("T-8: 첫 행동 시각이 없는 오늘 기록(배포 당일) → 배포 후 첫 행동부터 잼", async () => {
+    storeTodayWithoutFirstActionAt();
     const h = renderGame();
     passSeconds(30);
     await h.submit("배", 200);
+    passSeconds(10);
+    await h.submitAnswer();
+    expect(completedTimes()[0].timeSinceFirstAction).toBe(10);
+  });
+
+  it("T-9: 첫 행동 시각이 없는 기록에서 이미 있는 단어 재제출 → 20초 → 새 단어 → 10초 → 정답 → 10초 (재제출은 첫 행동이 아님)", async () => {
+    storeTodayWithoutFirstActionAt();
+    const h = renderGame();
+    expect(await h.submit("사과")).toHaveProperty("error");
+    expect(gameServer.count("guess")).toBe(0);
+    passSeconds(20);
+    await h.submit("배", 200);
+    passSeconds(10);
+    await h.submitAnswer();
+    expect(completedTimes()[0].timeSinceFirstAction).toBe(10);
+  });
+
+  it("T-10: 초성 힌트 실패 → 20초 → 제출 → 10초 → 정답 → 10초 (실패는 첫 행동이 아님)", async () => {
+    const h = renderGame();
+    gameServer.failNext("hint");
+    await h.consonant();
+    expect(h.failureToastShown()).toBe(true);
+    expect(h.game.initialConsonantHintUsed).toBe(false);
+    passSeconds(20);
+    await h.submit("사과", 120);
     passSeconds(10);
     await h.submitAnswer();
     expect(completedTimes()[0].timeSinceFirstAction).toBe(10);

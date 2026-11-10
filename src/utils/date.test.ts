@@ -1,7 +1,7 @@
 // 날짜 유틸: 기기 타임존과 무관하게 KST 달력 날짜를 다루는지 (docs/tasks/kst-date-fix/verification.md)
 import { describe, expect, it } from "vitest";
 import { format, subDays } from "date-fns";
-import { KST_AFTERNOON, setClock } from "@/test/clock";
+import { KST_AFTERNOON, KST_BEFORE_MIDNIGHT, KST_MIDNIGHT, setClock } from "@/test/clock";
 import { getKSTDateString, getKSTToday, toLegacyDateString } from "@/utils/date";
 
 describe.each(["Asia/Seoul", "America/Los_Angeles"])("기기 타임존 %s, KST 11/10 14:00", (tz) => {
@@ -20,5 +20,19 @@ describe.each(["Asia/Seoul", "America/Los_Angeles"])("기기 타임존 %s, KST 1
     const today = getKSTToday();
     expect(format(today, "yyyy-MM-dd")).toBe("2026-11-10");
     expect(format(subDays(today, 90), "yyyy-MM-dd")).toBe("2026-08-12");
+  });
+});
+
+describe.each(["Asia/Seoul", "America/Los_Angeles"])("기기 타임존 %s, KST 자정 경계", (tz) => {
+  it("D-4: KST 11/10 23:59:59 → 아직 11/10", () => {
+    setClock(tz, KST_BEFORE_MIDNIGHT);
+    expect(getKSTDateString()).toBe("2026-11-10");
+    expect(format(getKSTToday(), "yyyy-MM-dd")).toBe("2026-11-10");
+  });
+
+  it("D-5: KST 11/11 00:00 → 11/11", () => {
+    setClock(tz, KST_MIDNIGHT);
+    expect(getKSTDateString()).toBe("2026-11-11");
+    expect(format(getKSTToday(), "yyyy-MM-dd")).toBe("2026-11-11");
   });
 });

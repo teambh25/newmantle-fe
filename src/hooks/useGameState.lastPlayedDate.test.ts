@@ -91,4 +91,16 @@ describe("저장된 기록의 날짜 판단", () => {
     storeGame("Tue Nov 10 2026");
     expectKept(renderGame());
   });
+
+  it("L-8: LA, 새 형식 KST 오늘(= 로컬 내일) → 그대로 유지", () => {
+    setEnvironment("America/Los_Angeles", KST_AFTERNOON);
+    storeGame("2026-11-10");
+    expectKept(renderGame());
+  });
+
+  it("L-9: LA, 새 형식 KST 어제(= 로컬 오늘) → 초기화", () => {
+    setEnvironment("America/Los_Angeles", KST_AFTERNOON);
+    storeGame("2026-11-09");
+    expectReset(renderGame());
+  });
 });
