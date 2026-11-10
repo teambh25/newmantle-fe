@@ -3,6 +3,7 @@
 import React from "react";
 import { format, subDays } from "date-fns";
 import { fetchStatsOverview } from "@/utils/api";
+import { getKSTToday } from "@/utils/date";
 import { StatOverviewResp } from "@/types/stats";
 import { useQuery } from "@tanstack/react-query";
 import { StatsSummaryCards } from "@/components/stats/StatsSummaryCards";
@@ -37,8 +38,10 @@ export default function StatsPage() {
   const { data: overview, isLoading: overviewLoading, error: queryError } = useQuery({
     queryKey: ["statsOverview", userId],
     queryFn: async () => {
-      const endDate = format(new Date(), "yyyy-MM-dd");
-      const startDate = format(subDays(new Date(), 90), "yyyy-MM-dd");
+      // 퀴즈 날짜는 KST 기준이므로 기기 타임존과 무관하게 KST 오늘을 끝으로 잡는다.
+      const today = getKSTToday();
+      const endDate = format(today, "yyyy-MM-dd");
+      const startDate = format(subDays(today, 90), "yyyy-MM-dd");
       
       const data = await fetchStatsOverview(startDate, endDate);
       return data; // Return full StatOverviewResp
