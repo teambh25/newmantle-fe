@@ -3,10 +3,12 @@ import ClassicGameDescription from "@/components/classic/GameDescription";
 import ClassicNotificationFeed from "@/components/classic/NotificationFeed";
 import ClassicFooter from "@/components/classic/Footer";
 import RuleIntroModal from "@/components/classic/RuleIntroModal";
+import { GAME_INPUT_ID } from "@/components/classic/NewMantleForm/GameForm";
 import { SettingsButton } from "@/components/SettingsButton";
 import { useUITheme } from "@/hooks/useUITheme";
 import { useGuestLink } from "@/hooks/useGuestLink";
 import { useRuleIntroModal } from "@/hooks/useRuleIntroModal";
+import { useInputTooltip } from "@/hooks/useInputTooltip";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import AuthButton from "@/components/AuthButton";
@@ -32,6 +34,10 @@ export default function Home() {
   const { theme, setTheme, mounted } = useUITheme();
   useGuestLink();
   const ruleModal = useRuleIntroModal();
+  const inputTooltip = useInputTooltip();
+  // 말풍선은 한 번에 하나: 모달 → 입력창 말풍선 → 헤더 말풍선 (docs/tasks/ui/plan.md 7장)
+  const showInputTooltip = ruleModal.closed && inputTooltip.show;
+  const hideHeaderTooltip = !ruleModal.closed || !inputTooltip.done;
 
   // hydration 전(localStorage 읽기 전)에는 아무것도 렌더링하지 않아 디자인 깜빡임(FOUC) 방지
   if (!mounted) {
@@ -183,8 +189,8 @@ export default function Home() {
                 </p>
               </Link>
               <div className="flex items-center shrink-0 space-x-2 sm:space-x-4">
-                {/* 첫 방문 모달이 닫히기 전에는 로그인 말풍선을 숨긴다 (docs/tasks/rule/plan.md M-6) */}
-                <AuthButton hideTooltip={!ruleModal.closed} />
+                {/* 첫 방문 모달·입력창 말풍선이 끝나기 전에는 헤더 말풍선을 숨긴다 (docs/tasks/rule/plan.md M-6, docs/tasks/ui/plan.md 7장) */}
+                <AuthButton hideTooltip={hideHeaderTooltip} />
                 <Link
                   href="/rule"
                   className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all"
@@ -193,18 +199,25 @@ export default function Home() {
                 >
                   <CircleHelp size={20} />
                 </Link>
-                <StatsLink hideTooltip={!ruleModal.closed} />
+                <StatsLink hideTooltip={hideHeaderTooltip} />
                 <SettingsButton theme={theme} onThemeChange={setTheme} variant="classic" />
               </div>
             </div>
             <div className="w-full max-w-2xl space-y-16 flex-grow flex flex-col pb-16">
-              <ClassicNewMantleForm />
+              <ClassicNewMantleForm
+                showInputTooltip={showInputTooltip}
+                onInputTooltipDone={inputTooltip.dismiss}
+              />
               <ClassicNotificationFeed />
             </div>
             <ClassicGameDescription />
           </main>
           <ClassicFooter />
-          <RuleIntroModal open={ruleModal.open} onClose={ruleModal.close} />
+          <RuleIntroModal
+            open={ruleModal.open}
+            onClose={ruleModal.close}
+            onStart={() => document.getElementById(GAME_INPUT_ID)?.focus()}
+          />
         </div>
       )}
     </>

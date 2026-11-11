@@ -15,7 +15,13 @@ import CompetitiveBar from "@/components/CompetitiveBar";
 import { fetchSharerStats } from "@/utils/api";
 import { createClient } from "@/utils/supabase/client";
 
-export default function NewMantleForm() {
+interface NewMantleFormProps {
+  /** 첫 입력 유도 말풍선 (docs/tasks/ui/plan.md 7장). 순서는 메인이 정한다 */
+  showInputTooltip?: boolean;
+  onInputTooltipDone?: () => void;
+}
+
+export default function NewMantleForm({ showInputTooltip = false, onInputTooltipDone }: NewMantleFormProps = {}) {
   const gameDate = useGameDate();
   const [displayDate, setDisplayDate] = useState("");
   const [showAllWords, setShowAllWords] = useState(false);
@@ -190,8 +196,9 @@ export default function NewMantleForm() {
             return res;
           }}
           gameCompleted={gameLogic.gameCompleted}
-          hasSubmittedWords={gameLogic.submittedWords.length > 0}
           displayDate={displayDate}
+          showInputTooltip={showInputTooltip}
+          onInputTooltipDone={onInputTooltipDone}
           hintButton={
             <HintButton
               onHintRequest={gameLogic.requestHint}

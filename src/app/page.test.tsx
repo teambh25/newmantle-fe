@@ -3,7 +3,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { StrictMode } from "react";
 import Home from "./page";
+import { gameServer } from "@/test/fakeGameServer";
 
 // 로그인 여부를 케이스마다 바꾼다 (기본: 비로그인)
 const auth = vi.hoisted(() => ({ user: null as null | { id: string; email: string } }));
@@ -41,9 +43,10 @@ beforeEach(() => {
 });
 
 /** 메인을 렌더링하고, 헤더(로그인 버튼)와 게임 입력창이 준비될 때까지 기다린다 */
-async function renderHome() {
+async function renderHome({ strict = false } = {}) {
   const user = userEvent.setup({ pointerEventsCheck: 0 });
-  const view = render(<Home />);
+  // strict: 개발 서버처럼 StrictMode로 (effect가 두 번 실행됨)
+  const view = render(strict ? <StrictMode><Home /></StrictMode> : <Home />);
   // 게임 입력창(모달이 열려 있으면 aria-hidden)이 게임 날짜가 정해져 활성화될 때까지
   await waitFor(() => {
     const textboxes = screen.getAllByRole("textbox", { hidden: true });
@@ -57,6 +60,18 @@ async function renderHome() {
     ).toBeGreaterThan(0)
   );
   return { user, ...view };
+}
+
+/** 이전에 단어를 입력해 본 기존 유저 (입력창 말풍선 대상 아님, docs/tasks/ui/plan.md 7장) */
+function setPlayed() {
+  localStorage.setItem(
+    "newmantle_game_data",
+    JSON.stringify({
+      submittedWords: [{ word: "사과", similarity: 10, rank: 500, attempt: 1, correct: false }],
+      attempts: 1,
+      lastPlayedDate: "2000-01-01",
+    })
+  );
 }
 
 const dialog = () => screen.queryByRole("dialog");
@@ -145,6 +160,9 @@ describe("첫 방문 안내 모달", () => {
   });
 
   it("M-6-1: 비로그인 첫 방문 시 모달이 열려 있는 동안 로그인 말풍선이 없고, 닫은 뒤 보임", async () => {
+    // 입력해 본 적 없으면 입력창 말풍선이 먼저라 로그인 말풍선이 뒤로 밀린다 (docs/tasks/ui/plan.md 7장, I-1-1).
+    // M-6(모달 → 로그인 말풍선)은 입력해 본 기존 유저 기준으로 확인한다
+    setPlayed();
     const { user } = await renderHome();
     await screen.findByRole("dialog");
     expect(loginTooltip()).not.toBeInTheDocument();
@@ -252,6 +270,7 @@ describe("통계 유도 말풍선 (docs/tasks/ui/verification.md T)", () => {
 
   beforeEach(() => {
     localStorage.setItem(MODAL_SEEN_KEY, "1");
+    setPlayed(); // 입력창 말풍선이 끝난 상태 (말풍선 순서는 I에서 확인)
   });
 
   it("T-1-1: 로그인 유저는 통계 말풍선이 보이고 로그인 말풍선은 없음", async () => {
@@ -287,5 +306,153 @@ describe("통계 유도 말풍선 (docs/tasks/ui/verification.md T)", () => {
 
     await closeWithX(user);
     expect(await screen.findByRole("button", { name: "통계 안내 닫기" })).toBeInTheDocument();
+  });
+});
+
+describe("첫 입력 유도 말풍선 / 말풍선 순서 (docs/tasks/ui/verification.md I)", () => {
+  const INPUT_TOOLTIP_DONE_KEY = "newmantle_input_tooltip_done";
+  const inputTooltip = () => screen.queryByRole("button", { name: "입력 안내", hidden: true });
+  const statsTooltip = () =>
+    screen.queryByRole("button", { name: "통계 안내 닫기", hidden: true });
+  const gameInput = () => screen.getByRole("textbox");
+  /** 첫 단어를 엔터로 제출하고 서버 응답까지 기다린다 */
+  async function submitFirstWord(user: User) {
+    await user.type(gameInput(), "사과{Enter}");
+    await waitFor(() => expect(gameServer.count("guess")).toBe(1));
+  }
+  const logIn = () => {
+    auth.user = { id: "user-1", email: "tester@example.com" };
+  };
+
+  it("I-1-1: 첫 방문은 모달 → 입력창 말풍선 순서, 이때 로그인 말풍선은 없음", async () => {
+    const { user } = await renderHome();
+    await screen.findByRole("dialog");
+    expect(inputTooltip()).not.toBeInTheDocument();
+
+    await closeWithX(user);
+    expect(await screen.findByRole("button", { name: "입력 안내" })).toBeInTheDocument();
+    expect(loginTooltip()).not.toBeInTheDocument();
+  });
+
+  it("I-1-2: 첫 단어를 제출(엔터)하면 입력창 말풍선이 사라지고 로그인 말풍선이 보임", async () => {
+    localStorage.setItem(MODAL_SEEN_KEY, "1");
+    const { user } = await renderHome();
+    await screen.findByRole("button", { name: "입력 안내" });
+
+    await submitFirstWord(user);
+    await waitFor(() => expect(inputTooltip()).not.toBeInTheDocument());
+    expect(await screen.findByRole("button", { name: "로그인 안내 닫기" })).toBeInTheDocument();
+    expect(localStorage.getItem(INPUT_TOOLTIP_DONE_KEY)).not.toBeNull();
+  });
+
+  it("I-1-3: 첫 단어를 제출한 뒤 다시 열면 입력창 말풍선 없음", async () => {
+    localStorage.setItem(MODAL_SEEN_KEY, "1");
+    const { user, unmount } = await renderHome();
+    await screen.findByRole("button", { name: "입력 안내" });
+    await submitFirstWord(user);
+    await waitFor(() => expect(inputTooltip()).not.toBeInTheDocument());
+
+    await reload(unmount);
+    expect(inputTooltip()).not.toBeInTheDocument();
+  });
+
+  it("I-1-4: 입력창 말풍선을 누르면 입력창에 포커스, 말풍선은 남아 있음", async () => {
+    localStorage.setItem(MODAL_SEEN_KEY, "1");
+    const { user } = await renderHome();
+    await user.click(await screen.findByRole("button", { name: "입력 안내" }));
+    await waitFor(() => expect(gameInput()).toHaveFocus());
+    expect(inputTooltip()).toBeInTheDocument();
+  });
+
+  it("I-1-6: 입력창을 누르고 글자를 쳐도 제출 전이면 입력창 말풍선이 남고 헤더 말풍선은 없음", async () => {
+    localStorage.setItem(MODAL_SEEN_KEY, "1");
+    const { user } = await renderHome();
+    await screen.findByRole("button", { name: "입력 안내" });
+    await user.click(gameInput());
+    await user.type(gameInput(), "사과");
+    expect(inputTooltip()).toBeInTheDocument();
+    expect(loginTooltip()).not.toBeInTheDocument();
+  });
+
+  it("I-1-5: 입력창을 누르지 않으면 말풍선이 그대로 있음 (개발 서버 StrictMode, 규칙 페이지에서 돌아온 경우)", async () => {
+    localStorage.setItem(MODAL_SEEN_KEY, "1");
+    await renderHome({ strict: true });
+    await screen.findByRole("button", { name: "입력 안내" });
+    // 진입 직후 자동 포커스(50ms 지연)가 지나도 남아 있어야 한다
+    await new Promise((r) => setTimeout(r, 150));
+    expect(inputTooltip()).toBeInTheDocument();
+  });
+
+  it("I-4-1: 모달을 시작하기로 닫으면 입력창에 포커스, 입력창 말풍선은 남아 있음", async () => {
+    const { user } = await renderHome();
+    await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "시작하기" }));
+    await waitFor(() => expect(dialog()).not.toBeInTheDocument());
+    await waitFor(() => expect(gameInput()).toHaveFocus());
+    expect(inputTooltip()).toBeInTheDocument();
+  });
+
+  describe.each([
+    ["X", async (user: User) => closeWithX(user)],
+    [
+      "ESC",
+      async (user: User) => {
+        await user.keyboard("{Escape}");
+        await waitFor(() => expect(dialog()).not.toBeInTheDocument());
+      },
+    ],
+    [
+      "바깥 클릭",
+      async (user: User) => {
+        await user.click(document.body);
+        await waitFor(() => expect(dialog()).not.toBeInTheDocument());
+      },
+    ],
+  ])("모달을 %s(으)로 닫기", (_, close) => {
+    it("I-4-2: 입력창으로 포커스가 가지 않음, 입력창 말풍선은 남아 있음", async () => {
+      const { user } = await renderHome();
+      await screen.findByRole("dialog");
+      await close(user);
+      // 닫힌 뒤 포커스 이동이 끝날 시간을 둔다
+      await new Promise((r) => setTimeout(r, 100));
+      expect(gameInput()).not.toHaveFocus();
+      expect(inputTooltip()).toBeInTheDocument();
+    });
+  });
+
+  it("I-2-1: 입력해 본 기존 유저는 입력창 말풍선 없이 로그인 말풍선", async () => {
+    localStorage.setItem(MODAL_SEEN_KEY, "1");
+    setPlayed();
+    await renderHome();
+    expect(await screen.findByRole("button", { name: "로그인 안내 닫기" })).toBeInTheDocument();
+    expect(inputTooltip()).not.toBeInTheDocument();
+  });
+
+  it("I-2-2: 로그인 말풍선을 닫은 적 있는 유저는 입력창 말풍선 없음", async () => {
+    localStorage.setItem(MODAL_SEEN_KEY, "1");
+    localStorage.setItem(TOOLTIP_DISMISSED_KEY, "1");
+    await renderHome();
+    expect(inputTooltip()).not.toBeInTheDocument();
+  });
+
+  it("I-3-1: 입력 없이 로그인부터 하고 돌아오면 입력창 말풍선만, 첫 단어를 제출하면 통계 말풍선", async () => {
+    localStorage.setItem(MODAL_SEEN_KEY, "1");
+    logIn();
+    const { user } = await renderHome();
+    expect(await screen.findByRole("button", { name: "입력 안내" })).toBeInTheDocument();
+    expect(loginTooltip()).not.toBeInTheDocument();
+    expect(statsTooltip()).not.toBeInTheDocument();
+
+    await submitFirstWord(user);
+    expect(await screen.findByRole("button", { name: "통계 안내 닫기" })).toBeInTheDocument();
+    expect(inputTooltip()).not.toBeInTheDocument();
+  });
+
+  it("I-3-2: 입력해 본 로그인 유저는 입력창 말풍선 없이 통계 말풍선", async () => {
+    localStorage.setItem(MODAL_SEEN_KEY, "1");
+    setPlayed();
+    logIn();
+    await renderHome();
+    expect(await screen.findByRole("button", { name: "통계 안내 닫기" })).toBeInTheDocument();
+    expect(inputTooltip()).not.toBeInTheDocument();
   });
 });

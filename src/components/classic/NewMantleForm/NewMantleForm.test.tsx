@@ -457,3 +457,17 @@ describe("D. 공통 / 예외", () => {
     expect(giveUpButton()).toBeDisabled();
   });
 });
+
+// 제출 버튼 대신 엔터 (docs/tasks/ui/verification.md E)
+describe("E. 엔터 제출", () => {
+  it("E-1: 단어 입력 후 엔터 → 추측 요청 1회", async () => {
+    const { user } = await setup();
+    await user.type(input(), "엔터단어{Enter}");
+    await waitFor(() => expect(gameServer.count("guess")).toBe(1));
+  });
+
+  it("E-2: 입력창의 모바일 키보드 엔터 키가 보내기(send)", async () => {
+    await setup();
+    expect(input()).toHaveAttribute("enterkeyhint", "send");
+  });
+});
