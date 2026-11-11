@@ -9,12 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface GiveUpButtonProps {
   onGiveUp: () => void;
@@ -45,29 +39,19 @@ const GiveUpButton: React.FC<GiveUpButtonProps> = ({
 
   return (
     <>
-      <TooltipProvider delayDuration={150}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span>
-              <Button
-                type="button"
-                onClick={() => setDialogOpen(true)}
-                disabled={disabled}
-                variant="ghost"
-                size="icon"
-                className="flex-shrink-0 w-8 h-8"
-                title=""
-                aria-label="포기"
-              >
-                <Flag size={20} />
-              </Button>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>포기</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      {/* 모바일에선 툴팁이 안 떠서 아이콘 + 글씨로 보여준다 (docs/tasks/ui/plan.md 4장, 프로토타입) */}
+      <Button
+        type="button"
+        onClick={() => setDialogOpen(true)}
+        disabled={disabled}
+        variant="ghost"
+        size="sm"
+        className="h-8 px-2 gap-1 text-gray-600"
+        aria-label="포기"
+      >
+        <Flag size={16} />
+        포기
+      </Button>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent

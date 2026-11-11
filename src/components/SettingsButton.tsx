@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
-import { Settings, X, Palette } from "lucide-react";
+import { Settings, X, Palette, LogOut } from "lucide-react";
+import { useAuthUser } from "@/hooks/useAuthUser";
 import { UITheme } from "@/hooks/useUITheme";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import ClassicSurveyForm from "@/components/classic/SurveyForm";
@@ -23,6 +24,7 @@ export function SettingsButton({ theme, onThemeChange, variant }: SettingsButton
   const [open, setOpen] = useState(false);
   const [showSurvey, setShowSurvey] = useState(false);
   const isExcel = variant === "excel";
+  const { user, signOut } = useAuthUser();
 
   return (
     <div className="relative inline-block">
@@ -119,6 +121,22 @@ export function SettingsButton({ theme, onThemeChange, variant }: SettingsButton
               </span>
             </button>
           </div>
+
+          {/* 계정: 로그인했을 때만. 회원 탈퇴 진입점도 여기에 붙인다 (docs/tasks/ui/plan.md 1장) */}
+          {user && (
+            <div className="mt-2 pt-2 border-t border-gray-100">
+              <button
+                onClick={signOut}
+                className={`w-full flex items-center gap-2 p-2 rounded-md transition-colors hover:bg-gray-50 ${isExcel ? "text-[#217346]" : "text-gray-600"
+                  }`}
+              >
+                <LogOut size={16} />
+                <span className={`text-sm ${isExcel ? "font-bold" : "font-semibold"}`}>
+                  로그아웃
+                </span>
+              </button>
+            </div>
+          )}
         </div>
       )}
 

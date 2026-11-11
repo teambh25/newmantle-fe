@@ -1,8 +1,7 @@
 'use client'
 
-import { createClient } from '@/utils/supabase/client'
+import { useAuthUser } from '@/hooks/useAuthUser'
 import { useEffect, useState } from 'react'
-import { User } from '@supabase/supabase-js'
 import { X } from 'lucide-react'
 
 interface AuthButtonProps {
@@ -11,55 +10,31 @@ interface AuthButtonProps {
 }
 
 export default function AuthButton({ hideTooltip = false }: AuthButtonProps) {
-    const [user, setUser] = useState<User | null>(null)
-    const [nickname, setNickname] = useState<string | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
+    const { user, displayName, isLoading } = useAuthUser()
     const [showTooltip, setShowTooltip] = useState(false)
-    const supabase = createClient()
 
     useEffect(() => {
-        const fetchUser = async () => {
-            const { data: { user } } = await supabase.auth.getUser()
-
-            if (user) {
-                const { data: profile } = await supabase.from('profiles').select('nickname').eq('id', user.id).single()
-                if (profile?.nickname) setNickname(profile.nickname)
-                setUser(user)
-            }
-            setIsLoading(false)
-        }
-        fetchUser()
-
         const dismissed = localStorage.getItem('login-tooltip-dismissed')
         if (!dismissed) setShowTooltip(true)
-    }, [supabase])
+    }, [])
 
     const dismissTooltip = () => {
         localStorage.setItem('login-tooltip-dismissed', '1')
         setShowTooltip(false)
     }
 
-    const handleSignOut = async () => {
-        await supabase.auth.signOut()
-        window.location.reload()
-    }
-
     if (isLoading) {
         return <div className="h-8 w-16 opacity-0"></div>
     }
 
+    // 로그아웃은 설정 메뉴에 있다 (docs/tasks/ui/plan.md 1장). 헤더에는 닉네임만, 길면 말줄임
     return user ? (
-        <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-700 font-medium whitespace-nowrap">
-                {nickname || user.email?.split('@')[0]}님
-            </span>
-            <button
-                onClick={handleSignOut}
-                className="text-sm px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition font-semibold whitespace-nowrap"
-            >
-                로그아웃
-            </button>
-        </div>
+        <span
+            className="flex items-center text-sm text-gray-900 font-medium whitespace-nowrap min-w-0"
+            title={`${displayName}님`}
+        >
+            <span className="truncate max-w-[7rem]">{displayName}</span>님
+        </span>
     ) : (
         <div className="relative flex flex-col items-center">
             <a href="/login" className="text-sm px-3 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition font-semibold whitespace-nowrap">

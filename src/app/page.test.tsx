@@ -8,11 +8,14 @@ import Home from "./page";
 // 로그인 여부를 케이스마다 바꾼다 (기본: 비로그인)
 const auth = vi.hoisted(() => ({ user: null as null | { id: string; email: string } }));
 
-// 메인 화면은 헤더 로그인 버튼(getUser, profiles 조회)과 닉네임 설정 창(getSession)이 Supabase를 쓴다
+const signOut = vi.hoisted(() => vi.fn(async () => ({ error: null })));
+
+// 메인 화면은 헤더 로그인 버튼·설정 메뉴(getUser, profiles 조회, signOut)와 닉네임 설정 창(getSession)이 Supabase를 쓴다
 vi.mock("@/utils/supabase/client", () => ({
   createClient: () => ({
     auth: {
       getUser: async () => ({ data: { user: auth.user } }),
+      signOut,
       getSession: async () => ({
         data: { session: auth.user ? { access_token: "test-token", user: auth.user } : null },
       }),
@@ -21,12 +24,13 @@ vi.mock("@/utils/supabase/client", () => ({
     // 로그인 유저는 닉네임이 있어 닉네임 설정 창이 열리지 않는다
     from: () => ({
       select: () => ({
-        eq: () => ({ single: async () => ({ data: { nickname: "tester" } }) }),
+        eq: () => ({ single: async () => ({ data: { nickname: "tester" } }) }), // = NICKNAME
       }),
     }),
   }),
 }));
 
+const NICKNAME = "tester";
 const MODAL_SEEN_KEY = "newmantle_rule_modal_seen";
 const TOOLTIP_DISMISSED_KEY = "login-tooltip-dismissed";
 
@@ -45,11 +49,12 @@ async function renderHome() {
     const textboxes = screen.getAllByRole("textbox", { hidden: true });
     textboxes.forEach((t) => expect(t).toBeEnabled());
   });
+  // 헤더 계정 영역: 비로그인은 로그인 링크, 로그인은 닉네임
   await waitFor(() =>
     expect(
-      screen.queryByRole("link", { name: "로그인", hidden: true }) ??
-        screen.queryByRole("button", { name: "로그아웃", hidden: true })
-    ).not.toBeNull()
+      screen.queryAllByRole("link", { name: "로그인", hidden: true }).length +
+        screen.queryAllByText(new RegExp(NICKNAME)).length
+    ).toBeGreaterThan(0)
   );
   return { user, ...view };
 }
@@ -189,5 +194,98 @@ describe("규칙 진입점", () => {
   it("N-4-1: 원작(꼬맨틀) 링크가 그대로 있음", async () => {
     await renderHome();
     expect(screen.getByRole("button", { name: /꼬맨틀/ })).toBeInTheDocument();
+  });
+});
+
+describe("로그아웃 위치 (docs/tasks/ui/verification.md L)", () => {
+  beforeEach(() => {
+    localStorage.setItem(MODAL_SEEN_KEY, "1");
+  });
+
+  const logIn = () => {
+    auth.user = { id: "user-1", email: "tester@example.com" };
+  };
+  const openSettings = (user: User) => user.click(screen.getByRole("button", { name: "설정" }));
+  const logoutButton = () => screen.queryByRole("button", { name: "로그아웃" });
+
+  it("L-1-1: 로그인하면 헤더에 로그아웃 버튼이 없고 닉네임이 보임", async () => {
+    logIn();
+    await renderHome();
+    expect(screen.getAllByText(new RegExp(NICKNAME)).length).toBeGreaterThan(0);
+    expect(logoutButton()).not.toBeInTheDocument();
+  });
+
+  it("L-1-2: 로그인하면 설정 메뉴에 로그아웃이 있고, 누르면 signOut 호출", async () => {
+    logIn();
+    const { user } = await renderHome();
+    expect(logoutButton()).not.toBeInTheDocument(); // 설정을 열기 전에는 없음 (헤더에 없음)
+    await openSettings(user);
+    await user.click(await screen.findByRole("button", { name: "로그아웃" }));
+    await waitFor(() => expect(signOut).toHaveBeenCalledTimes(1));
+  });
+
+  it("L-1-3: 비로그인이면 설정 메뉴에 로그아웃이 없고 헤더에 로그인 링크가 있음", async () => {
+    const { user } = await renderHome();
+    expect(screen.getByRole("link", { name: "로그인" })).toBeInTheDocument();
+    await openSettings(user);
+    expect(screen.getByRole("radiogroup")).toBeInTheDocument(); // 설정 메뉴가 열렸는지
+    expect(logoutButton()).not.toBeInTheDocument();
+  });
+
+  it("L-2-1: excel 테마에서도 로그인하면 설정 메뉴에 로그아웃이 있음", async () => {
+    localStorage.setItem("newmantle-ui-theme", "excel");
+    logIn();
+    const { user } = await renderHome();
+    expect(logoutButton()).not.toBeInTheDocument();
+    await openSettings(user);
+    expect(await screen.findByRole("button", { name: "로그아웃" })).toBeInTheDocument();
+  });
+});
+
+describe("통계 유도 말풍선 (docs/tasks/ui/verification.md T)", () => {
+  const STATS_TOOLTIP_DISMISSED_KEY = "stats-tooltip-dismissed";
+  const statsTooltip = () =>
+    screen.queryByRole("button", { name: "통계 안내 닫기", hidden: true });
+  const logIn = () => {
+    auth.user = { id: "user-1", email: "tester@example.com" };
+  };
+
+  beforeEach(() => {
+    localStorage.setItem(MODAL_SEEN_KEY, "1");
+  });
+
+  it("T-1-1: 로그인 유저는 통계 말풍선이 보이고 로그인 말풍선은 없음", async () => {
+    logIn();
+    await renderHome();
+    expect(await screen.findByRole("button", { name: "통계 안내 닫기" })).toBeInTheDocument();
+    expect(loginTooltip()).not.toBeInTheDocument();
+  });
+
+  it("T-1-2: 비로그인 유저는 통계 말풍선이 없음 (로그인 말풍선은 보임)", async () => {
+    await renderHome();
+    expect(loginTooltip()).toBeInTheDocument();
+    expect(statsTooltip()).not.toBeInTheDocument();
+  });
+
+  it("T-1-3: X로 닫으면 저장되고, 다시 열어도 없음", async () => {
+    logIn();
+    const { user, unmount } = await renderHome();
+    await user.click(await screen.findByRole("button", { name: "통계 안내 닫기" }));
+    expect(statsTooltip()).not.toBeInTheDocument();
+    expect(localStorage.getItem(STATS_TOOLTIP_DISMISSED_KEY)).not.toBeNull();
+
+    await reload(unmount);
+    expect(statsTooltip()).not.toBeInTheDocument();
+  });
+
+  it("T-1-4: 첫 방문이면 모달이 열려 있는 동안 통계 말풍선이 없고, 닫은 뒤 보임", async () => {
+    localStorage.removeItem(MODAL_SEEN_KEY);
+    logIn();
+    const { user } = await renderHome();
+    await screen.findByRole("dialog");
+    expect(statsTooltip()).not.toBeInTheDocument();
+
+    await closeWithX(user);
+    expect(await screen.findByRole("button", { name: "통계 안내 닫기" })).toBeInTheDocument();
   });
 });

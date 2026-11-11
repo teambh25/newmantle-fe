@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { format, subDays } from "date-fns";
 import { KST_AFTERNOON, KST_BEFORE_MIDNIGHT, KST_MIDNIGHT, setClock } from "@/test/clock";
-import { getKSTDateString, getKSTToday, toLegacyDateString } from "@/utils/date";
+import { formatGameDate, getKSTDateString, getKSTToday, toLegacyDateString } from "@/utils/date";
 
 describe.each(["Asia/Seoul", "America/Los_Angeles"])("기기 타임존 %s, KST 11/10 14:00", (tz) => {
   it("D-1: getKSTDateString → KST 오늘", () => {
@@ -34,5 +34,18 @@ describe.each(["Asia/Seoul", "America/Los_Angeles"])("기기 타임존 %s, KST �
     setClock(tz, KST_MIDNIGHT);
     expect(getKSTDateString()).toBe("2026-11-11");
     expect(format(getKSTToday(), "yyyy-MM-dd")).toBe("2026-11-11");
+  });
+});
+
+// 입력창 위 게임 날짜 표시 (docs/tasks/ui/verification.md G)
+describe.each(["Asia/Seoul", "America/Los_Angeles"])("게임 날짜 표시, 기기 타임존 %s", (tz) => {
+  it("G-1: 2026-11-11 → 11월 11일 (수)", () => {
+    setClock(tz, KST_AFTERNOON);
+    expect(formatGameDate("2026-11-11")).toBe("11월 11일 (수)");
+  });
+
+  it("G-2: 2026-03-01 → 3월 1일 (일)", () => {
+    setClock(tz, KST_AFTERNOON);
+    expect(formatGameDate("2026-03-01")).toBe("3월 1일 (일)");
   });
 });

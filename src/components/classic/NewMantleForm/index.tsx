@@ -8,6 +8,7 @@ import { GameResult } from "./GameResult";
 import { useGameState } from "@/hooks/useGameState";
 import { logEvent } from "@/utils/amplitude";
 import { useGameDate } from "@/hooks/useGameDate";
+import { formatGameDate } from "@/utils/date";
 import HintButton from "../HintButton";
 import GiveUpButton from "../GiveUpButton";
 import CompetitiveBar from "@/components/CompetitiveBar";
@@ -61,8 +62,7 @@ export default function NewMantleForm() {
 
   useEffect(() => {
     if (gameDate) {
-      const [year, month, day] = gameDate.split("-");
-      setDisplayDate(`${parseInt(month)}월 ${parseInt(day)}일`);
+      setDisplayDate(formatGameDate(gameDate));
     }
   }, [gameDate]);
 

@@ -69,10 +69,10 @@ export default function NotificationFeed() {
                     </div>
                   </div>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-base font-semibold text-gray-900 mb-2">
                   {notification.title}
                 </h3>
-                <p className="text-gray-700 whitespace-pre-line">
+                <p className="text-sm text-gray-700 whitespace-pre-line">
                   {notification.content}
                 </p>
               </div>

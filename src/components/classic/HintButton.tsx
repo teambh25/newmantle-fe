@@ -1,43 +1,27 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Lightbulb } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface HintButtonProps {
   onHintRequest: () => void;
   disabled: boolean;
 }
 
+// 모바일에선 툴팁이 안 떠서 아이콘 + 글씨로 보여준다 (docs/tasks/ui/plan.md 4장, 프로토타입)
 const HintButton: React.FC<HintButtonProps> = ({ onHintRequest, disabled }) => {
   return (
-    <TooltipProvider delayDuration={150}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span>
-            <Button
-              type="button"
-              onClick={onHintRequest}
-              disabled={disabled}
-              aria-label="힌트"
-              variant="ghost"
-              size="icon"
-              className="flex-shrink-0 w-8 h-8"
-              title=""
-            >
-              <Lightbulb size={20} />
-            </Button>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>힌트</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Button
+      type="button"
+      onClick={onHintRequest}
+      disabled={disabled}
+      aria-label="힌트"
+      variant="ghost"
+      size="sm"
+      className="h-8 px-2 gap-1 text-gray-600"
+    >
+      <Lightbulb size={16} />
+      힌트
+    </Button>
   );
 };
 

@@ -36,7 +36,7 @@ export const GameForm: React.FC<GameFormProps> = ({
     <form onSubmit={handleSubmit} className="w-full mb-6 relative" autoComplete="off">
       <div className="flex items-center space-x-2 mb-1.5 min-h-[16px]">
         {displayDate && (
-          <div className="text-xs text-gray-400 font-medium text-left tracking-wide">
+          <div className="text-xs text-gray-900 font-medium text-left tracking-wide">
             {displayDate}
           </div>
         )}
@@ -57,7 +57,7 @@ export const GameForm: React.FC<GameFormProps> = ({
               errorMessage ||
               (hasSubmittedWords ? "단어 입력" : "아무 단어나 입력해보세요")
             }
-            className={`w-full pr-[80px] ${isError
+            className={`w-full ${isError
                 ? "placeholder-red-500"
                 : "placeholder-gray-400"
               }`}
@@ -67,10 +67,6 @@ export const GameForm: React.FC<GameFormProps> = ({
             autoCapitalize="none"
             autoCorrect="off"
           />
-          <div className="absolute right-2 flex items-center space-x-0.5 text-gray-500">
-            {hintButton}
-            {giveUpButton}
-          </div>
         </div>
         <div className="flex-shrink-0 flex flex-col items-center justify-end">
           <Button
@@ -81,6 +77,11 @@ export const GameForm: React.FC<GameFormProps> = ({
             제출
           </Button>
         </div>
+      </div>
+      {/* 힌트·포기: 입력창 아래 오른쪽 (docs/tasks/ui/plan.md 4장, 프로토타입. 위치는 미정) */}
+      <div className="flex justify-end items-center gap-1 mt-1.5">
+        {hintButton}
+        {giveUpButton}
       </div>
     </form>
   );

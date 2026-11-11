@@ -1,10 +1,13 @@
 // 화면 레벨: 통계 화면의 조회 범위가 KST 오늘 기준인지 (docs/tasks/kst-date-fix/verification.md P-3)
 import { describe, expect, it, vi } from "vitest";
-import { render, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { KST_AFTERNOON, setClock } from "@/test/clock";
 import type { StatOverviewResp } from "@/types/stats";
 import StatsPage from "./page";
+
+const signOut = vi.hoisted(() => vi.fn(async () => ({ error: null })));
 
 // 통계 화면은 로그인한 사용자만 조회한다. setup.ts의 게스트 대신 로그인 세션을 준다
 vi.mock("@/utils/supabase/client", () => {
@@ -14,11 +17,12 @@ vi.mock("@/utils/supabase/client", () => {
       auth: {
         getSession: async () => ({ data: { session } }),
         getUser: async () => ({ data: { user: session.user } }),
+        signOut,
         onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
       },
-      // 헤더의 로그인 버튼이 닉네임을 조회한다
+      // 헤더의 계정 영역이 닉네임을 조회한다
       from: () => ({
-        select: () => ({ eq: () => ({ single: async () => ({ data: null }) }) }),
+        select: () => ({ eq: () => ({ single: async () => ({ data: { nickname: "tester" } }) }) }),
       }),
     }),
   };
@@ -62,5 +66,42 @@ describe("통계 화면", () => {
     const url = new URL(statsUrls.find((u) => u.includes("/v2/stats"))!, "http://localhost");
     expect(url.searchParams.get("start_date")).toBe("2026-08-12");
     expect(url.searchParams.get("end_date")).toBe("2026-11-10");
+  });
+});
+
+describe("통계 화면 헤더 (docs/tasks/ui/verification.md L-3)", () => {
+  it("L-3-1: 헤더에 로그아웃 버튼이 없고, 설정 메뉴에 있음", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({ ok: true, status: 200, json: async () => OVERVIEW }) as Response)
+    );
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <StatsPage />
+      </QueryClientProvider>
+    );
+
+    await screen.findByText(/tester/);
+    expect(screen.queryByRole("button", { name: "로그아웃" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "설정" }));
+    expect(await screen.findByRole("button", { name: "로그아웃" })).toBeInTheDocument();
+  });
+});
+
+describe("통계 유도 말풍선 (docs/tasks/ui/verification.md T-2)", () => {
+  it("T-2-1: 통계 페이지에 들어가면 stats-tooltip-dismissed 저장", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({ ok: true, status: 200, json: async () => OVERVIEW }) as Response)
+    );
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <StatsPage />
+      </QueryClientProvider>
+    );
+    await waitFor(() => expect(localStorage.getItem("stats-tooltip-dismissed")).not.toBeNull());
   });
 });

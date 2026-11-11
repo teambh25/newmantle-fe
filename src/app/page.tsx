@@ -10,6 +10,7 @@ import { useRuleIntroModal } from "@/hooks/useRuleIntroModal";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import AuthButton from "@/components/AuthButton";
+import StatsLink from "@/components/StatsLink";
 import NicknameSetupModal from "@/components/NicknameSetupModal";
 import { BarChart3, CircleHelp } from "lucide-react";
 
@@ -171,16 +172,17 @@ export default function Home() {
         /* ──────────── 클래식 UI ──────────── */
         <div className="flex flex-col min-h-screen font-sans">
           <main className="flex-grow flex flex-col items-center justify-start p-4 sm:p-6 md:p-8">
-            <div className="w-full max-w-2xl flex flex-row items-center justify-between mb-6 mt-2 sm:mt-0">
-              <Link href="/" className="flex flex-row items-end justify-start space-x-3 hover:opacity-80 transition-opacity">
+            {/* 작은 화면(375px)에서 한 줄에 들어가도록 부제를 숨기고 간격을 줄인다 (docs/tasks/ui/plan.md 1장) */}
+            <div className="w-full max-w-2xl flex flex-row items-center justify-between gap-2 mb-6 mt-2 sm:mt-0">
+              <Link href="/" className="flex flex-row items-end justify-start space-x-3 whitespace-nowrap hover:opacity-80 transition-opacity">
                 <h1 className="text-2xl sm:text-3xl font-bold text-blue-600 leading-none">
                   뉴맨틀
                 </h1>
-                <p className="text-base sm:text-lg text-gray-600 leading-none pb-0.5">
+                <p className="hidden sm:block text-base sm:text-lg text-gray-600 leading-none pb-0.5">
                   단어 추측 게임
                 </p>
               </Link>
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center shrink-0 space-x-2 sm:space-x-4">
                 {/* 첫 방문 모달이 닫히기 전에는 로그인 말풍선을 숨긴다 (docs/tasks/rule/plan.md M-6) */}
                 <AuthButton hideTooltip={!ruleModal.closed} />
                 <Link
@@ -191,13 +193,7 @@ export default function Home() {
                 >
                   <CircleHelp size={20} />
                 </Link>
-                <Link 
-                  href="/stats" 
-                  className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all" 
-                  title="통계"
-                >
-                  <BarChart3 size={20} />
-                </Link>
+                <StatsLink hideTooltip={!ruleModal.closed} />
                 <SettingsButton theme={theme} onThemeChange={setTheme} variant="classic" />
               </div>
             </div>

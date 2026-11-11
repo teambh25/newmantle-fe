@@ -21,3 +21,13 @@ export function toLegacyDateString(dateString: string): string {
 export function getKSTToday(date: Date = new Date()): Date {
   return new Date(`${getKSTDateString(date)}T00:00:00`);
 }
+
+const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+
+// "2026-11-11" → "11월 11일 (수)" (입력창 위 게임 날짜)
+// UTC로 계산해 기기 타임존과 무관하게 같은 달력 날짜·요일이 나온다.
+export function formatGameDate(dateString: string): string {
+  const [year, month, day] = dateString.split("-").map(Number);
+  const weekday = WEEKDAYS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()];
+  return `${month}월 ${day}일 (${weekday})`;
+}
