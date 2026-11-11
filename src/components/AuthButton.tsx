@@ -5,7 +5,12 @@ import { useEffect, useState } from 'react'
 import { User } from '@supabase/supabase-js'
 import { X } from 'lucide-react'
 
-export default function AuthButton() {
+interface AuthButtonProps {
+    /** 다른 안내(첫 방문 모달)가 떠 있는 동안 로그인 말풍선을 숨긴다 */
+    hideTooltip?: boolean
+}
+
+export default function AuthButton({ hideTooltip = false }: AuthButtonProps) {
     const [user, setUser] = useState<User | null>(null)
     const [nickname, setNickname] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(true)
@@ -60,13 +65,14 @@ export default function AuthButton() {
             <a href="/login" className="text-sm px-3 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition font-semibold whitespace-nowrap">
                 로그인
             </a>
-            {showTooltip && (
+            {showTooltip && !hideTooltip && (
                 <div
                     className="absolute top-full mt-1.5 bg-white text-gray-700 text-xs rounded-md px-2 py-1.5 whitespace-nowrap leading-tight text-center shadow-md border border-gray-200 z-[9999] cursor-pointer"
                     onClick={dismissTooltip}
                 >
                     <button
                         onClick={(e) => { e.stopPropagation(); dismissTooltip() }}
+                        aria-label="로그인 안내 닫기"
                         className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-gray-400 hover:bg-gray-500 text-white rounded-full flex items-center justify-center"
                     >
                         <X size={10} />

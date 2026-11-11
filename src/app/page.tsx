@@ -2,15 +2,16 @@
 import ClassicGameDescription from "@/components/classic/GameDescription";
 import ClassicNotificationFeed from "@/components/classic/NotificationFeed";
 import ClassicFooter from "@/components/classic/Footer";
-import HelpSection from "@/components/HelpSection";
+import RuleIntroModal from "@/components/classic/RuleIntroModal";
 import { SettingsButton } from "@/components/SettingsButton";
 import { useUITheme } from "@/hooks/useUITheme";
 import { useGuestLink } from "@/hooks/useGuestLink";
+import { useRuleIntroModal } from "@/hooks/useRuleIntroModal";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import AuthButton from "@/components/AuthButton";
 import NicknameSetupModal from "@/components/NicknameSetupModal";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, CircleHelp } from "lucide-react";
 
 // Excel Components
 import ExcelGameDescription from "@/components/excel/GameDescription";
@@ -29,6 +30,7 @@ const ExcelNewMantleForm = dynamic(() => import("@/components/excel/NewMantleFor
 export default function Home() {
   const { theme, setTheme, mounted } = useUITheme();
   useGuestLink();
+  const ruleModal = useRuleIntroModal();
 
   // hydration 전(localStorage 읽기 전)에는 아무것도 렌더링하지 않아 디자인 깜빡임(FOUC) 방지
   if (!mounted) {
@@ -179,7 +181,16 @@ export default function Home() {
                 </p>
               </Link>
               <div className="flex items-center space-x-4">
-                <AuthButton />
+                {/* 첫 방문 모달이 닫히기 전에는 로그인 말풍선을 숨긴다 (docs/tasks/rule/plan.md M-6) */}
+                <AuthButton hideTooltip={!ruleModal.closed} />
+                <Link
+                  href="/rule"
+                  className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all"
+                  title="규칙"
+                  aria-label="게임 규칙"
+                >
+                  <CircleHelp size={20} />
+                </Link>
                 <Link 
                   href="/stats" 
                   className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all" 
@@ -192,14 +203,12 @@ export default function Home() {
             </div>
             <div className="w-full max-w-2xl space-y-16 flex-grow flex flex-col pb-16">
               <ClassicNewMantleForm />
-              <div className="mt-4">
-                <HelpSection />
-              </div>
               <ClassicNotificationFeed />
             </div>
             <ClassicGameDescription />
           </main>
           <ClassicFooter />
+          <RuleIntroModal open={ruleModal.open} onClose={ruleModal.close} />
         </div>
       )}
     </>

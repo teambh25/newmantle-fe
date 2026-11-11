@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 
 const Footer: React.FC = () => {
@@ -13,6 +14,9 @@ const Footer: React.FC = () => {
             <p className="text-sm text-gray-600 text-center"></p>
           </div>
           <div className="flex space-x-4">
+            <Link href="/rule" className="text-sm text-blue-600 hover:underline">
+              규칙
+            </Link>
             <a href="#" className="text-sm text-blue-600 hover:underline">
               이용약관
             </a>

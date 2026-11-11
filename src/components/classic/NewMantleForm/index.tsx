@@ -190,6 +190,7 @@ export default function NewMantleForm() {
             return res;
           }}
           gameCompleted={gameLogic.gameCompleted}
+          hasSubmittedWords={gameLogic.submittedWords.length > 0}
           displayDate={displayDate}
           hintButton={
             <HintButton

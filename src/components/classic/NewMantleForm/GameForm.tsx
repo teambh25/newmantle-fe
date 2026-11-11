@@ -6,6 +6,8 @@ import { useGameForm } from "@/hooks/useGameForm";
 interface GameFormProps {
   submitAction: (word: string) => Promise<{ error?: string }>;
   gameCompleted: boolean;
+  /** 아직 입력한 단어가 없으면 첫 단어 입력을 유도하는 문구를 보여준다 */
+  hasSubmittedWords: boolean;
   displayDate?: string;
   hintButton?: React.ReactNode;
   giveUpButton?: React.ReactNode;
@@ -14,6 +16,7 @@ interface GameFormProps {
 export const GameForm: React.FC<GameFormProps> = ({
   submitAction,
   gameCompleted,
+  hasSubmittedWords,
   displayDate,
   hintButton,
   giveUpButton,
@@ -50,7 +53,10 @@ export const GameForm: React.FC<GameFormProps> = ({
             type="text"
             value={inputWord}
             onChange={handleInputChange}
-            placeholder={errorMessage || "단어 입력"}
+            placeholder={
+              errorMessage ||
+              (hasSubmittedWords ? "단어 입력" : "아무 단어나 입력해보세요")
+            }
             className={`w-full pr-[80px] ${isError
                 ? "placeholder-red-500"
                 : "placeholder-gray-400"
