@@ -147,7 +147,13 @@ export function useGameState(gameDate: string, theme?: string) {
     return correctWord?.attempt ?? gameState.attempts;
   }, [gameState.submittedWords, gameState.attempts]);
 
-  const submitWordAction = async (word: string): Promise<{ error?: string }> => {
+  /**
+   * 제출 결과. 실패면 error(안내 문구)와 함께 reason으로 종류를 알려 준다.
+   * duplicate: 이미 제출한 단어, unknownWord: 게임 단어 목록에 없음(404), failed: 그 밖의 실패(서버·네트워크·날짜)
+   */
+  const submitWordAction = async (
+    word: string
+  ): Promise<{ error?: string; reason?: "duplicate" | "unknownWord" | "failed" }> => {
     try {
       if (findWordIndex(gameState.submittedWords, word) !== -1) {
         setGameState((prev) => {
@@ -159,7 +165,7 @@ export function useGameState(gameDate: string, theme?: string) {
             submittedWords: moveWordToTop(prev.submittedWords, index),
           };
         });
-        return { error: "이미 제출한 단어입니다" };
+        return { error: "이미 제출한 단어입니다", reason: "duplicate" };
       }
 
       const newWord = await apiSubmitWord(
@@ -195,11 +201,8 @@ export function useGameState(gameDate: string, theme?: string) {
         };
       });
 
+      // 축하 멘트는 결과 상자에 있으므로 토스트는 띄우지 않는다 (docs/tasks/ui/result-box.md 6)
       if (newWord.correct) {
-        toast({
-          title: "축하합니다!",
-          description: `${gameState.attempts + 1}번째 시도에 정답을 맞히셨습니다.`,
-        });
         logEvent("Game Completed", {
           attempts: gameState.attempts + 1,
           timeSpent: (now - startTimeRef.current) / 1000,
@@ -218,12 +221,12 @@ export function useGameState(gameDate: string, theme?: string) {
     } catch (error) {
       if (error instanceof Error) {
         if (error.message === "Invalid guess request") {
-          return { error: "없는 단어입니다" };
+          return { error: "없는 단어입니다", reason: "unknownWord" };
         } else if (error.message === "Invalid date format") {
-          return { error: "잘못된 날짜 형식입니다" };
+          return { error: "잘못된 날짜 형식입니다", reason: "failed" };
         }
       }
-      return { error: "오류가 발생했습니다" };
+      return { error: "오류가 발생했습니다", reason: "failed" };
     }
   };
 

@@ -315,6 +315,24 @@ describe("통계 유도 말풍선 (docs/tasks/ui/verification.md T)", () => {
   });
 });
 
+/** 오늘 게임을 끝낸 상태로 저장 (기본: 2번째에 정답 맞힘. `{ givenUp: true }`로 포기) */
+function storeToday(extra: Record<string, unknown>) {
+  localStorage.setItem(
+    "newmantle_game_data",
+    JSON.stringify({
+      submittedWords: [
+        { word: "사랑", similarity: 100, rank: 0, attempt: 2, correct: true },
+        { word: "사과", similarity: 10, rank: 500, attempt: 1, correct: false },
+      ],
+      attempts: 2,
+      solvedAttempts: 2,
+      gameCompleted: true,
+      lastPlayedDate: getKSTDateString(),
+      ...extra,
+    }),
+  );
+}
+
 describe("헤더 말풍선 자동 닫힘 / 결과 상자 로그인 안내 (docs/tasks/ui/verification.md H)", () => {
   const STATS_TOOLTIP_DISMISSED_KEY = "stats-tooltip-dismissed";
   const statsTooltip = () => screen.queryByRole("button", { name: "통계 안내 닫기", hidden: true });
@@ -325,23 +343,6 @@ describe("헤더 말풍선 자동 닫힘 / 결과 상자 로그인 안내 (docs/
   const pass = (ms: number) => act(() => vi.advanceTimersByTimeAsync(ms));
   const loginLinks = () =>
     screen.queryAllByRole("link", { hidden: true }).filter((a) => a.getAttribute("href") === "/login");
-
-  function storeToday(extra: Record<string, unknown>) {
-    localStorage.setItem(
-      "newmantle_game_data",
-      JSON.stringify({
-        submittedWords: [
-          { word: "사랑", similarity: 100, rank: 0, attempt: 2, correct: true },
-          { word: "사과", similarity: 10, rank: 500, attempt: 1, correct: false },
-        ],
-        attempts: 2,
-        solvedAttempts: 2,
-        gameCompleted: true,
-        lastPlayedDate: getKSTDateString(),
-        ...extra,
-      }),
-    );
-  }
 
   beforeEach(() => {
     localStorage.setItem(MODAL_SEEN_KEY, "1");
@@ -389,16 +390,16 @@ describe("헤더 말풍선 자동 닫힘 / 결과 상자 로그인 안내 (docs/
     });
   });
 
-  it("H-2-1: 비로그인, 정답 맞힘 → 결과 상자에 로그인 링크 (헤더 포함 2개)", async () => {
+  it("H-2-1: 비로그인, 정답 맞힘 → 로그인 링크는 헤더 1개뿐 (결과 상자 링크 뺌)", async () => {
     storeToday({});
     await renderHome();
-    expect(loginLinks()).toHaveLength(2);
+    expect(loginLinks()).toHaveLength(1);
   });
 
-  it("H-2-2: 비로그인, 포기함 → 결과 상자에 로그인 링크 (헤더 포함 2개)", async () => {
+  it("H-2-2: 비로그인, 포기함 → 로그인 링크는 헤더 1개뿐", async () => {
     storeToday({ givenUp: true });
     await renderHome();
-    expect(loginLinks()).toHaveLength(2);
+    expect(loginLinks()).toHaveLength(1);
   });
 
   it("H-2-3: 로그인, 정답 맞힘 → 로그인 링크 없음", async () => {
@@ -411,6 +412,45 @@ describe("헤더 말풍선 자동 닫힘 / 결과 상자 로그인 안내 (docs/
   it("H-2-4: 비로그인, 진행 중 → 로그인 링크는 헤더 1개뿐", async () => {
     await renderHome();
     expect(loginLinks()).toHaveLength(1);
+  });
+});
+
+describe("결과 상자 (docs/tasks/ui/verification.md R)", () => {
+  const resultBox = () => screen.findByRole("region", { name: "게임 결과" });
+
+  beforeEach(() => {
+    localStorage.setItem(MODAL_SEEN_KEY, "1");
+  });
+
+  it("R-1-1: 정답 맞힘 → 결과 상자 안에 공유·피드백 버튼", async () => {
+    storeToday({});
+    await renderHome();
+    const box = await resultBox();
+    expect(within(box).getByRole("button", { name: /공유하기/ })).toBeInTheDocument();
+    expect(within(box).getByRole("button", { name: /피드백/ })).toBeInTheDocument();
+  });
+
+  it("R-1-2: 포기함 → 결과 상자 안에 공유·피드백 버튼", async () => {
+    storeToday({ givenUp: true });
+    await renderHome();
+    const box = await resultBox();
+    expect(within(box).getByRole("button", { name: /공유하기/ })).toBeInTheDocument();
+    expect(within(box).getByRole("button", { name: /피드백/ })).toBeInTheDocument();
+  });
+
+  it("R-1-3: 결과 상자의 피드백 버튼 → 피드백 창이 열림", async () => {
+    storeToday({});
+    const { user } = await renderHome();
+    await user.click(within(await resultBox()).getByRole("button", { name: /피드백/ }));
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("R-2-1: 정답 맞힘 → 정답 투표 버튼이 없음", async () => {
+    storeToday({});
+    await renderHome();
+    await screen.findByRole("button", { name: /공유하기/ });
+    expect(screen.queryByRole("button", { name: /좋았다/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /별로였다/ })).not.toBeInTheDocument();
   });
 });
 

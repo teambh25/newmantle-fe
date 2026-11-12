@@ -7,25 +7,13 @@ import { CornerDownLeft } from "lucide-react";
 /** 게임 입력창. 첫 방문 모달이 닫힌 뒤 포커스를 옮길 때 쓴다 */
 export const GAME_INPUT_ID = "game-input";
 
-/** 날짜 제목에 드러난 정답 정보: 진행 중엔 초성, 끝나면 정답 (docs/tasks/ui/word-list.md 3-4) */
-export interface AnswerReveal {
-  text: string;
-  tone: "consonant" | "solved" | "givenUp";
-}
-
-// 타일 색은 단어 목록과 같은 뜻: 힌트 노랑, 정답 초록. 포기는 축하 색 없이 회색
-const REVEAL_TILE: Record<AnswerReveal["tone"], string> = {
-  consonant: "bg-amber-100 text-amber-700",
-  solved: "bg-green-100 text-green-700",
-  givenUp: "bg-gray-100 text-gray-600",
-};
 
 interface GameFormProps {
   submitAction: (word: string) => Promise<{ error?: string }>;
   gameCompleted: boolean;
   displayDate?: string;
-  /** 날짜 제목 둘째 줄에 타일로 보여줄 초성·정답. 없으면 "오늘의 정답은?" */
-  reveal?: AnswerReveal | null;
+  /** 날짜 제목 둘째 줄에 타일로 보여줄 정답 정보: 진행 중엔 초성, 끝나면 정답. 없으면 "오늘의 정답은?" (docs/tasks/ui/word-list.md 3-4) */
+  reveal?: string | null;
   hintButton?: React.ReactNode;
   giveUpButton?: React.ReactNode;
   /** 입력창 아래 첫 입력 유도 말풍선. 첫 단어를 제출하면 onInputTooltipDone으로 닫는다 */
@@ -68,12 +56,13 @@ export const GameForm: React.FC<GameFormProps> = ({
             <>
               오늘의 정답
               {/* 스크린 리더는 타일을 한 글자씩이 아니라 한 단어로 읽게 */}
-              <span className="sr-only">{reveal.text}</span>
+              <span className="sr-only">{reveal}</span>
               <span className="flex gap-1" aria-hidden="true">
-                {Array.from(reveal.text).map((ch, i) => (
+                {Array.from(reveal).map((ch, i) => (
                   <span
                     key={i}
-                    className={`inline-flex h-7 min-w-7 sm:h-8 sm:min-w-8 px-1 items-center justify-center rounded text-lg sm:text-xl leading-none ${REVEAL_TILE[reveal.tone]}`}
+                    // 초성·정답 모두 파랑. 맞힘·포기 구분은 결과 상자 색이 한다
+                    className="inline-flex h-7 min-w-7 sm:h-8 sm:min-w-8 px-1 items-center justify-center rounded text-lg sm:text-xl leading-none bg-blue-100 text-blue-700"
                   >
                     {ch}
                   </span>
@@ -101,9 +90,11 @@ export const GameForm: React.FC<GameFormProps> = ({
             errorMessage ||
             "단어 입력 후 엔터"
           }
+          // 없는 단어 등 오류: 테두리와 안내 문구를 빨갛게. 다음 제출 때 풀린다 (docs/tasks/ui/plan.md 9장)
+          aria-invalid={isError}
           className={`w-full pr-[148px] sm:pr-[176px] ${isError
-              ? "placeholder-red-500"
-              : "placeholder-gray-400"
+              ? "border-red-500 placeholder:text-red-500"
+              : "placeholder:text-gray-400"
             }`}
           disabled={isLoading}
           ref={inputRef}

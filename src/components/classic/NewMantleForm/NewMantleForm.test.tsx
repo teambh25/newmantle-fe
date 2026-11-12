@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import NewMantleForm from "./index";
+import { Toaster } from "@/components/ui/toaster";
 import { ANSWER, gameServer } from "@/test/fakeGameServer";
 import { amplitudeEvents, GAME_DATE } from "@/test/gameHarness";
 
@@ -281,7 +282,7 @@ describe("C. 포기", () => {
 
     expect(resultAttempts()).toBe(3);
 
-    await user.click(screen.getByRole("button", { name: /도전장/ }));
+    await user.click(screen.getByRole("button", { name: /공유하기/ }));
     const link = await waitFor(async () => {
       const text = await navigator.clipboard.readText();
       expect(text).toContain("shared_attempts");
@@ -482,5 +483,45 @@ describe("E. 엔터 제출", () => {
   it("E-2: 입력창의 모바일 키보드 엔터 키가 보내기(send)", async () => {
     await setup();
     expect(input()).toHaveAttribute("enterkeyhint", "send");
+  });
+});
+
+// 없는 단어 안내 (docs/tasks/ui/verification.md Y)
+describe("Y. 없는 단어", () => {
+  it("Y-1-1: 없는 단어 제출 → 입력창이 오류 상태", async () => {
+    const { user } = await setup();
+    gameServer.setUnknown("없는말");
+    await submitWord(user, "없는말");
+    expect(input()).toHaveAttribute("aria-invalid", "true");
+  });
+
+  it("Y-1-2: 오류 뒤 있는 단어 제출 → 오류 상태가 풀림", async () => {
+    const { user } = await setup();
+    gameServer.setUnknown("없는말");
+    await submitWord(user, "없는말");
+    await submitWord(user, "사과", 500);
+    expect(input()).not.toHaveAttribute("aria-invalid", "true");
+  });
+
+  it("Y-2-1: 없는 단어 제출 → 입력창 안내에 그 단어가 들어 있음", async () => {
+    const { user } = await setup();
+    gameServer.setUnknown("없는말");
+    await submitWord(user, "없는말");
+    expect(input().getAttribute("placeholder")).toContain("없는말");
+  });
+
+  it("Y-3-1: 서버 오류로 제출 실패 → 입력창은 오류 상태가 아니고 실패 토스트", async () => {
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    render(
+      <>
+        <NewMantleForm />
+        <Toaster />
+      </>
+    );
+    await waitFor(() => expect(input()).toBeEnabled());
+    gameServer.failNext("guess");
+    await submitWord(user, "사과");
+    expect(input()).not.toHaveAttribute("aria-invalid", "true");
+    expect(await screen.findByRole("status")).toBeInTheDocument();
   });
 });

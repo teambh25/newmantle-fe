@@ -7,6 +7,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import localFont from "next/font/local";
 import { Toaster } from "@/components/ui/toaster";
+import DevTools from "./dev/DevTools";
 
 
 const monoplexKR = localFont({
@@ -107,6 +108,8 @@ export default function RootLayout({
           <AmplitudeInitializer />
           {children}
           <Toaster />
+          {/* 개발 서버에서만: DEV 표시·실패 주입 (docs/tasks/ui/dev-page.md) */}
+          <DevTools />
         </ReactQueryProvider>
       </body>
     </html>

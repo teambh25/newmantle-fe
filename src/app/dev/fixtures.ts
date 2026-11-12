@@ -1,4 +1,4 @@
-// 개발 전용: 단어 목록 화면 확인용 가짜 기록 (docs/tasks/ui/word-list.md 5장)
+// 개발 전용: 화면 확인용 가짜 기록 (docs/tasks/ui/dev-page.md)
 import type { SubmittedWord } from "@/utils/api";
 
 const w = (word: string, rank: number, similarity: number | null, attempt: number): SubmittedWord => ({

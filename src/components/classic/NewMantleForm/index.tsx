@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import WordTable, { VISIBLE_WORD_COUNT } from "./WordTable";
-import { GameForm, type AnswerReveal } from "./GameForm";
+import { GameForm } from "./GameForm";
 import { GameResult } from "./GameResult";
 import { useGameState } from "@/hooks/useGameState";
 import { logEvent } from "@/utils/amplitude";
@@ -14,6 +14,7 @@ import GiveUpButton from "../GiveUpButton";
 import CompetitiveBar from "@/components/CompetitiveBar";
 import { fetchSharerStats } from "@/utils/api";
 import { createClient } from "@/utils/supabase/client";
+import { topicParticle } from "@/utils/korean";
 
 interface NewMantleFormProps {
   /** 첫 입력 유도 말풍선 (docs/tasks/ui/plan.md 7장). 순서는 메인이 정한다 */
@@ -77,27 +78,12 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
   const gameOver = gameLogic.gameCompleted || gameLogic.givenUp;
   const answerWord = gameLogic.sortedWords.find((w) => w.correct)?.word;
   const consonantWord = gameLogic.sortedWords.find(isConsonant)?.word;
-  const reveal: AnswerReveal | null =
-    gameOver && answerWord
-      ? { text: answerWord, tone: gameLogic.givenUp ? "givenUp" : "solved" } // 포기해도 gameCompleted는 true
-      : !gameOver && consonantWord
-        ? { text: consonantWord, tone: "consonant" }
-        : null;
+  const reveal = (gameOver ? answerWord : consonantWord) ?? null;
   // 초성·정답은 제목에 보이므로 표에서 뺀다
   const inHeading = (w: { attempt: number; rank: number; correct: boolean }) => isConsonant(w) || w.correct;
   const tableWords = gameLogic.sortedWords.filter((w) => !inHeading(w));
   // 맨 위 고정 줄은 가장 최근 항목. 그게 초성·정답이었으면 표에 고정 줄이 없다
   const hasLatestRow = tableWords.length > 1 && !(gameLogic.sortedWords[0] && inHeading(gameLogic.sortedWords[0]));
-
-  const handleAnswerSurveyVote = (isPositive: boolean) => {
-    logEvent("Answer Word Survey", {
-      vote: isPositive ? "positive" : "negative",
-      attempts: gameLogic.correctAttempts,
-      date: gameDate,
-      theme: "classic",
-    });
-    gameLogic.setAnswerSurveyVoted(isPositive);
-  };
 
   const handleCopyLink = async () => {
     const baseUrl = window.location.origin;
@@ -173,21 +159,10 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
         <GameResult
           givenUp={gameLogic.givenUp}
           gameCompleted={gameLogic.gameCompleted}
-          attempts={gameLogic.attempts}
           solvedAttempts={gameLogic.solvedAttempts}
           correctAttempts={gameLogic.correctAttempts}
-          answerSurveyVoted={gameLogic.answerSurveyVoted}
-          onAnswerSurveyVote={handleAnswerSurveyVote}
+          onShare={handleCopyLink}
         />
-
-        {(gameLogic.gameCompleted || gameLogic.givenUp) && (
-          <div className="w-full mb-8 text-center">
-            <p className="text-gray-700 mb-3 text-sm font-medium">친구는 나보다 빨리 맞힐까요?</p>
-            <Button onClick={handleCopyLink} className="mx-auto">
-              🥊 도전장 보내기
-            </Button>
-          </div>
-        )}
 
         {sharedAttempts !== null && (
           <CompetitiveBar
@@ -210,6 +185,18 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
             isDone = true;
             clearTimeout(timer);
             setPendingWord(null);
+            // 없는 단어만 입력창에 빨갛게, 단어를 넣어 안내. 그 밖의 실패는 토스트 (docs/tasks/ui/plan.md 9장)
+            if (res.reason === "unknownWord") {
+              return { error: `'${word}'${topicParticle(word)} 없는 단어예요` };
+            }
+            if (res.reason === "failed") {
+              toast({
+                title: "단어 제출 실패",
+                description: "잠시 후 다시 시도해주세요.",
+                variant: "destructive",
+              });
+              return {};
+            }
             return res;
           }}
           gameCompleted={gameLogic.gameCompleted}

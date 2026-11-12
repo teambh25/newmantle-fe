@@ -65,6 +65,7 @@ Vitest + React Testing Library + user-event. 실행 명령은 루트 `README.md`
 | 메서드 | 용도 |
 |---|---|
 | `setRank(word, rank)` | 추측 단어의 순위. 정하지 않은 단어는 순위 밖(-1). `ANSWER.word`는 항상 정답 |
+| `setUnknown(word)` | 게임 단어 목록에 없는 단어로 정함 → 그 단어 추측은 404 (없는 단어 안내 테스트용) |
 | `failNext(kind)` | 다음 `kind` 요청 1회를 500으로 실패 |
 | `holdNext(kind, match?)` | 다음 요청을 붙잡아 둔다 → `release()` / `fail()`로 응답. 요청 중 잠금 테스트용 |
 | `requests` | 받은 요청 목록 (`kind`, `path`, `word`, `rank`). `path`로 날짜까지 확인 가능 |

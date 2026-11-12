@@ -59,8 +59,8 @@ const sentryOptions = {
   },
 };
 
-// 개발 서버에서만 *.dev.tsx를 페이지로 인식한다 (예: src/app/dev/word-list/page.dev.tsx).
-// 빌드·배포에서는 무시되어 경로 자체가 생기지 않는다 (docs/tasks/ui/word-list.md 5장)
+// 개발 서버에서만 *.dev.tsx를 페이지로 인식한다 (예: src/app/dev/page.dev.tsx).
+// 빌드·배포에서는 무시되어 경로 자체가 생기지 않는다 (docs/tasks/ui/dev-page.md)
 const DEFAULT_PAGE_EXTENSIONS = ['tsx', 'ts', 'jsx', 'js'];
 
 export default function config(phase, ctx) {

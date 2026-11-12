@@ -116,6 +116,15 @@ placeholder를 "단어 입력 후 엔터"로 줄이면서 빠진 첫 입력 유�
   - 결과 문구 아래 한 줄 + 로그인 링크(`/login`). 예: "로그인하면 오늘 맞힌 기록이 남아요" (포기는 "로그인하면 오늘 기록이 남아요")
   - 사실 확인: 로그인하면 게스트 기록이 계정으로 연결됨 (`useGuestLink` → `POST /v2/stats/link`)
   - 로그인 유저에게는 없음
+  - → 링크는 빼고 문구만 남김 (헤더에 로그인 버튼이 있음, `result-box.md` 5)
+
+## 9. 없는 단어 안내: 입력창 빨간 테두리 (2026-11-13)
+
+- 지금은 입력창 placeholder에 "없는 단어입니다"만 떠서 눈에 잘 안 띔
+- 알림창은 쓰지 않음: 자주 나오는 가벼운 실수라 흐름이 끊기고, 모바일에서 키보드가 내려감
+- 1차: 입력창 테두리를 빨갛게 (placeholder 문구는 그대로 빨간 글씨). 다음 제출 때 풀림. 써 보고 부족하면 입력창 아래 빨간 말풍선(단어·이유 포함) 검토
+- 2차: 문구에 입력한 단어를 넣음: "'사랑해'는 없는 단어예요". 조사 은/는은 마지막 글자 받침으로 고름 (한글이 아니면 "은(는)"). 글자색은 테두리와 같은 빨강
+- 빨간 표시는 없는 단어(내 입력이 잘못됨)에만. 서버·네트워크 오류, 접근 불가 날짜 같은 그 밖의 제출 실패는 빨간 입력창 대신 실패 토스트 (힌트·포기 실패와 같은 방식). 이미 제출한 단어는 지금처럼 안내 없음
 
 ## 6. 헤더 닉네임 색
 
@@ -132,6 +141,8 @@ placeholder를 "단어 입력 후 엔터"로 줄이면서 빠진 첫 입력 유�
 - `src/hooks/useInputTooltip.ts` (신규): 입력창 말풍선 표시 여부. 메인이 헤더 말풍선 순서에 같이 쓴다
 - `src/components/StatsLink.tsx` (신규): 헤더 통계 아이콘 + 통계 유도 말풍선
 - `src/hooks/useAutoDismiss.ts` (신규): 헤더 말풍선 5초 자동 닫힘 (8장)
-- `src/components/classic/NewMantleForm/GameResult.tsx`: 결과 상자 로그인 안내 (8장)
-- `src/components/classic/HintButton.tsx`, `GiveUpButton.tsx`, `NewMantleForm/GameForm.tsx`: 글씨 버튼, 엔터 아이콘, placeholder
-- `src/utils/date.ts`: 게임 날짜 표시 형식 (`formatGameDate`), `src/components/classic/NewMantleForm/`: 날짜 표시·색 (날짜 제목은 `word-list.md` 3-4)
+- `src/components/classic/NewMantleForm/GameResult.tsx`: 결과 상자 로그인 안내 (8장), 색·공유·피드백 (`result-box.md`)
+- `src/components/classic/HintButton.tsx`, `GiveUpButton.tsx`, `NewMantleForm/GameForm.tsx`: 글씨 버튼, 엔터 아이콘, placeholder, 없는 단어 빨간 테두리 (9장)
+- `src/utils/date.ts`: 게임 날짜 표시 형식 (`formatGameDate`), `src/components/classic/NewMantleForm/`: 날짜 표시·색 (날짜 제목은 `word-list.md` 3-4)- `src/hooks/useGameState.ts`: 제출 실패에 종류(`reason`: 이미 제출 / 없는 단어 / 그 밖의 실패), 정답 토스트 제거 (`result-box.md` 6). `src/components/classic/NewMantleForm/index.tsx`가 종류별로 입력창 안내·실패 토스트를 나눔 (9장)
+- `src/utils/korean.ts` (신규): 주제 조사 은/는 (9장)
+- `src/app/dev/` (개발 전용): `/dev` 페이지, DEV 표시·실패 주입, `layout.tsx`의 `DevTools` (`dev-page.md`)

@@ -43,14 +43,21 @@ export const ANSWER = {
 class FakeGameServer {
   requests: RecordedRequest[] = [];
   private guessRanks = new Map<string, number>();
+  private unknownWords = new Set<string>();
   private failNextKinds: RequestKind[] = [];
   private holdNextGates = new Map<RequestKind, Gate[]>();
 
   reset() {
     this.requests = [];
     this.guessRanks.clear();
+    this.unknownWords.clear();
     this.failNextKinds = [];
     this.holdNextGates.clear();
+  }
+
+  /** 게임 단어 목록에 없는 단어로 정한다 (guess → 404) */
+  setUnknown(word: string) {
+    this.unknownWords.add(word);
   }
 
   /** 추측 단어의 순위를 정한다. 정하지 않은 단어는 순위 밖(-1) */
@@ -117,6 +124,9 @@ class FakeGameServer {
     }
 
     if (fail) return jsonResponse(500, { detail: "fake server error" });
+    if (req.kind === "guess" && this.unknownWords.has(req.word!)) {
+      return jsonResponse(404, { detail: "Invalid guess request" });
+    }
     return jsonResponse(200, this.body(req));
   };
 
