@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import WordTable from "./WordTable";
-import { GameForm } from "./GameForm";
+import WordTable, { VISIBLE_WORD_COUNT } from "./WordTable";
+import { GameForm, type AnswerReveal } from "./GameForm";
 import { GameResult } from "./GameResult";
 import { useGameState } from "@/hooks/useGameState";
 import { logEvent } from "@/utils/amplitude";
@@ -71,6 +71,23 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
       setDisplayDate(formatGameDate(gameDate));
     }
   }, [gameDate]);
+
+  // 초성 힌트는 표에서 빼고 입력창 위 날짜 제목에 둔다. 게임이 끝나면 초성 대신 정답 (docs/tasks/ui/word-list.md 3-4)
+  const isConsonant = (w: { attempt: number; rank: number }) => w.attempt === -1 && w.rank === 0;
+  const gameOver = gameLogic.gameCompleted || gameLogic.givenUp;
+  const answerWord = gameLogic.sortedWords.find((w) => w.correct)?.word;
+  const consonantWord = gameLogic.sortedWords.find(isConsonant)?.word;
+  const reveal: AnswerReveal | null =
+    gameOver && answerWord
+      ? { text: answerWord, tone: gameLogic.givenUp ? "givenUp" : "solved" } // 포기해도 gameCompleted는 true
+      : !gameOver && consonantWord
+        ? { text: consonantWord, tone: "consonant" }
+        : null;
+  // 초성·정답은 제목에 보이므로 표에서 뺀다
+  const inHeading = (w: { attempt: number; rank: number; correct: boolean }) => isConsonant(w) || w.correct;
+  const tableWords = gameLogic.sortedWords.filter((w) => !inHeading(w));
+  // 맨 위 고정 줄은 가장 최근 항목. 그게 초성·정답이었으면 표에 고정 줄이 없다
+  const hasLatestRow = tableWords.length > 1 && !(gameLogic.sortedWords[0] && inHeading(gameLogic.sortedWords[0]));
 
   const handleAnswerSurveyVote = (isPositive: boolean) => {
     logEvent("Answer Word Survey", {
@@ -197,6 +214,7 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
           }}
           gameCompleted={gameLogic.gameCompleted}
           displayDate={displayDate}
+          reveal={reveal}
           showInputTooltip={showInputTooltip}
           onInputTooltipDone={onInputTooltipDone}
           hintButton={
@@ -224,16 +242,19 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
           }
         />
 
-        <div className="w-full">
-          {gameLogic.sortedWords.length > 0 || pendingWord ? (
+        {/* 표 자리 확보: 단어가 적어도 7줄 + "더보기" 높이만큼 차지해서, 입력할 때마다 아래 내용이 밀리지 않게 (docs/tasks/ui/word-list.md 3-5).
+            값 = 표 머리 48px + 줄(모바일 37px / sm 41px) × 7 + 방금 입력 구분선 1px + "더보기" 56px */}
+        <div className="w-full min-h-[364px] sm:min-h-[392px]">
+          {tableWords.length > 0 || pendingWord ? (
             <>
               <WordTable 
-                words={gameLogic.sortedWords} 
+                words={tableWords}
+                hasLatestRow={hasLatestRow}
                 showAll={showAllWords} 
                 pendingWord={pendingWord}
                 pendingAttempt={gameLogic.attempts + 1}
               />
-              {gameLogic.sortedWords.length > 5 && (
+              {tableWords.length > VISIBLE_WORD_COUNT && (
                 <div className="text-center mt-4">
                   <Button
                     onClick={() => setShowAllWords(!showAllWords)}

@@ -1,13 +1,14 @@
 // 화면 레벨: 메인 화면의 첫 방문 모달과 규칙 진입점 (docs/tasks/rule/verification.md M, N)
 // 문구는 검증하지 않는다. 요소는 역할과 접근 가능한 이름으로 찾는다.
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { StrictMode } from "react";
 import Home from "./page";
 import { gameServer } from "@/test/fakeGameServer";
 import { notifications } from "@/static/notifications";
 import { getLatestNotification } from "@/utils/notifications";
+import { getKSTDateString } from "@/utils/date";
 
 // 로그인 여부를 케이스마다 바꾼다 (기본: 비로그인)
 const auth = vi.hoisted(() => ({ user: null as null | { id: string; email: string } }));
@@ -311,6 +312,105 @@ describe("통계 유도 말풍선 (docs/tasks/ui/verification.md T)", () => {
 
     await closeWithX(user);
     expect(await screen.findByRole("button", { name: "통계 안내 닫기" })).toBeInTheDocument();
+  });
+});
+
+describe("헤더 말풍선 자동 닫힘 / 결과 상자 로그인 안내 (docs/tasks/ui/verification.md H)", () => {
+  const STATS_TOOLTIP_DISMISSED_KEY = "stats-tooltip-dismissed";
+  const statsTooltip = () => screen.queryByRole("button", { name: "통계 안내 닫기", hidden: true });
+  const logIn = () => {
+    auth.user = { id: "user-1", email: "tester@example.com" };
+  };
+  /** 시간을 흘려보낸다. 실제 시간도 같이 흐르게 해 두어(shouldAdvanceTime) waitFor·userEvent가 멈추지 않는다 */
+  const pass = (ms: number) => act(() => vi.advanceTimersByTimeAsync(ms));
+  const loginLinks = () =>
+    screen.queryAllByRole("link", { hidden: true }).filter((a) => a.getAttribute("href") === "/login");
+
+  function storeToday(extra: Record<string, unknown>) {
+    localStorage.setItem(
+      "newmantle_game_data",
+      JSON.stringify({
+        submittedWords: [
+          { word: "사랑", similarity: 100, rank: 0, attempt: 2, correct: true },
+          { word: "사과", similarity: 10, rank: 500, attempt: 1, correct: false },
+        ],
+        attempts: 2,
+        solvedAttempts: 2,
+        gameCompleted: true,
+        lastPlayedDate: getKSTDateString(),
+        ...extra,
+      }),
+    );
+  }
+
+  beforeEach(() => {
+    localStorage.setItem(MODAL_SEEN_KEY, "1");
+    setPlayed();
+  });
+
+  describe("말풍선 5초", () => {
+    beforeEach(() => {
+      // setup.ts가 setInterval만 가짜로 깔아 두었으므로, 한 번 풀고 setTimeout까지 다시 깐다 (src/test/README.md 시간)
+      vi.useRealTimers();
+      vi.useFakeTimers({
+        toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"],
+        shouldAdvanceTime: true,
+      });
+    });
+
+    it("H-1-1: 로그인 말풍선은 5초 전엔 있고 5초 뒤 사라지며 닫은 것으로 저장", async () => {
+      await renderHome();
+      expect(loginTooltip()).toBeInTheDocument();
+      await pass(4000);
+      expect(loginTooltip()).toBeInTheDocument();
+      await pass(1500);
+      expect(loginTooltip()).not.toBeInTheDocument();
+      expect(localStorage.getItem(TOOLTIP_DISMISSED_KEY)).not.toBeNull();
+    });
+
+    it("H-1-2: 통계 말풍선도 5초 뒤 사라지며 닫은 것으로 저장", async () => {
+      logIn();
+      await renderHome();
+      expect(await screen.findByRole("button", { name: "통계 안내 닫기" })).toBeInTheDocument();
+      await pass(5500);
+      expect(statsTooltip()).not.toBeInTheDocument();
+      expect(localStorage.getItem(STATS_TOOLTIP_DISMISSED_KEY)).not.toBeNull();
+    });
+
+    it("H-1-3: 모달 때문에 숨어 있는 동안은 세지 않음", async () => {
+      localStorage.removeItem(MODAL_SEEN_KEY);
+      const { user } = await renderHome();
+      await screen.findByRole("dialog");
+      await pass(6000);
+      await closeWithX(user);
+      expect(loginTooltip()).toBeInTheDocument();
+      await pass(5500);
+      expect(loginTooltip()).not.toBeInTheDocument();
+    });
+  });
+
+  it("H-2-1: 비로그인, 정답 맞힘 → 결과 상자에 로그인 링크 (헤더 포함 2개)", async () => {
+    storeToday({});
+    await renderHome();
+    expect(loginLinks()).toHaveLength(2);
+  });
+
+  it("H-2-2: 비로그인, 포기함 → 결과 상자에 로그인 링크 (헤더 포함 2개)", async () => {
+    storeToday({ givenUp: true });
+    await renderHome();
+    expect(loginLinks()).toHaveLength(2);
+  });
+
+  it("H-2-3: 로그인, 정답 맞힘 → 로그인 링크 없음", async () => {
+    logIn();
+    storeToday({});
+    await renderHome();
+    expect(loginLinks()).toHaveLength(0);
+  });
+
+  it("H-2-4: 비로그인, 진행 중 → 로그인 링크는 헤더 1개뿐", async () => {
+    await renderHome();
+    expect(loginLinks()).toHaveLength(1);
   });
 });
 

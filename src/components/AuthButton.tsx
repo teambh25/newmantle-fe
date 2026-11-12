@@ -3,6 +3,7 @@
 import { useAuthUser } from '@/hooks/useAuthUser'
 import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
+import { useAutoDismiss } from '@/hooks/useAutoDismiss'
 
 interface AuthButtonProps {
     /** 다른 안내(첫 방문 모달)가 떠 있는 동안 로그인 말풍선을 숨긴다 */
@@ -23,6 +24,10 @@ export default function AuthButton({ hideTooltip = false }: AuthButtonProps) {
         setShowTooltip(false)
     }
 
+    // 보인 지 5초 뒤 닫은 것과 같이 처리 (docs/tasks/ui/plan.md 8장)
+    const tooltipVisible = !isLoading && !user && showTooltip && !hideTooltip
+    useAutoDismiss(tooltipVisible, dismissTooltip)
+
     if (isLoading) {
         return <div className="h-8 w-16 opacity-0"></div>
     }
@@ -40,7 +45,7 @@ export default function AuthButton({ hideTooltip = false }: AuthButtonProps) {
             <a href="/login" className="text-sm px-3 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition font-semibold whitespace-nowrap">
                 로그인
             </a>
-            {showTooltip && !hideTooltip && (
+            {tooltipVisible && (
                 <div
                     className="absolute top-full mt-1.5 bg-white text-gray-700 text-xs rounded-md px-2 py-1.5 whitespace-nowrap leading-tight text-center shadow-md border border-gray-200 z-[9999] cursor-pointer"
                     onClick={dismissTooltip}

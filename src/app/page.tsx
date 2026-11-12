@@ -204,7 +204,7 @@ export default function Home() {
                 <SettingsButton theme={theme} onThemeChange={setTheme} variant="classic" />
               </div>
             </div>
-            <div className="w-full max-w-2xl space-y-16 flex-grow flex flex-col pb-16">
+            <div className="w-full max-w-2xl flex-grow flex flex-col">
               <ClassicNewMantleForm
                 showInputTooltip={showInputTooltip}
                 onInputTooltipDone={inputTooltip.dismiss}

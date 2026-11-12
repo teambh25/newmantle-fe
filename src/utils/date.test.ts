@@ -39,13 +39,13 @@ describe.each(["Asia/Seoul", "America/Los_Angeles"])("기기 타임존 %s, KST �
 
 // 입력창 위 게임 날짜 표시 (docs/tasks/ui/verification.md G)
 describe.each(["Asia/Seoul", "America/Los_Angeles"])("게임 날짜 표시, 기기 타임존 %s", (tz) => {
-  it("G-1: 2026-11-11 → 11월 11일 (수)", () => {
+  it("G-1: 2026-11-11 → 11월 11일 수요일", () => {
     setClock(tz, KST_AFTERNOON);
-    expect(formatGameDate("2026-11-11")).toBe("11월 11일 (수)");
+    expect(formatGameDate("2026-11-11")).toBe("11월 11일 수요일");
   });
 
-  it("G-2: 2026-03-01 → 3월 1일 (일)", () => {
+  it("G-2: 2026-03-01 → 3월 1일 일요일", () => {
     setClock(tz, KST_AFTERNOON);
-    expect(formatGameDate("2026-03-01")).toBe("3월 1일 (일)");
+    expect(formatGameDate("2026-03-01")).toBe("3월 1일 일요일");
   });
 });

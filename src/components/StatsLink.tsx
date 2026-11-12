@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { BarChart3, X } from 'lucide-react'
 import { useAuthUser } from '@/hooks/useAuthUser'
+import { useAutoDismiss } from '@/hooks/useAutoDismiss'
 
 /** 통계 페이지를 한 번 알려줬는지. `/stats`에 들어가도 저장한다 (docs/tasks/ui/plan.md 5장) */
 export const STATS_TOOLTIP_DISMISSED_KEY = 'stats-tooltip-dismissed'
@@ -41,6 +42,10 @@ export default function StatsLink({ hideTooltip = false }: StatsLinkProps) {
         setShowTooltip(false)
     }
 
+    // 보인 지 5초 뒤 닫은 것과 같이 처리 (docs/tasks/ui/plan.md 8장)
+    const tooltipVisible = !!user && showTooltip && !hideTooltip
+    useAutoDismiss(tooltipVisible, dismissTooltip)
+
     return (
         <div className="relative flex flex-col items-center">
             <Link
@@ -50,7 +55,7 @@ export default function StatsLink({ hideTooltip = false }: StatsLinkProps) {
             >
                 <BarChart3 size={20} />
             </Link>
-            {user && showTooltip && !hideTooltip && (
+            {tooltipVisible && (
                 <div
                     className="absolute top-full mt-1.5 bg-white text-gray-700 text-xs rounded-md px-2 py-1.5 whitespace-nowrap leading-tight text-center shadow-md border border-gray-200 z-[9999] cursor-pointer"
                     onClick={dismissTooltip}

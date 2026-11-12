@@ -1,4 +1,5 @@
 import { withSentryConfig } from '@sentry/nextjs';
+import { PHASE_DEVELOPMENT_SERVER } from 'next/constants.js';
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // 폰트 최적화 설정
@@ -20,7 +21,7 @@ const nextConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, {
+const sentryOptions = {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 
@@ -56,4 +57,18 @@ export default withSentryConfig(nextConfig, {
       removeDebugLogging: true,
     },
   },
-});
+};
+
+// 개발 서버에서만 *.dev.tsx를 페이지로 인식한다 (예: src/app/dev/word-list/page.dev.tsx).
+// 빌드·배포에서는 무시되어 경로 자체가 생기지 않는다 (docs/tasks/ui/word-list.md 5장)
+const DEFAULT_PAGE_EXTENSIONS = ['tsx', 'ts', 'jsx', 'js'];
+
+export default function config(phase, ctx) {
+  const pageExtensions =
+    phase === PHASE_DEVELOPMENT_SERVER
+      ? ['dev.tsx', ...DEFAULT_PAGE_EXTENSIONS]
+      : DEFAULT_PAGE_EXTENSIONS;
+  const wrapped = withSentryConfig({ ...nextConfig, pageExtensions }, sentryOptions);
+  return typeof wrapped === 'function' ? wrapped(phase, ctx) : wrapped;
+}
+

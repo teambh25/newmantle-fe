@@ -1,6 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
+import { useAuthUser } from "@/hooks/useAuthUser";
 
 interface GameResultProps {
   givenUp: boolean;
@@ -21,6 +22,7 @@ export function GameResult({
   answerSurveyVoted,
   onAnswerSurveyVote,
 }: GameResultProps) {
+  const { user, isLoading: authLoading } = useAuthUser();
   if (!gameCompleted && !givenUp) return null;
 
   const displaySolvedAttempts = solvedAttempts ?? correctAttempts;
@@ -36,6 +38,16 @@ export function GameResult({
           : `${displaySolvedAttempts}번째 만에 맞히셨네요.`}
       </p>
       <p className="text-center w-full">(내일은 새로운 단어로 도전할 수 있어요!)</p>
+
+      {/* 비로그인만: 로그인하면 게스트 기록이 계정으로 연결된다 (docs/tasks/ui/plan.md 8장) */}
+      {!authLoading && !user && (
+        <p className="mt-3 text-sm text-center w-full">
+          {givenUp ? "로그인하면 오늘 기록이 남아요" : "로그인하면 오늘 맞힌 기록이 남아요"}
+          <a href="/login" className="ml-2 font-semibold underline underline-offset-2">
+            로그인
+          </a>
+        </p>
+      )}
 
       {gameCompleted && !givenUp && (
         <div className="mt-4 w-full">
