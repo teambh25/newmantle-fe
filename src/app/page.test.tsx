@@ -6,6 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { StrictMode } from "react";
 import Home from "./page";
 import { gameServer } from "@/test/fakeGameServer";
+import { notifications } from "@/static/notifications";
 
 // 로그인 여부를 케이스마다 바꾼다 (기본: 비로그인)
 const auth = vi.hoisted(() => ({ user: null as null | { id: string; email: string } }));
@@ -209,9 +210,12 @@ describe("규칙 진입점", () => {
     expect(screen.queryByRole("heading", { name: "도움말" })).not.toBeInTheDocument();
   });
 
-  it("N-4-1: 원작(꼬맨틀) 링크가 그대로 있음", async () => {
+  it("N-4-1: 원작(꼬맨틀) 외부 링크가 푸터에 있음 (본문에는 없음, docs/tasks/ui/footer.md)", async () => {
     await renderHome();
-    expect(screen.getByRole("button", { name: /꼬맨틀/ })).toBeInTheDocument();
+    const footer = screen.getByRole("contentinfo");
+    const link = within(footer).getByRole("link", { name: /꼬맨틀/ });
+    expect(link.getAttribute("href")).toMatch(/^https:\/\//);
+    expect(screen.queryByRole("button", { name: /꼬맨틀/ })).not.toBeInTheDocument();
   });
 });
 
@@ -454,5 +458,62 @@ describe("첫 입력 유도 말풍선 / 말풍선 순서 (docs/tasks/ui/verifica
     await renderHome();
     expect(await screen.findByRole("button", { name: "통계 안내 닫기" })).toBeInTheDocument();
     expect(inputTooltip()).not.toBeInTheDocument();
+  });
+});
+
+describe("공지 배너 / 공지사항 진입점 (docs/tasks/ui/notices.md NT)", () => {
+  const LAST_SEEN_KEY = "newmantle_last_seen_notification_id";
+  const LEGACY_CHECK_KEY = "newmantle_last_notification_check";
+  // 실제 공지 데이터에서 가장 큰 id = 최신 공지
+  const latestId = String(Math.max(...notifications.map((n) => Number(n.id))));
+  const olderId = String(Number(latestId) - 1);
+
+  beforeEach(() => {
+    localStorage.setItem(MODAL_SEEN_KEY, "1");
+  });
+
+  const bannerLinks = () =>
+    screen.queryAllByRole("link").filter((a) => a.getAttribute("href") === "/notices");
+  const closeBanner = () => screen.queryByRole("button", { name: "공지 닫기" });
+
+  it("NT-5: 안 읽은 최신 공지가 있으면 /notices로 가는 배너가 보이고, 공지 목록은 없음", async () => {
+    localStorage.setItem(LAST_SEEN_KEY, olderId);
+    await renderHome();
+    expect(bannerLinks()).toHaveLength(1);
+    expect(closeBanner()).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "공지사항" })).not.toBeInTheDocument();
+  });
+
+  it("NT-6: 최신 공지를 읽었으면 배너 없음", async () => {
+    localStorage.setItem(LAST_SEEN_KEY, latestId);
+    await renderHome();
+    expect(bannerLinks()).toHaveLength(0);
+    expect(closeBanner()).not.toBeInTheDocument();
+  });
+
+  it("NT-7: 메인에 들어오기만 해서는 읽음 저장값(새 키·기존 키)이 바뀌지 않음", async () => {
+    const legacy = "2026-01-01T00:00:00.000Z";
+    localStorage.setItem(LAST_SEEN_KEY, olderId);
+    localStorage.setItem(LEGACY_CHECK_KEY, legacy);
+    await renderHome();
+    // 기존 공지 목록은 마운트 100ms 뒤 기존 키를 덮어썼다
+    await new Promise((r) => setTimeout(r, 200));
+    expect(localStorage.getItem(LAST_SEEN_KEY)).toBe(olderId);
+    expect(localStorage.getItem(LEGACY_CHECK_KEY)).toBe(legacy);
+  });
+
+  it("NT-8: 배너를 X로 닫으면 배너가 사라지고 최신 공지를 본 것으로 저장", async () => {
+    localStorage.setItem(LAST_SEEN_KEY, olderId);
+    const { user } = await renderHome();
+    await user.click(screen.getByRole("button", { name: "공지 닫기" }));
+    expect(bannerLinks()).toHaveLength(0);
+    expect(localStorage.getItem(LAST_SEEN_KEY)).toBe(latestId);
+  });
+
+  it("NT-10: 설정 메뉴에 /notices로 가는 공지사항 링크가 있음", async () => {
+    localStorage.setItem(LAST_SEEN_KEY, latestId); // 배너 없이
+    const { user } = await renderHome();
+    await user.click(screen.getByRole("button", { name: "설정" }));
+    expect(screen.getByRole("link", { name: "공지사항" })).toHaveAttribute("href", "/notices");
   });
 });

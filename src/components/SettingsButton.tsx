@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
-import { Settings, X, Palette, LogOut } from "lucide-react";
+import Link from "next/link";
+import { Settings, X, Palette, LogOut, Megaphone } from "lucide-react";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { UITheme } from "@/hooks/useUITheme";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -120,6 +121,18 @@ export function SettingsButton({ theme, onThemeChange, variant }: SettingsButton
                 피드백 남기기
               </span>
             </button>
+            {/* 공지사항 진입점. 헤더 아이콘은 폭이 넘쳐 설정 메뉴에 둔다 (docs/tasks/ui/notices.md 4장) */}
+            <Link
+              href="/notices"
+              onClick={() => setOpen(false)}
+              className={`w-full flex items-center gap-2 p-2 rounded-md transition-colors hover:bg-gray-50 ${isExcel ? "text-[#217346]" : "text-gray-600"
+                }`}
+            >
+              <Megaphone size={16} />
+              <span className={`text-sm ${isExcel ? "font-bold" : "font-semibold"}`}>
+                공지사항
+              </span>
+            </Link>
           </div>
 
           {/* 계정: 로그인했을 때만. 회원 탈퇴 진입점도 여기에 붙인다 (docs/tasks/ui/plan.md 1장) */}

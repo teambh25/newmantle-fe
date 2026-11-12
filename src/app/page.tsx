@@ -1,6 +1,5 @@
 "use client";
-import ClassicGameDescription from "@/components/classic/GameDescription";
-import ClassicNotificationFeed from "@/components/classic/NotificationFeed";
+import NoticeBanner from "@/components/classic/NoticeBanner";
 import ClassicFooter from "@/components/classic/Footer";
 import RuleIntroModal from "@/components/classic/RuleIntroModal";
 import { GAME_INPUT_ID } from "@/components/classic/NewMantleForm/GameForm";
@@ -177,6 +176,8 @@ export default function Home() {
       ) : (
         /* ──────────── 클래식 UI ──────────── */
         <div className="flex flex-col min-h-screen font-sans">
+          {/* 안 읽은 최신 공지만 맨 위 띠로. 전체 목록은 /notices (docs/tasks/ui/notices.md 2장) */}
+          <NoticeBanner />
           <main className="flex-grow flex flex-col items-center justify-start p-4 sm:p-6 md:p-8">
             {/* 작은 화면(375px)에서 한 줄에 들어가도록 부제를 숨기고 간격을 줄인다 (docs/tasks/ui/plan.md 1장) */}
             <div className="w-full max-w-2xl flex flex-row items-center justify-between gap-2 mb-6 mt-2 sm:mt-0">
@@ -208,9 +209,7 @@ export default function Home() {
                 showInputTooltip={showInputTooltip}
                 onInputTooltipDone={inputTooltip.dismiss}
               />
-              <ClassicNotificationFeed />
             </div>
-            <ClassicGameDescription />
           </main>
           <ClassicFooter />
           <RuleIntroModal
