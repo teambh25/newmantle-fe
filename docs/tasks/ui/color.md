@@ -57,3 +57,10 @@
 - 업데이트 배지 초록: 통계의 정답 색과 뜻이 겹치고, 공지 대부분이 업데이트라 초록만 반복
 
 코드: `src/utils/notifications.ts`(`isIncident`, `getTypeColor`, `getBannerLabel`), `src/components/classic/NoticeBanner.tsx`(`STYLES`)
+
+## 헤더 로그인 버튼 (유지)
+
+- 고민: 메인에서 꽉 찬 파란 버튼이 로그인 하나라 강조가 세 보임. 로그인 권유는 말풍선("비로그인은 기록이 날아가요")도 하고 있음
+- 해 본 것: classic만 파란 테두리(`border-blue-600 text-blue-600 hover:bg-blue-50`)로 낮춘 미리보기
+- 결정: 기존처럼 꽉 찬 파랑(`bg-blue-600 text-white`) 유지. 로그인하면 기록이 남아 유저에게 이득이라 강조할 동작으로 봄. 위 원칙(꽉 찬 파랑은 권하고 싶은 동작에만)과도 맞음
+- 코드: `src/components/AuthButton.tsx` (변경 없음)
