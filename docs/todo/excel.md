@@ -15,7 +15,7 @@ classic 위주로 진행하면서 excel에 미룬 것들. 나중에 한 번에 �
 - 하단 탭에 "규칙" 탭 추가
 - excel 도움말(`ExcelHelpSection`) 정리. 정리되면 `src/static/faq.ts` 삭제
 - 첫 방문 안내 모달 적용 여부 (현재 excel은 안 열림, M-5)
-- 이용약관 / 개인정보처리방침 진입점 (`docs/todo/rules-terms.md`): excel 푸터는 렌더링 안 됨 → 푸터 / 하단 탭 / 헤더 메뉴 중 어디에 둘지
+- 이용약관 / 개인정보처리방침 진입점 (`docs/todo/privacy-terms.md` 4장): excel 푸터는 렌더링 안 됨 → 푸터 / 하단 탭 / 헤더 메뉴 중 어디에 둘지
 
 ## 메인 UI (`docs/tasks/ui/plan.md`)
 
@@ -27,4 +27,3 @@ classic 위주로 진행하면서 excel에 미룬 것들. 나중에 한 번에 �
 ## 기타
 
 - 공유 링크 생성 / 진입 처리가 classic, excel에 복제돼 있음 → 훅으로 분리 (`docs/todo/share.md`)
-- 첫 추측 관련 excel 적용 여부 (`docs/todo/first-guess.md`)
