@@ -18,8 +18,9 @@
 ## 2. 메인: 공지 목록 제거, 새 공지 배너
 
 - 메인(classic)에서 `ClassicNotificationFeed`를 뺀다
-- 대신 페이지 맨 위(헤더 위)에 전체 폭 띠(announcement bar): `타입 라벨  최신 공지 제목  ›`
+- 대신 페이지 맨 위(헤더 위)에 전체 폭 띠(announcement bar): `타입 라벨 │ 최신 공지 제목  ›`
   - 옅은 파란 배경 + 아래 경계선, 작은 글씨. 처음엔 헤더 아래 테두리 박스였는데 입력창과 너무 비슷해 보여 바꿈
+  - 장애 공지면 빨간 띠, 라벨은 "안내". 색은 `color.md`, 종류는 `docs/spec/notices.md`
   - 누르면 `/notices`로 이동
   - 제목이 길면 한 줄 말줄임
   - 닫기(X) 버튼: 닫으면 읽음 처리
@@ -50,7 +51,14 @@
 ## 5. 공통 로직
 
 - 정렬, 타입 라벨/색상, 최신 공지, 안 읽음 판단을 `src/utils/notifications.ts`로 모은다
-- excel `NotificationFeed`와 기존 `useNotifications`는 건드리지 않는다 (excel 전용으로 남음)
+- excel `NotificationFeed`와 기존 `useNotifications`는 건드리지 않는다 (excel 전용으로 남음). 예외: 장애 종류 추가로 excel 라벨만 공통 `getTypeLabel` 사용
+
+## 6. 공지 종류 정리
+
+색 고민(`color.md`) 중에 정함. 규칙은 `docs/spec/notices.md`
+
+- 업데이트 / 공지 / 장애(`incident`, 신규). 이벤트는 쓸 일이 없어 삭제
+- 사과문(id 1)을 `notice` → `incident`
 
 푸터 정리와 원작 출처 표기는 같이 진행했지만 별도 문서로 분리: `footer.md`
 
@@ -63,6 +71,8 @@
 - `src/hooks/useLastSeenNotice.ts` (신규): 저장값 읽기, 읽음 처리
 - `src/utils/notifications.ts` (신규)
 - `src/components/SettingsButton.tsx`: 공지사항 항목
+- `src/static/notifications.ts`: 종류 정리 (6장)
+- `src/components/excel/NotificationFeed.tsx`: 라벨만 공통 함수로
 
 ## 테스트
 
@@ -89,6 +99,9 @@
 | --- | --- |
 | 2026-11-12 | 구현 전 실행: NT-5·7·8·10 실패(배너·링크 없음, 기존 키 덮어씀), NT-1~4·9 모듈 없음. NT-6은 "배너 없음" 확인이라 구현 전에도 통과 (NT-5의 반대 짝으로 유지) |
 | 2026-11-12 | 구현 후 전체 184개 통과, `tsc`·lint 통과. 수동 확인은 아직 |
+| 2026-11-12 | 수동 확인 (360px, PC): 띠, `/notices` 이상 없음. 띠 라벨·배지 색만 남음 (`color.md`) |
+| 2026-11-12 | 색 결정·장애 종류 추가 후 전체 184개 통과, `tsc`·lint 통과. 장애 띠는 임시 공지로 화면 확인 후 임시 공지 삭제 |
+| 2026-11-12 | 10월 29~30일 장애 사과문(id 7, `date` 10-30, 기록용) 추가 후 NT-5·8 실패: 테스트가 "가장 큰 id = 최신"으로 가정해서. 최신을 정렬 1순위(`getLatestNotification`)로 고친 뒤 184개 통과 |
 
 ## 결정 기록
 
@@ -97,3 +110,5 @@
 - D-3 읽음 비교: 마지막으로 본 공지 `id` (새 키, 기존 키에서 한 번 이전)
 - D-4 `/notices`의 N 표시: 없앰
 - D-5 Amplitude: 이번엔 안 함 (개편 때)
+- D-6 색: 장애만 빨강, 나머지는 무채색 배지 + 파란 띠 (`color.md`)
+- D-7 종류: 업데이트 / 공지 / 장애, 이벤트 삭제. 장애는 띠에서만 "안내" (`docs/spec/notices.md`)

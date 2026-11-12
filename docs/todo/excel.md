@@ -7,7 +7,8 @@ classic 위주로 진행하면서 excel에 미룬 것들. 나중에 한 번에 �
 - 메인에 아직 공지 전체 목록(`ExcelNotificationFeed`, 30행~)이 그대로 있음 → classic처럼 목록 제거 + 새 공지 알림
 - `/notices` excel 버전 여부. 지원하면 하단 탭 바(현재 "게임"만)에 "공지사항" 탭이 자연스러움
 - 읽음 처리: excel 공지 목록은 기존 `useNotifications`(메인 마운트 시 읽음 처리)를 그대로 씀 → classic의 새 읽음 로직으로 맞추기
-- 정렬, 타입 라벨/색상이 classic과 중복이고 정렬 방식도 다름 (`Date` 비교 vs 문자열 비교) → 공통 유틸 사용
+- 정렬, 타입 색상이 classic과 중복이고 정렬 방식도 다름 (`Date` 비교 vs 문자열 비교) → 공통 유틸 사용. 라벨은 공통 `getTypeLabel`로 바꿈
+- 장애(`incident`) 종류 색: excel 배지 색에 없어 기본 회색으로 보임. classic은 장애만 빨강 (`docs/tasks/ui/color.md`)
 
 ## 규칙 (`docs/tasks/rule/plan.md`)
 

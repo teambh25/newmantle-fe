@@ -25,24 +25,26 @@ export function getTypeLabel(type: Notification["type"]): string {
       return "업데이트";
     case "notice":
       return "공지";
-    case "event":
-      return "이벤트";
+    case "incident":
+      return "장애";
     default:
       return "알림";
   }
 }
 
+/** 메인 띠 라벨: 장애는 띠에서만 부드럽게 "안내" (빨간 띠가 이미 알려줌) */
+export function getBannerLabel(type: Notification["type"]): string {
+  return isIncident(type) ? "안내" : getTypeLabel(type);
+}
+
+/** 색은 주의가 필요한 장애만. 나머지는 무채색 (docs/tasks/ui/color.md) */
+export function isIncident(type: Notification["type"]): boolean {
+  return type === "incident";
+}
+
+/** `/notices` 종류 배지 */
 export function getTypeColor(type: Notification["type"]): string {
-  switch (type) {
-    case "update":
-      return "bg-green-100 text-green-800";
-    case "notice":
-      return "bg-blue-100 text-blue-800";
-    case "event":
-      return "bg-purple-100 text-purple-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
+  return isIncident(type) ? "bg-red-50 text-red-700" : "bg-gray-100 text-gray-600";
 }
 
 interface ReadState {

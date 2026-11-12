@@ -1,5 +1,6 @@
 import { notifications } from "@/static/notifications";
 import { useNotifications } from "@/hooks/useNotifications";
+import { getTypeLabel } from "@/utils/notifications";
 
 const getTypeColor = (type: string) => {
   switch (type) {
@@ -33,7 +34,7 @@ const NotificationItem = ({
       <div className="excel-cell col-span-4 border-r-0 flex flex-col items-start justify-start py-4 px-5">
         <div className="flex items-center space-x-3 mb-2">
           <span className={`px-2 py-0.5 border text-[11px] font-medium ${getTypeColor(notification.type)}`}>
-            {notification.type === 'update' ? '업데이트' : notification.type === 'notice' ? '공지' : '이벤트'}
+            {getTypeLabel(notification.type)}
           </span>
           <div className="flex items-center gap-1.5">
             <span className="text-[11px] text-gray-500 font-mono">

@@ -7,6 +7,7 @@ import { StrictMode } from "react";
 import Home from "./page";
 import { gameServer } from "@/test/fakeGameServer";
 import { notifications } from "@/static/notifications";
+import { getLatestNotification } from "@/utils/notifications";
 
 // 로그인 여부를 케이스마다 바꾼다 (기본: 비로그인)
 const auth = vi.hoisted(() => ({ user: null as null | { id: string; email: string } }));
@@ -464,8 +465,8 @@ describe("첫 입력 유도 말풍선 / 말풍선 순서 (docs/tasks/ui/verifica
 describe("공지 배너 / 공지사항 진입점 (docs/tasks/ui/notices.md NT)", () => {
   const LAST_SEEN_KEY = "newmantle_last_seen_notification_id";
   const LEGACY_CHECK_KEY = "newmantle_last_notification_check";
-  // 실제 공지 데이터에서 가장 큰 id = 최신 공지
-  const latestId = String(Math.max(...notifications.map((n) => Number(n.id))));
+  // 최신 공지 = 정렬 1순위 (날짜순). 지난 일을 기록한 공지는 id가 더 커도 최신이 아님 (docs/spec/notices.md)
+  const latestId = getLatestNotification(notifications)!.id;
   const olderId = String(Number(latestId) - 1);
 
   beforeEach(() => {
