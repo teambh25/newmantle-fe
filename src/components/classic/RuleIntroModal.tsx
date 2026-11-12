@@ -44,13 +44,13 @@ const RuleIntroModal: React.FC<RuleIntroModalProps> = ({ open, onClose, onStart 
       >
         <DialogHeader>
           <DialogTitle className="text-blue-600">오늘의 정답 단어를 맞혀보세요!</DialogTitle>
-          <DialogDescription className="text-left text-sm text-gray-600 leading-relaxed pt-2">
+          <DialogDescription className="text-left text-sm text-gray-600 leading-relaxed pt-2 break-keep">
             단어를 입력하면 정답과 얼마나 비슷한지 알려드려요.
             <br />
             유사도를 참고해 매일 바뀌는 정답을 찾아보세요!
             {/* 보조 정보라 작고 연하게 */}
             <span className="block mt-2 text-xs text-gray-400">
-              (정답 단어는 매일 밤 12시에 바뀝니다)
+              정답은 매일 밤 12시에 바뀌어요.
             </span>
           </DialogDescription>
         </DialogHeader>
@@ -60,13 +60,12 @@ const RuleIntroModal: React.FC<RuleIntroModalProps> = ({ open, onClose, onStart 
               시작하기
             </Button>
           </DialogClose>
-          <Link
-            href="/rule"
-            onClick={onClose}
-            className="text-center text-sm text-gray-500 hover:text-blue-600 hover:underline"
-          >
-            자세한 규칙 보기
-          </Link>
+          {/* 다른 선택은 회색 테두리 버튼 (포기 확인 창과 같은 규칙, docs/tasks/rule/plan.md M-7) */}
+          <Button asChild variant="outline" className="w-full">
+            <Link href="/rule" onClick={onClose}>
+              자세한 규칙 보기
+            </Link>
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

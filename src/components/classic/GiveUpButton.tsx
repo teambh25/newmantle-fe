@@ -54,40 +54,66 @@ const GiveUpButton: React.FC<GiveUpButtonProps> = ({
       </Button>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        {/* 모바일 양옆 여백·둥근 모서리는 첫 방문 안내 창과 맞춤 (docs/tasks/ui/giveup-dialog.md 5장) */}
         <DialogContent
+          className="w-[calc(100%-2rem)] max-w-md rounded-lg"
           onOpenAutoFocus={(e) => {
             e.preventDefault();
             continueButtonRef.current?.focus();
           }}
         >
-          <DialogHeader>
-            <DialogTitle>정말 포기하시겠습니까?</DialogTitle>
+          {/* 공통 DialogHeader는 모바일에서 가운데 정렬이라 왼쪽으로 고정. 한국어는 단어 단위 줄바꿈 (giveup-dialog.md 7장) */}
+          <DialogHeader className="text-left break-keep">
+            {/* 초성 미사용: 초성 힌트를 권하는 질문이라 "초성 힌트 받기"가 진행 버튼이 됨 (docs/tasks/ui/giveup-dialog.md 3장) */}
+            {/* 기본 줄 간격(leading-none)은 두 줄일 때 붙어 보여서 살짝 띄움 */}
+            <DialogTitle className="leading-snug">
+              {initialConsonantHintUsed ? (
+                "정말 포기하시겠습니까?"
+              ) : (
+                <>
+                  포기하기 전에 <br className="sm:hidden" />
+                  초성 힌트를 받아볼까요?
+                </>
+              )}
+            </DialogTitle>
             <DialogDescription>
-              포기하면 정답이 공개되고, 이후 입력하는 단어는 오늘 기록에
-              반영되지 않아요.
+              포기하면 정답이 공개되고,
+              <br />
+              이후 입력한 단어는 기록되지 않아요.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
+          {/* 계속 도전(유도)을 마지막에: DialogFooter가 PC에선 오른쪽, 모바일에선 맨 위로 보낸다 (docs/tasks/ui/giveup-dialog.md 2장) */}
+          <DialogFooter className="gap-2 sm:gap-0 pt-2">
             {!initialConsonantHintUsed ? (
               <>
-                <Button ref={continueButtonRef} onClick={handleInitialConsonantHint} className="bg-blue-600 text-white hover:bg-blue-700">
-                  초성 힌트 받고 계속 도전하기
+                <Button variant="outline" onClick={handleGiveUp}>
+                  포기하고 정답 보기
                 </Button>
-                <Button variant="destructive" onClick={handleGiveUp}>
-                  정말로 포기할래요
+                <Button ref={continueButtonRef} onClick={handleInitialConsonantHint} className="bg-blue-600 text-white hover:bg-blue-700">
+                  초성 힌트 받기
                 </Button>
               </>
             ) : (
               <>
+                <Button variant="outline" onClick={handleGiveUp}>
+                  포기하기
+                </Button>
                 <Button ref={continueButtonRef} onClick={() => setDialogOpen(false)} className="bg-blue-600 text-white hover:bg-blue-700">
                   계속 도전하기
-                </Button>
-                <Button variant="destructive" onClick={handleGiveUp}>
-                  포기하기
                 </Button>
               </>
             )}
           </DialogFooter>
+          {/* 초성 없이 계속하기: X와 같은 동작을 눈에 보이게. 두 선택지보다 약하게 (docs/tasks/ui/giveup-dialog.md 4장) */}
+          {!initialConsonantHintUsed && (
+            <button
+              type="button"
+              onClick={() => setDialogOpen(false)}
+              className="-mt-2 justify-self-center sm:justify-self-end text-xs text-gray-400 underline underline-offset-2 hover:text-gray-600"
+            >
+              힌트 없이 계속하기
+            </button>
+          )}
         </DialogContent>
       </Dialog>
     </>

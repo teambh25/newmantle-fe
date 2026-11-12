@@ -98,13 +98,14 @@ describe("A. 일반 힌트 버튼", () => {
 });
 
 describe("B. 초성 힌트 / 확인 창", () => {
-  it("B-2-1: 초성 미사용 상태에서 포기 버튼 → 서버 요청 없이 확인 창, 선택지 2개 (초성 힌트 / 포기)", async () => {
+  it("B-2-1: 초성 미사용 상태에서 포기 버튼 → 서버 요청 없이 확인 창, 선택지 3개 (초성 힌트 / 포기 / 힌트 없이 계속)", async () => {
     const { user } = await setup();
     await openGiveUpDialog(user);
     const opts = dialogOptions();
-    expect(opts.all).toHaveLength(2);
+    expect(opts.all).toHaveLength(3);
     expect(opts.consonant).toBeDefined();
     expect(opts.giveUp).toBeDefined();
+    expect(opts.continue).toBeDefined();
     expect(gameServer.count("hint")).toBe(0);
     expect(gameServer.count("give-up")).toBe(0);
   });
@@ -118,6 +119,18 @@ describe("B. 초성 힌트 / 확인 창", () => {
       await waitFor(() => expect(dialog()).not.toBeInTheDocument());
     }
     expect(gameServer.count("hint")).toBe(0);
+  });
+
+  it("B-2-4: 초성 미사용 상태에서 힌트 없이 계속 선택 → 요청 없음, 창 닫힘, 다음에도 초성 선택지 있음", async () => {
+    const { user } = await setup();
+    await openGiveUpDialog(user);
+    await user.click(dialogOptions().continue!);
+    await waitFor(() => expect(dialog()).not.toBeInTheDocument());
+    expect(gameServer.count("hint")).toBe(0);
+    expect(gameServer.count("give-up")).toBe(0);
+    expect(giveUpButton()).toBeEnabled();
+    await openGiveUpDialog(user);
+    expect(dialogOptions().consonant).toBeDefined();
   });
 
   it("B-1-1 / B-2-3: 입력 0개에서 초성 힌트 선택 → 0위 요청 1회, 창 닫힘, 게임 계속", async () => {
