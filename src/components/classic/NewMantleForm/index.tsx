@@ -291,8 +291,8 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
         />
 
         {/* 표 자리 확보: 단어가 적어도 7줄 + "더보기" 높이만큼 차지해서, 입력할 때마다 아래 내용이 밀리지 않게 (docs/tasks/ui/word-list/plan.md 5).
-            값 = 방금 입력 칸 87px(머리 48 + 줄 37 + 위 선 1 + 아래 굵은 선 2) + 기록 6줄 221px + "더보기" 56px = 365px (헤드리스 측정 372px에서 간격 8px을 뺌, 375·1024 같음) */}
-        <div className="w-full min-h-[365px]">
+            값 = 방금 입력 칸 + 기록 표 소제목 + 기록 6줄 + "더보기"를 헤드리스로 잰 404px (375·1024 같음) */}
+        <div className="w-full min-h-[404px]">
           {/* 시작할 때도 빈 표(머리줄)를 바로 보여 준다 */}
           <WordTable latest={latestRow} history={historyWords} showAll={showAllWords} />
           {historyWords.length > VISIBLE_HISTORY_COUNT && (
