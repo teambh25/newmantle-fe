@@ -97,11 +97,32 @@ function getInitialGameState(): GameData {
   return createEmptyGameState();
 }
 
-export function useGameState(gameDate: string, theme?: string) {
+/** 실패한 요청 종류. 안내 문구에 어떤 기능이 실패했는지 적는 데 쓴다 */
+export type GameRequestKind = "hint" | "consonantHint" | "giveUp";
+
+interface GameStateOptions {
+  /** 힌트·초성 힌트·포기 요청이 실패하면 토스트 대신 부른다 (classic: 입력창 아래 안내, docs/tasks/ui/plan.md 11장) */
+  onRequestError?: (kind: GameRequestKind) => void;
+}
+
+/** 단어 목록 순서: 순위 순, 순위 밖은 뒤에서 유사도 순 */
+export function compareByRank(a: SubmittedWord, b: SubmittedWord): number {
+  if (a.rank === -1 && b.rank === -1) return (b.similarity ?? 0) - (a.similarity ?? 0);
+  if (a.rank === -1) return 1;
+  if (b.rank === -1) return -1;
+  return a.rank - b.rank;
+}
+
+export function useGameState(gameDate: string, theme?: string, { onRequestError }: GameStateOptions = {}) {
   const [gameState, setGameState] = useState<GameData>(getInitialGameState);
   // 이번 페이지 로드 시각. timeSpent(연속 플레이 시간) 기준이며 새로고침하면 다시 잰다.
   const startTimeRef = useRef<number>(Date.now());
   const { toast } = useToast();
+
+  const notifyRequestError = (kind: GameRequestKind, fallbackToast: { title: string; description: string }) => {
+    if (onRequestError) onRequestError(kind);
+    else toast({ ...fallbackToast, variant: "destructive" });
+  };
 
   // 요청 중 잠금 (D-2). ref는 같은 틱 안의 연속 호출을 막고, state는 버튼 비활성에 쓴다.
   // 초성 힌트와 포기는 같은 버튼이므로 하나의 잠금을 공유한다.
@@ -127,13 +148,7 @@ export function useGameState(gameDate: string, theme?: string) {
   const sortedWords = useMemo(() => {
     if (gameState.submittedWords.length <= 1) return gameState.submittedWords;
     const [firstWord, ...restWords] = gameState.submittedWords;
-    const sortedRestWords = restWords.sort((a, b) => {
-      if (a.rank === -1 && b.rank === -1)
-        return (b.similarity ?? 0) - (a.similarity ?? 0);
-      if (a.rank === -1) return 1;
-      if (b.rank === -1) return -1;
-      return a.rank - b.rank;
-    });
+    const sortedRestWords = restWords.sort(compareByRank);
     return [firstWord, ...sortedRestWords];
   }, [gameState.submittedWords]);
 
@@ -258,10 +273,9 @@ export function useGameState(gameDate: string, theme?: string) {
       logEvent("Hint Requested", { hintRank, theme });
     } catch (error) {
       console.error("힌트 요청 중 오류 발생:", error);
-      toast({
+      notifyRequestError("hint", {
         title: "힌트 요청 실패",
         description: "힌트를 가져오는 중 오류가 발생했습니다. 다시 시도해주세요.",
-        variant: "destructive",
       });
     } finally {
       hintPendingRef.current = false;
@@ -295,10 +309,9 @@ export function useGameState(gameDate: string, theme?: string) {
       logEvent("Initial Consonant Hint Requested", { theme });
     } catch (error) {
       console.error("초성 힌트 요청 중 오류 발생:", error);
-      toast({
+      notifyRequestError("consonantHint", {
         title: "초성 힌트 요청 실패",
         description: "초성 힌트를 가져오는 중 오류가 발생했습니다. 다시 시도해주세요.",
-        variant: "destructive",
       });
     } finally {
       giveUpPendingRef.current = false;
@@ -344,10 +357,9 @@ export function useGameState(gameDate: string, theme?: string) {
       });
     } catch (error) {
       console.error("정답 가져오기 실패:", error);
-      toast({
+      notifyRequestError("giveUp", {
         title: "정답 가져오기 실패",
         description: "정답을 가져오는 중 오류가 발생했습니다. 다시 시도해주세요.",
-        variant: "destructive",
       });
     } finally {
       giveUpPendingRef.current = false;

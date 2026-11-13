@@ -2,12 +2,14 @@
 // 게임 서버·Amplitude·축하 효과·Supabase만 mock하고 화면은 실제 컴포넌트를 렌더링한다.
 // 문구는 검증하지 않는다. 버튼은 역할과 대략적인 이름으로만 찾는다.
 import { describe, expect, it } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, renderHook, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import NewMantleForm from "./index";
 import { Toaster } from "@/components/ui/toaster";
+import { useToast } from "@/components/ui/use-toast";
 import { ANSWER, gameServer } from "@/test/fakeGameServer";
 import { amplitudeEvents, GAME_DATE } from "@/test/gameHarness";
+import { getKSTDateString } from "@/utils/date";
 
 type User = ReturnType<typeof userEvent.setup>;
 
@@ -79,6 +81,19 @@ async function giveUpViaDialog(user: User) {
   await user.click(dialogOptions().giveUp!);
   await waitFor(() => expect(givenUpShown()).toBe(true));
 }
+
+/** 표 본문의 줄 (표가 없으면 빈 배열) */
+function bodyRows() {
+  const groups = screen.queryAllByRole("rowgroup");
+  return groups[1] ? within(groups[1]).queryAllByRole("row") : [];
+}
+const firstRowText = () => bodyRows()[0]?.textContent ?? "";
+const rowsWith = (word: string) => bodyRows().filter((r) => r.textContent?.includes(word));
+/** 저장값에 든 단어 */
+const storedWords = (): string[] =>
+  (JSON.parse(localStorage.getItem("newmantle_game_data") ?? "{}").submittedWords ?? []).map(
+    (w: { word: string }) => w.word,
+  );
 
 // ---------------------------------------------------------------------------
 
@@ -495,24 +510,129 @@ describe("Y. 없는 단어", () => {
     expect(input()).toHaveAttribute("aria-invalid", "true");
   });
 
-  it("Y-1-2: 오류 뒤 입력창 글자를 고침 → 오류 상태와 아래 경고가 사라짐", async () => {
+  it("Y-1-2: 오류 뒤 입력창에 글자 입력 → 오류 상태와 안내가 사라짐", async () => {
     const { user } = await setup();
     gameServer.setUnknown("없는말");
     await submitWord(user, "없는말");
-    await user.type(input(), "{Backspace}");
+    await user.type(input(), "가");
     expect(input()).not.toHaveAttribute("aria-invalid", "true");
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
-  it("Y-2-1: 없는 단어 제출 → 입력창에 그 단어가 남고, 아래 경고가 뜸", async () => {
+  it("Y-2-1: 없는 단어 제출 → 입력창 비움, 알림에 단어, 표 첫 줄에 임시 줄, 저장 안 됨", async () => {
     const { user } = await setup();
     gameServer.setUnknown("없는말");
     await submitWord(user, "없는말");
-    expect(input()).toHaveValue("없는말");
-    expect(screen.getByRole("alert")).toBeInTheDocument();
+    expect(input()).toHaveValue("");
+    expect(screen.getByRole("alert")).toHaveTextContent("없는말");
+    expect(firstRowText()).toContain("없는말");
+    expect(storedWords()).not.toContain("없는말");
   });
 
-  it("Y-3-1: 서버 오류로 제출 실패 → 입력창은 오류 상태가 아니고 실패 토스트", async () => {
+  it("Y-2-2: 임시 줄은 입력창에 글자를 쳐도 남음", async () => {
+    const { user } = await setup();
+    gameServer.setUnknown("없는말");
+    await submitWord(user, "없는말");
+    await user.type(input(), "가");
+    expect(firstRowText()).toContain("없는말");
+  });
+
+  it("Y-2-3: 임시 줄 뒤 있는 단어 제출 → 임시 줄 사라지고 첫 줄은 새 단어", async () => {
+    const { user } = await setup();
+    gameServer.setUnknown("없는말");
+    await submitWord(user, "없는말");
+    await submitWord(user, "사과", 500);
+    await waitFor(() => expect(rowsWith("없는말")).toHaveLength(0));
+    expect(firstRowText()).toContain("사과");
+  });
+
+  it("Y-2-4: 임시 줄 뒤 힌트 (성공) → 임시 줄 사라짐", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 500);
+    gameServer.setUnknown("없는말");
+    await submitWord(user, "없는말");
+    await user.click(hintButton());
+    await waitFor(() => expect(gameServer.count("hint")).toBe(1));
+    await waitFor(() => expect(rowsWith("없는말")).toHaveLength(0));
+  });
+
+  it("Y-2-5: 같은 없는 단어를 다시 제출 → 줄은 하나, 요청은 두 번", async () => {
+    const { user } = await setup();
+    gameServer.setUnknown("없는말");
+    await submitWord(user, "없는말");
+    await submitWord(user, "없는말");
+    expect(gameServer.count("guess")).toBe(2);
+    expect(rowsWith("없는말")).toHaveLength(1);
+  });
+
+  it("Y-2-6: 단어 8개 저장 상태에서 없는 단어 → 보이는 줄은 임시 줄 포함 7줄", async () => {
+    const words = Array.from({ length: 8 }, (_, k) => ({
+      word: `단어${8 - k}`, similarity: 10, rank: 108 - k, attempt: 8 - k, correct: false,
+    }));
+    localStorage.setItem(
+      "newmantle_game_data",
+      JSON.stringify({ submittedWords: words, attempts: 8, lastPlayedDate: getKSTDateString() }),
+    );
+    const { user } = await setup();
+    gameServer.setUnknown("없는말");
+    await submitWord(user, "없는말");
+    expect(firstRowText()).toContain("없는말");
+    expect(bodyRows()).toHaveLength(7);
+  });
+
+  it("Y-2-7: 10위·500위 순으로 낸 뒤 없는 단어 → 줄 순서는 없는 단어, 10위, 500위", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 10);
+    await submitWord(user, "바나나", 500);
+    gameServer.setUnknown("없는말");
+    await submitWord(user, "없는말");
+    const texts = bodyRows().map((r) => r.textContent ?? "");
+    expect(texts).toHaveLength(3);
+    expect(texts[0]).toContain("없는말");
+    expect(texts[1]).toContain("사과");
+    expect(texts[2]).toContain("바나나");
+  });
+
+});
+
+// 이미 제출한 단어 (docs/tasks/ui/verification.md Y-4, plan.md 12장)
+describe("Y-4. 이미 제출한 단어", () => {
+  const repeatIcon = () => screen.queryByRole("img", { name: "이미 입력한 단어" });
+
+  async function resubmit(user: User, word: string) {
+    await user.type(input(), word);
+    await user.click(submitButton());
+    await waitFor(() => expect(input()).toHaveValue(""));
+  }
+
+  it("Y-4-1: 이미 낸 단어를 다시 → 요청 없음, 첫 줄이 그 단어이고 반복 아이콘", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 10);
+    await submitWord(user, "바나나", 500);
+    await resubmit(user, "사과");
+    expect(gameServer.count("guess")).toBe(2);
+    await waitFor(() => expect(firstRowText()).toContain("사과"));
+    expect(within(bodyRows()[0]).getByRole("img", { name: "이미 입력한 단어" })).toBeInTheDocument();
+  });
+
+  it("Y-4-2: 반복 아이콘 뒤 새 단어 제출 → 아이콘 없음", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 10);
+    await submitWord(user, "바나나", 500);
+    await resubmit(user, "사과");
+    await submitWord(user, "포도", 300);
+    expect(repeatIcon()).not.toBeInTheDocument();
+  });
+});
+
+// 요청 실패 안내 (docs/tasks/ui/verification.md Y-3, plan.md 11장)
+describe("Y-3. 요청 실패는 입력창 아래", () => {
+  /** 토스트가 뜨는지도 보기 위해 Toaster를 같이 렌더링한다 */
+  async function setupWithToaster() {
+    // 토스트 상태는 모듈 전역이라 앞 테스트(링크 복사 등)의 토스트를 닫아 둔다
+    const toasts = renderHook(() => useToast());
+    act(() => toasts.result.current.dismiss());
+    toasts.unmount();
     const user = userEvent.setup({ pointerEventsCheck: 0 });
     render(
       <>
@@ -521,9 +641,92 @@ describe("Y. 없는 단어", () => {
       </>
     );
     await waitFor(() => expect(input()).toBeEnabled());
+    return { user };
+  }
+  const toastShown = () => screen.queryByRole("status") !== null;
+
+  async function failHint(user: User) {
+    gameServer.failNext("hint");
+    await user.click(hintButton());
+    await waitFor(() => expect(gameServer.count("hint")).toBe(1));
+    await waitFor(() => expect(hintButton()).toBeEnabled());
+  }
+
+  it("Y-3-1: 서버 오류로 제출 실패 → 단어가 남고 오류 상태 아님, 알림, 토스트 없음, 표 첫 줄에 임시 줄", async () => {
+    const { user } = await setupWithToaster();
     gameServer.failNext("guess");
     await submitWord(user, "사과");
+    expect(input()).toHaveValue("사과");
     expect(input()).not.toHaveAttribute("aria-invalid", "true");
-    expect(await screen.findByRole("status")).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    expect(toastShown()).toBe(false);
+    expect(firstRowText()).toContain("사과");
+    expect(storedWords()).not.toContain("사과");
+  });
+
+  it("Y-3-2: 제출 실패 뒤 엔터만 다시 → 같은 단어로 재요청, 안내 사라짐", async () => {
+    const { user } = await setupWithToaster();
+    gameServer.failNext("guess");
+    await submitWord(user, "사과");
+    await user.type(input(), "{Enter}");
+    await waitFor(() => expect(gameServer.count("guess")).toBe(2));
+    expect(gameServer.requests.filter((r) => r.kind === "guess").map((r) => r.word)).toEqual(["사과", "사과"]);
+    await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
+    await waitFor(() => expect(storedWords()).toContain("사과"));
+    expect(rowsWith("사과")).toHaveLength(1);
+  });
+
+  it("Y-3-3: 힌트 실패 → 아래 안내, 토스트 없음", async () => {
+    const { user } = await setupWithToaster();
+    await failHint(user);
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    expect(toastShown()).toBe(false);
+  });
+
+  it("Y-3-4: 초성 힌트 실패 → 아래 안내, 토스트 없음", async () => {
+    const { user } = await setupWithToaster();
+    gameServer.failNext("hint");
+    await openGiveUpDialog(user);
+    await user.click(dialogOptions().consonant!);
+    await waitFor(() => expect(gameServer.consonantHintCount()).toBe(1));
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    expect(toastShown()).toBe(false);
+  });
+
+  it("Y-3-5: 포기 실패 → 아래 안내, 토스트 없음", async () => {
+    const { user } = await setupWithToaster();
+    gameServer.failNext("give-up");
+    await openGiveUpDialog(user);
+    await user.click(dialogOptions().giveUp!);
+    await waitFor(() => expect(gameServer.count("give-up")).toBe(1));
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    expect(toastShown()).toBe(false);
+  });
+
+  it("Y-3-6: 힌트 실패 뒤 힌트 다시 (성공) → 안내 사라짐", async () => {
+    const { user } = await setupWithToaster();
+    await failHint(user);
+    await screen.findByRole("alert");
+    await user.click(hintButton());
+    await waitFor(() => expect(gameServer.count("hint")).toBe(2));
+    await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
+  });
+
+  it("Y-3-7: 힌트 실패 뒤 입력창에 글자 입력 → 안내 사라짐", async () => {
+    const { user } = await setupWithToaster();
+    await failHint(user);
+    await screen.findByRole("alert");
+    await user.type(input(), "가");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("Y-3-8: 없는 단어 안내 중 힌트 실패 → 안내는 하나, 입력창은 오류 상태 아님", async () => {
+    const { user } = await setupWithToaster();
+    gameServer.setUnknown("없는말");
+    await submitWord(user, "없는말");
+    await failHint(user);
+    await waitFor(() => expect(screen.getAllByRole("alert")).toHaveLength(1));
+    expect(screen.getByRole("alert")).not.toHaveTextContent("없는말");
+    expect(input()).not.toHaveAttribute("aria-invalid", "true");
   });
 });
