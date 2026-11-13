@@ -1,6 +1,14 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
-export function useGameForm(submitAction: (word: string) => Promise<{ error?: string }>) {
+interface GameFormOptions {
+  /** 오류가 나면 입력한 단어를 지우지 않고 남겨 고칠 수 있게 하고, 고치기 시작하면 오류를 푼다 (classic, docs/tasks/ui/plan.md 9장) */
+  keepInputOnError?: boolean;
+}
+
+export function useGameForm(
+  submitAction: (word: string) => Promise<{ error?: string }>,
+  { keepInputOnError = false }: GameFormOptions = {}
+) {
   const [inputWord, setInputWord] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
@@ -55,14 +63,16 @@ export function useGameForm(submitAction: (word: string) => Promise<{ error?: st
 
     const result = await submitAction(trimmedWord);
 
+    let keepInput = false;
     if (result && result.error) {
       if (result.error !== "이미 제출한 단어입니다") {
         setIsError(true);
         setErrorMessage(result.error);
+        keepInput = keepInputOnError;
       }
     }
-    
-    setInputWord("");
+
+    if (!keepInput) setInputWord("");
     setIsLoading(false);
 
     // 결과를 받은 후(isLoading false) 다시 input으로 포커스
@@ -77,6 +87,10 @@ export function useGameForm(submitAction: (word: string) => Promise<{ error?: st
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputWord(e.target.value);
+    if (keepInputOnError && isError) {
+      setIsError(false);
+      setErrorMessage(null);
+    }
   };
 
   return {

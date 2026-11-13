@@ -2,10 +2,11 @@ import React from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useGameForm } from "@/hooks/useGameForm";
-import { CornerDownLeft } from "lucide-react";
+import { CircleAlert, CornerDownLeft } from "lucide-react";
 
 /** 게임 입력창. 첫 방문 모달이 닫힌 뒤 포커스를 옮길 때 쓴다 */
 export const GAME_INPUT_ID = "game-input";
+const GAME_INPUT_ERROR_ID = "game-input-error";
 
 
 interface GameFormProps {
@@ -40,11 +41,14 @@ export const GameForm: React.FC<GameFormProps> = ({
     dummyInputRef,
     handleInputChange,
     handleSubmit,
-  } = useGameForm((word) => {
-    // 빈 입력이 아닌 제출일 때만 불린다. 결과(오류 포함)와 무관하게 첫 제출이면 말풍선을 닫는다
-    if (showInputTooltip) onInputTooltipDone?.();
-    return submitAction(word);
-  });
+  } = useGameForm(
+    (word) => {
+      // 빈 입력이 아닌 제출일 때만 불린다. 결과(오류 포함)와 무관하게 첫 제출이면 말풍선을 닫는다
+      if (showInputTooltip) onInputTooltipDone?.();
+      return submitAction(word);
+    },
+    { keepInputOnError: true }
+  );
 
   return (
     <form onSubmit={handleSubmit} className="w-full mb-6 relative" autoComplete="off">
@@ -86,17 +90,11 @@ export const GameForm: React.FC<GameFormProps> = ({
           type="text"
           value={inputWord}
           onChange={handleInputChange}
-          placeholder={
-            errorMessage ||
-            "단어 입력 후 엔터"
-          }
-          // 없는 단어 등 오류: 테두리와 안내 문구를 빨갛게. 다음 제출 때 풀린다 (docs/tasks/ui/plan.md 9장)
+          placeholder="단어 입력 후 엔터"
+          // 없는 단어: 입력한 단어를 남기고 테두리를 빨갛게, 아래에 경고. 고치기 시작하면 풀린다 (docs/tasks/ui/plan.md 9장)
           aria-invalid={isError}
-          // 좁은 폰(360px 이하)에서 긴 안내 문구는 끝을 "…"로 (plan.md 9장 3차)
-          className={`w-full text-ellipsis pr-[112px] sm:pr-[176px] ${isError
-              ? "border-red-500 placeholder:text-red-500"
-              : "placeholder:text-gray-400"
-            }`}
+          aria-describedby={isError ? GAME_INPUT_ERROR_ID : undefined}
+          className={`w-full pr-[112px] sm:pr-[176px] placeholder:text-gray-400 ${isError ? "border-red-500" : ""}`}
           disabled={isLoading}
           ref={inputRef}
           id={GAME_INPUT_ID}
@@ -121,6 +119,17 @@ export const GameForm: React.FC<GameFormProps> = ({
             <CornerDownLeft className="w-[18px] h-[18px]" />
           </Button>
         </div>
+        {/* 입력창과 목록 사이 여백에 겹쳐 띄워 아래 목록이 밀리지 않게 */}
+        {isError && errorMessage && (
+          <p
+            id={GAME_INPUT_ERROR_ID}
+            role="alert"
+            className="absolute top-full left-1 mt-1 flex items-center gap-1 text-[11px] sm:text-xs text-red-600"
+          >
+            <CircleAlert className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" aria-hidden="true" />
+            {errorMessage}
+          </p>
+        )}
         {/* 첫 입력 유도 말풍선: 누르면 입력창으로 포커스, 첫 단어를 제출하면 닫힘 (docs/tasks/ui/plan.md 7장) */}
         {showInputTooltip && (
           <button

@@ -495,19 +495,21 @@ describe("Y. 없는 단어", () => {
     expect(input()).toHaveAttribute("aria-invalid", "true");
   });
 
-  it("Y-1-2: 오류 뒤 있는 단어 제출 → 오류 상태가 풀림", async () => {
+  it("Y-1-2: 오류 뒤 입력창 글자를 고침 → 오류 상태와 아래 경고가 사라짐", async () => {
     const { user } = await setup();
     gameServer.setUnknown("없는말");
     await submitWord(user, "없는말");
-    await submitWord(user, "사과", 500);
+    await user.type(input(), "{Backspace}");
     expect(input()).not.toHaveAttribute("aria-invalid", "true");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
-  it("Y-2-1: 없는 단어 제출 → 입력창 안내에 그 단어가 들어 있음", async () => {
+  it("Y-2-1: 없는 단어 제출 → 입력창에 그 단어가 남고, 아래 경고가 뜸", async () => {
     const { user } = await setup();
     gameServer.setUnknown("없는말");
     await submitWord(user, "없는말");
-    expect(input().getAttribute("placeholder")).toContain("없는말");
+    expect(input()).toHaveValue("없는말");
+    expect(screen.getByRole("alert")).toBeInTheDocument();
   });
 
   it("Y-3-1: 서버 오류로 제출 실패 → 입력창은 오류 상태가 아니고 실패 토스트", async () => {

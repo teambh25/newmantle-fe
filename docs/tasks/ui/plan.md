@@ -131,6 +131,16 @@ placeholder를 "단어 입력 후 엔터"로 줄이면서 빠진 첫 입력 유�
 - 3차: 문구 속 단어가 6글자를 넘으면 앞 5글자 + "…"로 줄인다 ("'가나다라마…'는 없는 단어예요"). 조사는 원래 단어 마지막 글자로 고른다. 가장 긴 문구가 약 212px(16px 글꼴)로 고정돼 아래 입력창 폭을 줄일 수 있다
   - 360px 폰에서는 글자 칸이 약 204px라 그래도 끝이 잘림 → 잘리는 대로 두되 끝을 "…"로 (`text-overflow: ellipsis`, Chrome 확인). 6글자 넘는 없는 단어는 드물다
   - (한때 모바일 안내 문구를 14px로 줄여 들어가게 했으나, 글자가 작아져 오히려 공백이 많아 보여 되돌림)
+- 4차: 작은 폰에서는 끝의 "…"도 잘려 안 보임 → 문구를 줄여 "'사랑'은 없는 단어"로 ("예요"를 뺌, 가장 긴 문구 약 182px). 단어 6글자 초과 말줄임과 입력창 끝 말줄임은 그대로
+- 테두리만 빨가면 안의 힌트·포기·엔터 버튼은 그대로라 어색함 → 입력창 배경도 옅은 빨강(`bg-red-50`). 꽉 찬 빨강은 과하고 글씨가 안 보여 쓰지 않음
+- **5차 (현재)**: 안내를 입력창 안(placeholder)이 아니라 **입력창 아래**에 둔다. 2~4차의 문구 길이·말줄임·배경 문제가 모두 사라짐
+  - 없는 단어를 내면 입력한 단어를 지우지 않고 남긴다. 오타면 고쳐서 바로 다시 내면 된다
+  - 입력창 테두리 빨강 + 아래에 경고 아이콘(`CircleAlert`)과 "게임에 등록되지 않은 단어예요" (빨간 작은 글씨: 모바일 11px, PC 12px). 단어를 문구에 넣지 않으므로 조사·말줄임 함수는 없앰
+  - 입력창과 단어 목록 사이 여백에 겹쳐 띄워 목록이 밀리지 않게
+  - 입력창 글자를 고치기 시작하면 빨간 테두리와 경고가 사라진다
+  - 옅은 빨간 배경은 뺌 (아래 경고가 이유를 알려 주므로). 다시 넣어 비교해 봤으나 빼는 쪽으로 결정
+  - placeholder는 늘 "단어 입력 후 엔터"
+  - excel 테마는 그대로 (입력을 지우고 placeholder에 안내)
 - 빨간 표시는 없는 단어(내 입력이 잘못됨)에만. 서버·네트워크 오류, 접근 불가 날짜 같은 그 밖의 제출 실패는 빨간 입력창 대신 실패 토스트 (힌트·포기 실패와 같은 방식). 이미 제출한 단어는 지금처럼 안내 없음
 
 ## 10. 헤더 로그인 버튼을 오른쪽 끝으로 (2026-11-13)
@@ -158,5 +168,5 @@ placeholder를 "단어 입력 후 엔터"로 줄이면서 빠진 첫 입력 유�
 - `src/components/classic/NewMantleForm/GameResult.tsx`: 결과 상자 로그인 안내 (8장), 색·공유·피드백 (`result-box.md`)
 - `src/components/classic/HintButton.tsx`, `GiveUpButton.tsx`, `NewMantleForm/GameForm.tsx`: 글씨 버튼, 엔터 아이콘, placeholder, 없는 단어 빨간 테두리 (9장)
 - `src/utils/date.ts`: 게임 날짜 표시 형식 (`formatGameDate`), `src/components/classic/NewMantleForm/`: 날짜 표시·색 (날짜 제목은 `word-list.md` 3-4)- `src/hooks/useGameState.ts`: 제출 실패에 종류(`reason`: 이미 제출 / 없는 단어 / 그 밖의 실패), 정답 토스트 제거 (`result-box.md` 6). `src/components/classic/NewMantleForm/index.tsx`가 종류별로 입력창 안내·실패 토스트를 나눔 (9장)
-- `src/utils/korean.ts` (신규): 주제 조사 은/는 (9장)
+- `src/hooks/useGameForm.ts`: 오류 때 입력을 남기는 선택(`keepInputOnError`, classic만) (9장 5차)
 - `src/app/dev/` (개발 전용): `/dev` 페이지, DEV 표시·실패 주입, `layout.tsx`의 `DevTools` (`dev-page.md`)

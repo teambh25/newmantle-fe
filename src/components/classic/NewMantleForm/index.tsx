@@ -14,7 +14,6 @@ import GiveUpButton from "../GiveUpButton";
 import CompetitiveBar from "@/components/CompetitiveBar";
 import { fetchSharerStats } from "@/utils/api";
 import { createClient } from "@/utils/supabase/client";
-import { shortenWord, topicParticle } from "@/utils/korean";
 
 interface NewMantleFormProps {
   /** 첫 입력 유도 말풍선 (docs/tasks/ui/plan.md 7장). 순서는 메인이 정한다 */
@@ -186,9 +185,9 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
             isDone = true;
             clearTimeout(timer);
             setPendingWord(null);
-            // 없는 단어만 입력창에 빨갛게, 단어를 넣어 안내. 그 밖의 실패는 토스트 (docs/tasks/ui/plan.md 9장)
+            // 없는 단어만 입력창 아래 경고로 안내. 그 밖의 실패는 토스트 (docs/tasks/ui/plan.md 9장)
             if (res.reason === "unknownWord") {
-              return { error: `'${shortenWord(word)}'${topicParticle(word)} 없는 단어예요` };
+              return { error: "게임에 등록되지 않은 단어예요" };
             }
             if (res.reason === "failed") {
               toast({
