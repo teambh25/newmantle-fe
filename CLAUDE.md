@@ -31,10 +31,11 @@ npx vitest run -t "A-5-1"   # run by case ID
 Harness guide: `src/test/README.md` (fake game server, `renderGame`, presets, clock/timezone helpers, mock setup). Read it before writing tests.
 
 ### Workflow: TDD
-1. Write the test cases in the task's `docs/tasks/<task>/verification.md` first (ID / level / precondition / action / expected), based on the spec or problem decisions, not on the implementation
+1. Write the test cases first in the Verification section of the task's `specs/<task>/plan.md`, each with an ID (precondition / action / expected), based on the plan and `decisions.md`, not on the implementation
 2. Write the tests, prefixing each test name with its case ID
 3. Run them and confirm they **fail for the right reason** (missing behavior, not a typo or missing mock). A test that passes before implementation does not distinguish the bug, so revisit the case
-4. Implement until they pass, then record the result in the verification doc's result log
+4. Implement until they pass, then update the Phase progress in `plan.md`
+- `docs/tasks/<task>/verification.md` is the old format. Do not create new ones; existing files remain only as the source of existing test IDs and presets
 - When adding tests to code that already exists, do not edit implementation files to see them fail. Check that in an isolated copy (git worktree) and only after asking
 
 ### What to test
