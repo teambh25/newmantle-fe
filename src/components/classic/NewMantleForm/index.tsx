@@ -235,7 +235,6 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
         <GameForm
           submitAction={async (word) => {
             setRequestError(null);
-            setSubmitNotice(null);
             setRepeatedWord(null);
             let isDone = false;
             const timer = setTimeout(() => {
@@ -245,6 +244,8 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
             isDone = true;
             clearTimeout(timer);
             setPendingWord(null);
+            // 임시 줄은 응답과 함께 바꾼다. 요청 전에 지우면 직전 단어가 방금 입력 칸으로 잠깐 돌아온다 (V-13)
+            setSubmitNotice(null);
             // 없는 단어·제출 실패는 목록 맨 위 임시 줄로. 입력창은 없는 단어면 비우고 placeholder 안내, 실패면 단어를 남기고 빨간 배경 (docs/tasks/ui/plan.md 12장)
             if (res.reason === "duplicate") setRepeatedWord(word);
             if (res.reason === "unknownWord") {

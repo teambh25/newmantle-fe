@@ -614,6 +614,40 @@ describe("Y. 없는 단어", () => {
     for (const w of words) expect(rowsWith(w.word)).toHaveLength(1);
   });
 
+  it("Y-2-11: 없는 단어 뒤 다른 없는 단어 제출 중 → 방금 입력 칸·기록이 그대로, 응답 뒤 새 없는 단어", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 100);
+    await submitWord(user, "바나나", 500);
+    gameServer.setUnknown("없는말");
+    gameServer.setUnknown("없는말둘");
+    await submitWord(user, "없는말");
+    const held = gameServer.holdNext("guess");
+    await user.type(input(), "없는말둘");
+    await user.click(submitButton());
+    await waitFor(() => expect(input()).toBeDisabled());
+    expect(rowsOf(latestTable())[0].textContent).toContain("없는말");
+    expect(rowsOf(historyTable()).map((r) => r.textContent)).toEqual([
+      expect.stringContaining("사과"),
+      expect.stringContaining("바나나"),
+    ]);
+    await held.release();
+    await waitFor(() => expect(rowsOf(latestTable())[0].textContent).toContain("없는말둘"));
+    expect(rowsOf(historyTable())).toHaveLength(2);
+  });
+
+  it("Y-2-12: 없는 단어 뒤 직전 단어를 다시 제출 → 임시 줄 사라지고 첫 줄은 그 단어(반복 아이콘)", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 100);
+    await submitWord(user, "바나나", 500);
+    gameServer.setUnknown("없는말");
+    await submitWord(user, "없는말");
+    await user.type(input(), "바나나");
+    await user.click(submitButton());
+    await waitFor(() => expect(rowsWith("없는말")).toHaveLength(0));
+    expect(firstRowText()).toContain("바나나");
+    expect(within(bodyRows()[0]).getByRole("img", { name: "이미 입력한 단어" })).toBeInTheDocument();
+  });
+
 });
 
 // 이미 제출한 단어 (docs/tasks/ui/verification.md Y-4, plan.md 12장)
@@ -643,6 +677,19 @@ describe("Y-4. 이미 제출한 단어", () => {
     await resubmit(user, "사과");
     await submitWord(user, "포도", 300);
     expect(repeatIcon()).not.toBeInTheDocument();
+  });
+
+  it("Y-4-5: 다시 내면 번호 칸은 반복 아이콘만, 새 단어 뒤엔 원래 시도 번호", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 10);
+    await submitWord(user, "바나나", 500);
+    await resubmit(user, "사과");
+    await waitFor(() => expect(firstRowText()).toContain("사과"));
+    const numCell = () => within(rowsWith("사과")[0]).getAllByRole("cell")[0];
+    expect(within(numCell()).getByRole("img", { name: "이미 입력한 단어" })).toBeInTheDocument();
+    expect(numCell().textContent).toBe("");
+    await submitWord(user, "포도", 300);
+    expect(numCell().textContent).toBe("1");
   });
 
   it("Y-4-3: 500위 단어를 다시 낸 뒤 초성 → 반복 아이콘 없음, 첫 줄은 초성", async () => {
