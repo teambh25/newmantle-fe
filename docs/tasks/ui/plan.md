@@ -120,7 +120,7 @@ placeholder를 "단어 입력 후 엔터"로 줄이면서 빠진 첫 입력 유�
   - 결과 문구 아래 한 줄 + 로그인 링크(`/login`). 예: "로그인하면 오늘 맞힌 기록이 남아요" (포기는 "로그인하면 오늘 기록이 남아요")
   - 사실 확인: 로그인하면 게스트 기록이 계정으로 연결됨 (`useGuestLink` → `POST /v2/stats/link`)
   - 로그인 유저에게는 없음
-  - → 링크는 빼고 문구만 남김 (헤더에 로그인 버튼이 있음, `result-box.md` 5)
+  - → 링크는 빼고 문구만 남김 (헤더에 로그인 버튼이 있음, 결과 상자 정리). 결과 상자가 결과창 모달로 바뀐 뒤에는 결과창 안 문구도 빼고, 결과창이 열린 동안 헤더 로그인 버튼 강조 + 말풍선으로 바꿈 (`result-box.md` 요구사항 2-5, 8)
 
 ## 9. 없는 단어 안내: 입력창 빨간 테두리 (2026-11-13)
 
@@ -165,8 +165,9 @@ placeholder를 "단어 입력 후 엔터"로 줄이면서 빠진 첫 입력 유�
 - `src/hooks/useInputTooltip.ts` (신규): 입력창 말풍선 표시 여부. 메인이 헤더 말풍선 순서에 같이 쓴다
 - `src/components/StatsLink.tsx` (신규): 헤더 통계 아이콘 + 통계 유도 말풍선
 - `src/hooks/useAutoDismiss.ts` (신규): 헤더 말풍선 5초 자동 닫힘 (8장)
-- `src/components/classic/NewMantleForm/GameResult.tsx`: 결과 상자 로그인 안내 (8장), 색·공유·피드백 (`result-box.md`)
+- `src/components/classic/NewMantleForm/GameResult.tsx`: 결과 상자 로그인 안내 (8장), 색·공유·피드백 (결과 상자 정리, 커밋 fa5e0b9). 이후 결과창 모달로 바뀜 (`result-box.md`)
 - `src/components/classic/HintButton.tsx`, `GiveUpButton.tsx`, `NewMantleForm/GameForm.tsx`: 글씨 버튼, 엔터 아이콘, placeholder, 없는 단어 빨간 테두리 (9장)
-- `src/utils/date.ts`: 게임 날짜 표시 형식 (`formatGameDate`), `src/components/classic/NewMantleForm/`: 날짜 표시·색 (날짜 제목은 `word-list.md` 3-4)- `src/hooks/useGameState.ts`: 제출 실패에 종류(`reason`: 이미 제출 / 없는 단어 / 그 밖의 실패), 정답 토스트 제거 (`result-box.md` 6). `src/components/classic/NewMantleForm/index.tsx`가 종류별로 입력창 안내·실패 토스트를 나눔 (9장)
+- `src/utils/date.ts`: 게임 날짜 표시 형식 (`formatGameDate`), `src/components/classic/NewMantleForm/`: 날짜 표시·색 (날짜 제목은 `word-list.md` 3-4)
+- `src/hooks/useGameState.ts`: 제출 실패에 종류(`reason`: 이미 제출 / 없는 단어 / 그 밖의 실패), 정답 토스트 제거 (`result-box.md` "기존 결과 상자에서 그대로 가는 것"). `src/components/classic/NewMantleForm/index.tsx`가 종류별로 입력창 안내·실패 토스트를 나눔 (9장)
 - `src/hooks/useGameForm.ts`: 오류 때 입력을 남기는 선택(`keepInputOnError`, classic만) (9장 5차)
 - `src/app/dev/` (개발 전용): `/dev` 페이지, DEV 표시·실패 주입, `layout.tsx`의 `DevTools` (`dev-page.md`)

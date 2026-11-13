@@ -83,7 +83,7 @@
   - 서버 stats의 `status`(`FAIL`)로 구분할 수 있지만 현재 쓰지 않음
 - 받는 쪽도 포기로 끝내면 시도 횟수만 비교함 → 적게 입력하고 포기하면 "승리!"
 - 친구 기록은 URL의 `shared_attempts`를 그대로 믿음 → 숫자를 고쳐서 보낼 수 있음. 서버 `guess_count`와 대조하지 않음
-- 힌트 사용이 승패에 반영되지 않음 (랭킹 가중치와 같은 문제, `docs/todo/results.md` 3번)
+- 힌트 사용이 승패에 반영되지 않음 (랭킹 가중치와 같은 문제, `docs/todo/ranking.md`)
 
 동작상의 구멍
 
@@ -136,7 +136,7 @@
   - 다운로드 버튼
   - 모바일: `navigator.share({ files })`로 이미지 자체를 공유 시트에 넘기기 (지원 여부는 `navigator.canShare`로 확인, 미지원 시 다운로드)
   - 이미지 클립보드 복사 (데스크톱)
-- 캡처하기 좋은 결과 화면 자체를 만드는 것도 방법. 결과창 계획(`docs/todo/results.md`)과 같이 설계
+- 캡처하기 좋은 결과 화면 자체를 만드는 것도 방법. 결과창(`docs/tasks/ui/result-box.md`)과 같이 설계
 
 #### B-2. 카드 형태 공유 (카카오톡 / 디스코드)
 
@@ -172,4 +172,4 @@
 ## 같이 볼 항목
 
 - `docs/spec/hint-giveup.md` B-4 (힌트 횟수 기준은 서버 `hint_count`), C-4 (포기 시 시도 횟수)
-- `docs/todo/results.md` (결과창 / 랭킹. 자랑형 카드에 담을 내용, 힌트 가중치와 대결 승패 기준을 같이 정해야 함)
+- `docs/todo/ranking.md` (랭킹. 결과창은 `docs/tasks/ui/result-box.md`. 자랑형 카드에 담을 내용, 힌트 가중치와 대결 승패 기준을 같이 정해야 함)
