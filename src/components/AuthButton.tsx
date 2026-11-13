@@ -8,9 +8,11 @@ import { useAutoDismiss } from '@/hooks/useAutoDismiss'
 interface AuthButtonProps {
     /** 다른 안내(첫 방문 모달)가 떠 있는 동안 로그인 말풍선을 숨긴다 */
     hideTooltip?: boolean
+    /** 말풍선 정렬. 화면 오른쪽 끝에 있으면 "end"로 버튼 오른쪽에 맞춰 화면 밖으로 잘리지 않게 (docs/tasks/ui/plan.md 10장) */
+    tooltipAlign?: 'center' | 'end'
 }
 
-export default function AuthButton({ hideTooltip = false }: AuthButtonProps) {
+export default function AuthButton({ hideTooltip = false, tooltipAlign = 'center' }: AuthButtonProps) {
     const { user, displayName, isLoading } = useAuthUser()
     const [showTooltip, setShowTooltip] = useState(false)
 
@@ -47,7 +49,7 @@ export default function AuthButton({ hideTooltip = false }: AuthButtonProps) {
             </a>
             {tooltipVisible && (
                 <div
-                    className="absolute top-full mt-1.5 bg-white text-gray-700 text-xs rounded-md px-2 py-1.5 whitespace-nowrap leading-tight text-center shadow-md border border-gray-200 z-[9999] cursor-pointer"
+                    className={`absolute top-full mt-1.5 ${tooltipAlign === 'end' ? 'right-0' : ''} bg-white text-gray-700 text-xs rounded-md px-2 py-1.5 whitespace-nowrap leading-tight text-center shadow-md border border-gray-200 z-[9999] cursor-pointer`}
                     onClick={dismissTooltip}
                 >
                     <button
@@ -58,7 +60,7 @@ export default function AuthButton({ hideTooltip = false }: AuthButtonProps) {
                         <X size={10} />
                     </button>
                     비로그인은<br />기록이 날아가요 😲
-                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-white border-l border-t border-gray-200 rotate-45" />
+                    <div className={`absolute -top-1 ${tooltipAlign === 'end' ? 'right-6' : 'left-1/2 -translate-x-1/2'} w-2 h-2 bg-white border-l border-t border-gray-200 rotate-45`} />
                 </div>
             )}
         </div>

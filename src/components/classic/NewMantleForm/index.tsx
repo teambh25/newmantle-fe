@@ -14,7 +14,7 @@ import GiveUpButton from "../GiveUpButton";
 import CompetitiveBar from "@/components/CompetitiveBar";
 import { fetchSharerStats } from "@/utils/api";
 import { createClient } from "@/utils/supabase/client";
-import { topicParticle } from "@/utils/korean";
+import { shortenWord, topicParticle } from "@/utils/korean";
 
 interface NewMantleFormProps {
   /** 첫 입력 유도 말풍선 (docs/tasks/ui/plan.md 7장). 순서는 메인이 정한다 */
@@ -154,7 +154,8 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
   };
 
   return (
-    <div className="w-full max-w-2xl">
+    // PC는 게임 영역(결과 상자·단어 목록)을 480px로 가운데에, 입력창은 그보다 조금 좁은 420px. 모바일은 화면 폭 그대로 (docs/tasks/ui/plan.md 4장)
+    <div className="w-full max-w-2xl sm:max-w-[480px] sm:mx-auto">
       <div className="flex flex-col items-center mx-0">
         <GameResult
           givenUp={gameLogic.givenUp}
@@ -187,7 +188,7 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
             setPendingWord(null);
             // 없는 단어만 입력창에 빨갛게, 단어를 넣어 안내. 그 밖의 실패는 토스트 (docs/tasks/ui/plan.md 9장)
             if (res.reason === "unknownWord") {
-              return { error: `'${word}'${topicParticle(word)} 없는 단어예요` };
+              return { error: `'${shortenWord(word)}'${topicParticle(word)} 없는 단어예요` };
             }
             if (res.reason === "failed") {
               toast({

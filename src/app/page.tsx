@@ -190,8 +190,6 @@ export default function Home() {
                 </p>
               </Link>
               <div className="flex items-center shrink-0 space-x-2 sm:space-x-4">
-                {/* 첫 방문 모달·입력창 말풍선이 끝나기 전에는 헤더 말풍선을 숨긴다 (docs/tasks/rule/plan.md M-6, docs/tasks/ui/plan.md 7장) */}
-                <AuthButton hideTooltip={hideHeaderTooltip} />
                 <Link
                   href="/rule"
                   className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all"
@@ -202,6 +200,8 @@ export default function Home() {
                 </Link>
                 <StatsLink hideTooltip={hideHeaderTooltip} />
                 <SettingsButton theme={theme} onThemeChange={setTheme} variant="classic" />
+                {/* 로그인은 오른쪽 끝 (docs/tasks/ui/plan.md 10장). 첫 방문 모달·입력창 말풍선이 끝나기 전에는 헤더 말풍선을 숨긴다 (docs/tasks/rule/plan.md M-6, docs/tasks/ui/plan.md 7장) */}
+                <AuthButton hideTooltip={hideHeaderTooltip} tooltipAlign="end" />
               </div>
             </div>
             <div className="w-full max-w-2xl flex-grow flex flex-col">

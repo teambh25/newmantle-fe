@@ -80,8 +80,8 @@ export const GameForm: React.FC<GameFormProps> = ({
         style={{ position: "absolute", width: 0, height: 0, opacity: 0 }}
         aria-hidden="true"
       />
-      {/* 제출은 엔터. 입력창 안 오른쪽에 힌트·포기 글씨 버튼과 제출(엔터) 아이콘 (docs/tasks/ui/plan.md 4장) */}
-      <div className="relative flex items-center">
+      {/* 제출은 엔터. 입력창 안 오른쪽에 힌트·포기 글씨 버튼과 제출(엔터) 아이콘. PC는 폭 420px로 가운데 (docs/tasks/ui/plan.md 4장) */}
+      <div className="relative flex items-center sm:max-w-[420px] sm:mx-auto">
         <Input
           type="text"
           value={inputWord}
@@ -92,7 +92,8 @@ export const GameForm: React.FC<GameFormProps> = ({
           }
           // 없는 단어 등 오류: 테두리와 안내 문구를 빨갛게. 다음 제출 때 풀린다 (docs/tasks/ui/plan.md 9장)
           aria-invalid={isError}
-          className={`w-full pr-[148px] sm:pr-[176px] ${isError
+          // 좁은 폰(360px 이하)에서 긴 안내 문구는 끝을 "…"로 (plan.md 9장 3차)
+          className={`w-full text-ellipsis pr-[112px] sm:pr-[176px] ${isError
               ? "border-red-500 placeholder:text-red-500"
               : "placeholder:text-gray-400"
             }`}
@@ -107,16 +108,17 @@ export const GameForm: React.FC<GameFormProps> = ({
         <div className="absolute right-1 flex items-center">
           {hintButton}
           {giveUpButton}
-          <div className="w-px h-5 bg-gray-200 mx-1" aria-hidden="true" />
+          {/* 엔터 아이콘은 PC만. 모바일은 키보드 "보내기"로 제출 (docs/tasks/ui/plan.md 4장) */}
+          <div className="hidden sm:block w-px h-5 bg-gray-200 mx-1" aria-hidden="true" />
           <Button
             type="submit"
             disabled={isLoading}
             aria-label="제출"
             variant="ghost"
             size="icon"
-            className="w-7 h-7 sm:w-8 sm:h-8 text-gray-900"
+            className="hidden sm:inline-flex sm:w-8 sm:h-8 text-gray-900"
           >
-            <CornerDownLeft className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
+            <CornerDownLeft className="w-[18px] h-[18px]" />
           </Button>
         </div>
         {/* 첫 입력 유도 말풍선: 누르면 입력창으로 포커스, 첫 단어를 제출하면 닫힘 (docs/tasks/ui/plan.md 7장) */}
