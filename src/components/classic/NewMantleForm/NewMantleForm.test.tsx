@@ -593,6 +593,23 @@ describe("Y. 없는 단어", () => {
     expect(texts[2]).toContain("바나나");
   });
 
+  it("Y-2-8: 단어 7개 저장 상태에서 없는 단어 → 임시 줄 포함 7줄 + 더보기, 누르면 7개 모두", async () => {
+    const words = Array.from({ length: 7 }, (_, k) => ({
+      word: `단어${7 - k}`, similarity: 10, rank: 107 - k, attempt: 7 - k, correct: false,
+    }));
+    localStorage.setItem(
+      "newmantle_game_data",
+      JSON.stringify({ submittedWords: words, attempts: 7, lastPlayedDate: getKSTDateString() }),
+    );
+    const { user } = await setup();
+    gameServer.setUnknown("없는말");
+    await submitWord(user, "없는말");
+    expect(firstRowText()).toContain("없는말");
+    expect(bodyRows()).toHaveLength(7);
+    await user.click(screen.getByRole("button", { name: "더보기" }));
+    for (const w of words) expect(rowsWith(w.word)).toHaveLength(1);
+  });
+
 });
 
 // 이미 제출한 단어 (docs/tasks/ui/verification.md Y-4, plan.md 12장)
@@ -622,6 +639,93 @@ describe("Y-4. 이미 제출한 단어", () => {
     await resubmit(user, "사과");
     await submitWord(user, "포도", 300);
     expect(repeatIcon()).not.toBeInTheDocument();
+  });
+
+  it("Y-4-3: 500위 단어를 다시 낸 뒤 초성 → 반복 아이콘 없음, 첫 줄은 초성", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 100);
+    await submitWord(user, "바나나", 500);
+    await submitWord(user, "포도", 300);
+    await resubmit(user, "바나나");
+    await takeConsonantHint(user);
+    expect(firstRowText()).toContain("ㅈㄷ");
+    expect(repeatIcon()).not.toBeInTheDocument();
+  });
+
+  it("Y-4-4: 다시 낸 뒤 힌트 → 반복 아이콘 없음, 첫 줄은 힌트 단어", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 100);
+    await submitWord(user, "바나나", 500);
+    await submitWord(user, "포도", 300);
+    await resubmit(user, "바나나");
+    await user.click(hintButton());
+    await waitFor(() => expect(gameServer.count("hint")).toBe(1));
+    await waitFor(() => expect(firstRowText()).toContain("힌트"));
+    expect(repeatIcon()).not.toBeInTheDocument();
+  });
+
+  it("Y-2-9: 없는 단어 뒤 초성 → 임시 줄 사라지고 첫 줄은 초성", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 100);
+    gameServer.setUnknown("없는말");
+    await submitWord(user, "없는말");
+    await takeConsonantHint(user);
+    expect(rowsWith("없는말")).toHaveLength(0);
+    expect(firstRowText()).toContain("ㅈㄷ");
+  });
+
+  it("Y-2-10: 없는 단어 뒤 포기 → 임시 줄 사라짐", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 100);
+    gameServer.setUnknown("없는말");
+    await submitWord(user, "없는말");
+    await giveUpViaDialog(user);
+    expect(rowsWith("없는말")).toHaveLength(0);
+  });
+});
+
+// 구분선 위 = 가장 최근 입력·힌트 (docs/tasks/ui/verification.md W-5, word-list.md 3-2)
+describe("W-5. 구분선 위", () => {
+  async function twoWords() {
+    const { user } = await setup();
+    await submitWord(user, "사과", 100);
+    await submitWord(user, "바나나", 500);
+    return user;
+  }
+
+  /** 줄 순서: 구분선 위 한 줄 + 순위 순서 */
+  const rowOrder = (top: string) => {
+    const texts = bodyRows().map((r) => r.textContent ?? "");
+    expect(texts).toHaveLength(3);
+    expect(texts[0]).toContain(top);
+    expect(texts[1]).toContain("사과");
+    expect(texts[2]).toContain("바나나");
+  };
+
+  it("W-5-1: 100위·500위 뒤 초성 → 줄 순서 초성, 100위, 500위", async () => {
+    const user = await twoWords();
+    await takeConsonantHint(user);
+    rowOrder("ㅈㄷ");
+  });
+
+  it("W-5-2: 100위·500위 뒤 힌트 → 첫 줄은 힌트 단어", async () => {
+    const user = await twoWords();
+    await user.click(hintButton());
+    await waitFor(() => expect(gameServer.count("hint")).toBe(1));
+    await waitFor(() => expect(firstRowText()).toContain("힌트"));
+  });
+
+  it("W-5-3: 100위·500위 뒤 포기 → 줄 순서 정답, 100위, 500위", async () => {
+    const user = await twoWords();
+    await giveUpViaDialog(user);
+    rowOrder(ANSWER.word);
+  });
+
+  it("W-5-4: 100위·500위 뒤 정답 → 줄 순서 정답, 100위, 500위", async () => {
+    const user = await twoWords();
+    await submitWord(user, ANSWER.word);
+    await waitFor(() => expect(bodyRows()).toHaveLength(3));
+    rowOrder(ANSWER.word);
   });
 });
 

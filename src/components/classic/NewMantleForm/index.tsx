@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import WordTable, { VISIBLE_WORD_COUNT } from "./WordTable";
+import WordTable, { VISIBLE_WORD_COUNT, type TopRowTone } from "./WordTable";
 import { GameForm } from "./GameForm";
 import { GameResult } from "./GameResult";
 import { compareByRank, useGameState, type GameRequestKind } from "@/hooks/useGameState";
@@ -24,8 +24,14 @@ const REQUEST_ERROR_MESSAGES: Record<GameRequestKind | "submit", string> = {
   giveUp: "포기 처리에 실패했어요. 잠시 후 다시 시도해 주세요.",
 };
 
-/** 단어 목록 맨 위 임시 줄 안내 (docs/tasks/ui/plan.md 12장) */
-const SUBMIT_NOTICE_LABELS = { unknown: "없는 단어", failed: "오류" } as const;
+/** 구분선 위 한 줄(순위표에 없는 항목)의 순위·유사도 칸 (docs/tasks/ui/plan.md 12장, word-list.md 3-2) */
+const TOP_ROW_LABELS: Record<TopRowTone, { rank: string; similarity: string }> = {
+  unknown: { rank: "없음", similarity: "없음" },
+  failed: { rank: "오류", similarity: "오류" },
+  consonant: { rank: "초성", similarity: "100.00" },
+  answer: { rank: "정답", similarity: "100.00" },
+  givenUp: { rank: "정답", similarity: "100.00" },
+};
 
 interface NewMantleFormProps {
   /** 첫 입력 유도 말풍선 (docs/tasks/ui/plan.md 7장). 순서는 메인이 정한다 */
@@ -106,11 +112,19 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
   // 초성·정답은 제목에 보이므로 표에서 뺀다
   const inHeading = (w: { attempt: number; rank: number; correct: boolean }) => isConsonant(w) || w.correct;
   const listedWords = gameLogic.sortedWords.filter((w) => !inHeading(w));
-  // 임시 줄(없는 단어·제출 실패)이 있으면 그게 방금 입력 줄. 직전 단어는 순위 자리로 내린다 (docs/tasks/ui/plan.md 12장)
-  const tableWords = submitNotice ? [...listedWords].sort(compareByRank) : listedWords;
-  // 맨 위 고정 줄은 가장 최근 항목. 그게 초성·정답이었으면 표에 고정 줄이 없다
-  const hasLatestRow =
-    !submitNotice && tableWords.length > 1 && !(gameLogic.sortedWords[0] && inHeading(gameLogic.sortedWords[0]));
+  // 구분선 위는 늘 가장 최근 항목 (docs/tasks/ui/word-list.md 3-2). 순위표에 없는 것(임시 줄, 초성, 정답)은
+  // 구분선 위에만 한 줄로 두고, 직전 단어는 순위 자리로 내린다 (docs/tasks/ui/plan.md 12장)
+  const latestItem = gameLogic.submittedWords[0];
+  const topRow: { word: string; tone: TopRowTone; attempt?: number } | null = submitNotice
+    ? submitNotice
+    : latestItem && isConsonant(latestItem)
+      ? { word: latestItem.word, tone: "consonant" }
+      : latestItem?.correct
+        ? { word: latestItem.word, tone: gameLogic.givenUp ? "givenUp" : "answer", attempt: latestItem.attempt }
+        : null;
+  const tableWords = topRow ? [...listedWords].sort(compareByRank) : listedWords;
+  // 구분선은 게임 시작부터 끝까지 (단어가 1개여도)
+  const hasLatestRow = !topRow && tableWords.length > 0;
 
   // 목록 맨 위에 다른 줄이 올라오면(제출 결과, 이미 낸 단어, 힌트·초성·포기) 임시 줄을 내린다. 입력창에 글자를 칠 때는 남긴다
   const topWord = gameLogic.sortedWords[0];
@@ -270,7 +284,7 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
         {/* 표 자리 확보: 단어가 적어도 7줄 + "더보기" 높이만큼 차지해서, 입력할 때마다 아래 내용이 밀리지 않게 (docs/tasks/ui/word-list.md 3-5).
             값 = 표 머리 48px + 줄(모바일 37px / sm 41px) × 7 + 방금 입력 구분선 1px + "더보기" 56px */}
         <div className="w-full min-h-[364px] sm:min-h-[392px]">
-          {tableWords.length > 0 || pendingWord || submitNotice ? (
+          {tableWords.length > 0 || pendingWord || topRow ? (
             <>
               <WordTable 
                 words={tableWords}
@@ -278,11 +292,12 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
                 showAll={showAllWords} 
                 pendingWord={pendingWord}
                 pendingAttempt={gameLogic.attempts + 1}
-                notice={submitNotice && { ...submitNotice, label: SUBMIT_NOTICE_LABELS[submitNotice.tone] }}
+                notice={topRow && { ...topRow, ...TOP_ROW_LABELS[topRow.tone] }}
                 // 맨 위가 다른 줄(힌트 등)로 바뀌면 단어가 달라 아이콘이 자연히 빠진다
-                latestIsRepeat={!submitNotice && repeatedWord !== null && tableWords[0]?.word === repeatedWord}
+                latestIsRepeat={!topRow && repeatedWord !== null && tableWords[0]?.word === repeatedWord}
               />
-              {tableWords.length > VISIBLE_WORD_COUNT && (
+              {/* 제출 중 줄·구분선 위 한 줄이 자리를 차지하면 표에는 6개만 보이므로 그 줄까지 세어 넘치면 "더보기" */}
+              {tableWords.length + (pendingWord || topRow ? 1 : 0) > VISIBLE_WORD_COUNT && (
                 <div className="text-center mt-4">
                   <Button
                     onClick={() => setShowAllWords(!showAllWords)}

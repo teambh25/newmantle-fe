@@ -8,7 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SubmittedWord } from "@/utils/api";
-import { Ban, CircleAlert, Lightbulb, Loader2, Repeat } from "lucide-react";
+import { CircleAlert, Flag, Lightbulb, Loader2, Repeat } from "lucide-react";
 import { getRankTier, RankTier } from "@/utils/rankTier";
 
 /** 기본으로 보이는 줄 수. 넘으면 "더보기" (docs/tasks/ui/word-list.md 3-5) */
@@ -29,6 +29,23 @@ const TIER_RANK_TEXT: Record<RankTier, string> = {
   0: "text-gray-400",
 };
 
+export type TopRowTone = "unknown" | "failed" | "consonant" | "answer" | "givenUp";
+
+/** 구분선 위 한 줄의 번호 칸. 정답 맞힘만 진짜 시도라 번호, 나머지는 아이콘 */
+function TopRowMarker({ tone, attempt }: { tone: TopRowTone; attempt?: number }) {
+  if (tone === "answer") return <>{attempt}</>;
+  const [label, icon] =
+    tone === "failed" ? ["제출 실패", <CircleAlert key="i" className="h-4 w-4" aria-hidden="true" />]
+    : tone === "consonant" ? ["초성 힌트", <Lightbulb key="i" className="h-4 w-4 text-amber-700" aria-hidden="true" />]
+    : tone === "givenUp" ? ["포기", <Flag key="i" className="h-4 w-4" aria-hidden="true" />]
+    : ["없는 단어", <span key="i" aria-hidden="true">-</span>];
+  return (
+    <span role="img" aria-label={label} className="inline-flex justify-center w-full">
+      {icon}
+    </span>
+  );
+}
+
 interface WordTableProps {
   words: SubmittedWord[];
   showAll: boolean;
@@ -36,8 +53,8 @@ interface WordTableProps {
   pendingAttempt?: number;
   /** 맨 위 줄이 방금 입력한 항목인지. 맞으면 아래에 굵은 구분선 */
   hasLatestRow?: boolean;
-  /** 없는 단어·제출 실패를 맨 위에 잠깐 보여 주는 임시 줄. 저장하지 않는다 (docs/tasks/ui/plan.md 12장) */
-  notice?: { word: string; label: string; tone: "unknown" | "failed" } | null;
+  /** 구분선 위 한 줄: 순위표에 없는 가장 최근 항목. 없는 단어·제출 실패(저장 안 함), 초성, 정답 (docs/tasks/ui/plan.md 12장, word-list.md 3-2) */
+  notice?: { word: string; rank: string; similarity: string; tone: TopRowTone; attempt?: number } | null;
   /** 맨 위 줄이 이미 제출한 단어를 다시 낸 것인지. 맞으면 번호 대신 반복 아이콘 (plan.md 12장) */
   latestIsRepeat?: boolean;
 }
@@ -64,29 +81,22 @@ const WordTable: React.FC<WordTableProps> = ({ words, showAll, pendingWord, pend
         </TableRow>
       </TableHeader>
       <TableBody>
-        {/* 방금 입력 줄(굵은 구분선 위) 자리. 보통 줄과 같고, 순위·유사도 칸을 합쳐 안내 하나만.
-            번호는 시도 횟수에 안 들어가므로 아이콘: 없는 단어 Ban, 제출 실패 CircleAlert */}
+        {/* 방금 입력 줄(굵은 구분선 위) 자리. 보통 줄과 같은 4칸이고, 순위·유사도 칸에 숫자 대신 상태를 적는다.
+            번호 칸은 TopRowMarker. 순위표에 없는 항목이라 구분선 위에만 */}
         {notice && !pendingWord && (
-          <TableRow className={words.length > 0 ? "border-b-2 border-b-gray-400" : ""}>
+          <TableRow className="border-b-2 border-b-gray-400">
             <TableCell className="text-center py-2 px-1 w-12 sm:w-16">
-              <span
-                role="img"
-                aria-label={notice.tone === "failed" ? "제출 실패" : "없는 단어"}
-                className="inline-flex justify-center w-full"
-              >
-                {notice.tone === "failed" ? (
-                  <CircleAlert className="h-4 w-4" aria-hidden="true" />
-                ) : (
-                  <Ban className="h-4 w-4" aria-hidden="true" />
-                )}
-              </span>
+              <TopRowMarker tone={notice.tone} attempt={notice.attempt} />
             </TableCell>
-            <TableCell className="text-center py-2 whitespace-nowrap overflow-hidden text-ellipsis">
+            <TableCell
+              className={`text-center py-2 whitespace-nowrap overflow-hidden text-ellipsis ${
+                notice.tone === "consonant" ? "text-amber-700 font-medium" : ""
+              }`}
+            >
               {notice.word}
             </TableCell>
-            <TableCell colSpan={2} className="text-center py-2">
-              {notice.label}
-            </TableCell>
+            <TableCell className="text-center w-20 sm:w-24 py-2">{notice.rank}</TableCell>
+            <TableCell className="text-center w-20 sm:w-24 py-2">{notice.similarity}</TableCell>
           </TableRow>
         )}
         {pendingWord && pendingAttempt && (

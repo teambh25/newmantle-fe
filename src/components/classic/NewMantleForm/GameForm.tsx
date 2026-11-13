@@ -20,7 +20,7 @@ interface GameFormProps {
   /** 입력창 아래 첫 입력 유도 말풍선. 첫 단어를 제출하면 onInputTooltipDone으로 닫는다 */
   showInputTooltip?: boolean;
   onInputTooltipDone?: () => void;
-  /** 힌트·초성 힌트·포기 실패 안내. 입력창 아래에 빨갛게 띄운다 (docs/tasks/ui/plan.md 11장) */
+  /** 힌트·초성 힌트·포기 실패 안내. 입력창 아래에 빨갛게 띄운다 (제출 실패도 같은 자리, docs/tasks/ui/plan.md 12장) */
   requestError?: string | null;
   /** 입력창 글자를 고칠 때. 요청 실패 안내를 닫는 데 쓴다 */
   onInputEdit?: () => void;
@@ -64,15 +64,14 @@ export const GameForm: React.FC<GameFormProps> = ({
   }, [requestError, clearError]);
 
   // 주 안내는 단어 목록 맨 위 임시 줄 (docs/tasks/ui/plan.md 12장). 입력창 쪽은:
-  // 요청 실패(제출·힌트·초성 힌트·포기): 입력창을 막는 느낌으로 빨간 테두리 + 옅은 빨간 배경
-  //   힌트·초성 힌트·포기 실패만 아래에 빨간 문구 (제출 실패는 목록에 보이므로)
+  // 요청 실패(제출·힌트·초성 힌트·포기): 입력창을 막는 느낌으로 빨간 테두리 + 옅은 빨간 배경 + 아래 빨간 문구
   const submitFailure = !requestError && isError && errorTone === "error" ? errorMessage : null;
-  const blocked = !!requestError || !!submitFailure;
+  const failureMessage = requestError ?? submitFailure;
   // 없는 단어: 입력창을 비우고 placeholder에 안내 (평소 placeholder 색)
-  const unknownWord = !blocked && isError && errorTone === "warning" ? errorMessage : null;
-  // 화면에 문구가 없는 경우(없는 단어·제출 실패)는 스크린리더용 안 보이는 알림
-  const srOnlyNotice = submitFailure ?? unknownWord;
-  const inputStyle = blocked ? "border-red-500 bg-red-50 placeholder:text-gray-400" : "placeholder:text-gray-400";
+  const unknownWord = !failureMessage && isError && errorTone === "warning" ? errorMessage : null;
+  // placeholder는 스크린리더가 바로 읽지 않으므로 없는 단어는 안 보이는 알림으로도
+  const srOnlyNotice = unknownWord;
+  const inputStyle = failureMessage ? "border-red-500 bg-red-50 placeholder:text-gray-400" : "placeholder:text-gray-400";
 
   return (
     <form onSubmit={handleSubmit} className="w-full mb-6 relative" autoComplete="off">
@@ -120,7 +119,7 @@ export const GameForm: React.FC<GameFormProps> = ({
           placeholder={unknownWord ?? "단어 입력 후 엔터"}
           // 글자를 치기 시작하면 안내가 풀린다. 오류 상태(aria-invalid)는 단어 자체가 틀린 없는 단어만 (docs/tasks/ui/plan.md 9장, 11장)
           aria-invalid={!!unknownWord}
-          aria-describedby={requestError || srOnlyNotice ? GAME_INPUT_ERROR_ID : undefined}
+          aria-describedby={failureMessage || srOnlyNotice ? GAME_INPUT_ERROR_ID : undefined}
           className={`w-full pr-[112px] sm:pr-[176px] ${inputStyle}`}
           disabled={isLoading}
           ref={inputRef}
@@ -147,17 +146,17 @@ export const GameForm: React.FC<GameFormProps> = ({
           </Button>
         </div>
         {/* 입력창과 목록 사이 여백에 겹쳐 띄워 아래 목록이 밀리지 않게 */}
-        {requestError && (
+        {failureMessage && (
           <p
             id={GAME_INPUT_ERROR_ID}
             role="alert"
             className="absolute top-full left-1 mt-1 flex items-center gap-1 text-[11px] sm:text-xs text-red-600"
           >
             <CircleAlert className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" aria-hidden="true" />
-            {requestError}
+            {failureMessage}
           </p>
         )}
-        {/* placeholder·표 임시 줄은 스크린리더가 바로 읽지 않으므로 같은 안내를 화면에 안 보이는 알림으로도 */}
+        {/* placeholder는 스크린리더가 바로 읽지 않으므로 같은 안내를 화면에 안 보이는 알림으로도 */}
         {srOnlyNotice && (
           <p id={GAME_INPUT_ERROR_ID} role="alert" className="sr-only">
             {srOnlyNotice}
@@ -165,7 +164,7 @@ export const GameForm: React.FC<GameFormProps> = ({
         )}
         {/* 첫 입력 유도 말풍선: 누르면 입력창으로 포커스, 첫 단어를 제출하면 닫힘 (docs/tasks/ui/plan.md 7장) */}
         {/* 안내와 같은 자리라 안내가 떠 있으면 숨긴다 */}
-        {showInputTooltip && !requestError && (
+        {showInputTooltip && !failureMessage && (
           <button
             type="button"
             aria-label="입력 안내"
