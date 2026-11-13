@@ -82,10 +82,14 @@ async function giveUpViaDialog(user: User) {
   await waitFor(() => expect(givenUpShown()).toBe(true));
 }
 
-/** 표 본문의 줄 (표가 없으면 빈 배열) */
+const latestTable = () => screen.queryByRole("table", { name: "방금 입력" });
+const historyTable = () => screen.queryByRole("table", { name: "기록" });
+/** 표 안 머리줄을 뺀 줄 */
+const rowsOf = (t: HTMLElement | null) =>
+  t ? within(t).queryAllByRole("row").filter((r) => within(r).queryAllByRole("columnheader").length === 0) : [];
+/** 보이는 단어 줄: 방금 입력 칸 + 기록 표 (표가 없으면 빈 배열) */
 function bodyRows() {
-  const groups = screen.queryAllByRole("rowgroup");
-  return groups[1] ? within(groups[1]).queryAllByRole("row") : [];
+  return [...rowsOf(latestTable()), ...rowsOf(historyTable())];
 }
 const firstRowText = () => bodyRows()[0]?.textContent ?? "";
 const rowsWith = (word: string) => bodyRows().filter((r) => r.textContent?.includes(word));
@@ -681,6 +685,50 @@ describe("Y-4. 이미 제출한 단어", () => {
     await submitWord(user, "없는말");
     await giveUpViaDialog(user);
     expect(rowsWith("없는말")).toHaveLength(0);
+  });
+});
+
+// 방금 입력 칸과 기록 표 (docs/tasks/ui/verification.md W-6, word-list.md 3-2)
+describe("W-6. 방금 입력 칸과 기록 표", () => {
+  it("W-6-1: 100위·500위 → 방금 입력에 500위, 기록에 100위", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 100);
+    await submitWord(user, "바나나", 500);
+    const latest = rowsOf(latestTable());
+    const history = rowsOf(historyTable());
+    expect(latest).toHaveLength(1);
+    expect(latest[0].textContent).toContain("바나나");
+    expect(history).toHaveLength(1);
+    expect(history[0].textContent).toContain("사과");
+  });
+
+  it("W-6-2: 그 뒤 없는 단어 → 방금 입력에 없는 단어, 기록에 100위·500위", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 100);
+    await submitWord(user, "바나나", 500);
+    gameServer.setUnknown("없는말");
+    await submitWord(user, "없는말");
+    const latest = rowsOf(latestTable());
+    const history = rowsOf(historyTable()).map((r) => r.textContent ?? "");
+    expect(latest).toHaveLength(1);
+    expect(latest[0].textContent).toContain("없는말");
+    expect(history).toHaveLength(2);
+    expect(history[0]).toContain("사과");
+    expect(history[1]).toContain("바나나");
+  });
+
+  it("W-6-3: 단어 1개 → 방금 입력에 그 단어, 기록 줄 없음", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 100);
+    expect(rowsOf(latestTable())).toHaveLength(1);
+    expect(rowsOf(latestTable())[0].textContent).toContain("사과");
+    expect(rowsOf(historyTable())).toHaveLength(0);
+  });
+
+  it("W-6-4: 제출한 단어 없음 → 방금 입력 표가 바로 보이고 줄 없음", async () => {
+    await setup();
+    expect(latestTable()).toBeInTheDocument();
+    expect(rowsOf(latestTable())).toHaveLength(0);
   });
 });
 

@@ -35,10 +35,14 @@ async function renderForm() {
   await waitFor(() => expect(screen.getByRole("textbox")).toBeEnabled());
 }
 
-/** 표 본문의 단어 줄 */
+const latestTable = () => screen.queryByRole("table", { name: "방금 입력" });
+const historyTable = () => screen.queryByRole("table", { name: "기록" });
+/** 표 안 머리줄을 뺀 줄 */
+const rowsOf = (t: HTMLElement | null) =>
+  t ? within(t).queryAllByRole("row").filter((r) => within(r).queryAllByRole("columnheader").length === 0) : [];
+/** 보이는 단어 줄: 방금 입력 칸 + 기록 표 */
 function wordRows() {
-  const [, body] = screen.getAllByRole("rowgroup");
-  return within(body).getAllByRole("row");
+  return [...rowsOf(latestTable()), ...rowsOf(historyTable())];
 }
 const moreButton = () => screen.queryByRole("button", { name: "더보기" });
 

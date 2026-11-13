@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import WordTable, { VISIBLE_WORD_COUNT, type TopRowTone } from "./WordTable";
+import WordTable, { VISIBLE_HISTORY_COUNT, type LatestRow, type TopRowTone } from "./WordTable";
 import { GameForm } from "./GameForm";
 import { GameResult } from "./GameResult";
 import { compareByRank, useGameState, type GameRequestKind } from "@/hooks/useGameState";
@@ -112,8 +112,8 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
   // 초성·정답은 제목에 보이므로 표에서 뺀다
   const inHeading = (w: { attempt: number; rank: number; correct: boolean }) => isConsonant(w) || w.correct;
   const listedWords = gameLogic.sortedWords.filter((w) => !inHeading(w));
-  // 구분선 위는 늘 가장 최근 항목 (docs/tasks/ui/word-list.md 3-2). 순위표에 없는 것(임시 줄, 초성, 정답)은
-  // 구분선 위에만 한 줄로 두고, 직전 단어는 순위 자리로 내린다 (docs/tasks/ui/plan.md 12장)
+  // 방금 입력 칸은 늘 가장 최근 항목, 기록 표는 그 밖의 순위를 아는 단어 (docs/tasks/ui/word-list.md 3-2).
+  // 기록 표에 없는 것(임시 줄, 초성, 정답)은 방금 칸에만 둔다 (docs/tasks/ui/plan.md 12장)
   const latestItem = gameLogic.submittedWords[0];
   const topRow: { word: string; tone: TopRowTone; attempt?: number } | null = submitNotice
     ? submitNotice
@@ -122,9 +122,17 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
       : latestItem?.correct
         ? { word: latestItem.word, tone: gameLogic.givenUp ? "givenUp" : "answer", attempt: latestItem.attempt }
         : null;
-  const tableWords = topRow ? [...listedWords].sort(compareByRank) : listedWords;
-  // 구분선은 게임 시작부터 끝까지 (단어가 1개여도)
-  const hasLatestRow = !topRow && tableWords.length > 0;
+  const rankedWords = [...listedWords].sort(compareByRank);
+  // 방금 칸에 단어가 있으면(입력·힌트) 기록 표에서는 뺀다. 제출 중이면 방금 칸은 제출 중 줄, 그 전 단어는 기록으로
+  const latestListed = !pendingWord && !topRow && latestItem && !inHeading(latestItem) ? latestItem : null;
+  const latestRow: LatestRow | null = pendingWord
+    ? { kind: "pending", word: pendingWord, attempt: gameLogic.attempts + 1 }
+    : topRow
+      ? { kind: "notice", ...topRow, ...TOP_ROW_LABELS[topRow.tone] }
+      : latestListed
+        ? { kind: "word", word: latestListed, isRepeat: repeatedWord !== null && latestListed.word === repeatedWord }
+        : null;
+  const historyWords = latestListed ? rankedWords.filter((w) => w !== latestListed) : rankedWords;
 
   // 목록 맨 위에 다른 줄이 올라오면(제출 결과, 이미 낸 단어, 힌트·초성·포기) 임시 줄을 내린다. 입력창에 글자를 칠 때는 남긴다
   const topWord = gameLogic.sortedWords[0];
@@ -282,36 +290,19 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
         />
 
         {/* 표 자리 확보: 단어가 적어도 7줄 + "더보기" 높이만큼 차지해서, 입력할 때마다 아래 내용이 밀리지 않게 (docs/tasks/ui/word-list.md 3-5).
-            값 = 표 머리 48px + 줄(모바일 37px / sm 41px) × 7 + 방금 입력 구분선 1px + "더보기" 56px */}
-        <div className="w-full min-h-[364px] sm:min-h-[392px]">
-          {tableWords.length > 0 || pendingWord || topRow ? (
-            <>
-              <WordTable 
-                words={tableWords}
-                hasLatestRow={hasLatestRow}
-                showAll={showAllWords} 
-                pendingWord={pendingWord}
-                pendingAttempt={gameLogic.attempts + 1}
-                notice={topRow && { ...topRow, ...TOP_ROW_LABELS[topRow.tone] }}
-                // 맨 위가 다른 줄(힌트 등)로 바뀌면 단어가 달라 아이콘이 자연히 빠진다
-                latestIsRepeat={!topRow && repeatedWord !== null && tableWords[0]?.word === repeatedWord}
-              />
-              {/* 제출 중 줄·구분선 위 한 줄이 자리를 차지하면 표에는 6개만 보이므로 그 줄까지 세어 넘치면 "더보기" */}
-              {tableWords.length + (pendingWord || topRow ? 1 : 0) > VISIBLE_WORD_COUNT && (
-                <div className="text-center mt-4">
-                  <Button
-                    onClick={() => setShowAllWords(!showAllWords)}
-                    variant="outline"
-                  >
-                    {showAllWords ? "접기" : "더보기"}
-                  </Button>
-                </div>
-              )}
-            </>
-          ) : (
-            <p className="text-gray-500 text-center">
-              아직 제출한 단어가 없습니다.
-            </p>
+            값 = 방금 입력 칸 87px(머리 48 + 줄 37 + 위 선 1 + 아래 굵은 선 2) + 기록 6줄 221px + "더보기" 56px = 365px (헤드리스 측정 372px에서 간격 8px을 뺌, 375·1024 같음) */}
+        <div className="w-full min-h-[365px]">
+          {/* 시작할 때도 빈 표(머리줄)를 바로 보여 준다 */}
+          <WordTable latest={latestRow} history={historyWords} showAll={showAllWords} />
+          {historyWords.length > VISIBLE_HISTORY_COUNT && (
+            <div className="text-center mt-4">
+              <Button
+                onClick={() => setShowAllWords(!showAllWords)}
+                variant="outline"
+              >
+                {showAllWords ? "접기" : "더보기"}
+              </Button>
+            </div>
           )}
         </div>
       </div>
