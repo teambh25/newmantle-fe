@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import SurveyForm from "@/components/classic/SurveyForm";
 import type { AnswerData } from "@/utils/api";
+import { SPOTLIGHT_ATTR } from "@/components/AuthButton";
 
 // 결과창 모달 (docs/tasks/ui/result-box.md)
 
@@ -37,7 +38,14 @@ export function ResultDialog({ open, onOpenChange, givenUp, attempts, answer, on
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={SHEET_CLASS} aria-describedby={undefined}>
+      <DialogContent
+        className={SHEET_CLASS}
+        aria-describedby={undefined}
+        // 강조된 헤더 로그인을 누를 때 결과창이 먼저 닫히면, 닫히는 동안 남은 배경이 클릭을 가로채 이동하지 않는다 (요구사항 8)
+        onPointerDownOutside={(e) => {
+          if ((e.target as Element | null)?.closest?.(`[${SPOTLIGHT_ATTR}]`)) e.preventDefault();
+        }}
+      >
         {/* 화면에 보이는 첫 줄은 축하 문구라, 창 이름은 스크린 리더용으로 따로 둔다 */}
         <DialogTitle className="sr-only">게임 결과</DialogTitle>
 
@@ -62,8 +70,7 @@ export function ResultDialog({ open, onOpenChange, givenUp, attempts, answer, on
           </div>
         )}
 
-
-        {/* 3. 공유·피드백: 내용 폭의 작은 버튼 한 쌍 (아래 계속 플레이 배너와 폭을 맞춤) */}
+        {/* 3. 공유·피드백: 가운데 정렬한 작은 버튼 한 쌍 */}
         <div className="flex justify-center gap-2">
           <Button variant="outline" size="sm" onClick={onShare} className="text-gray-700">
             <Share2 className="mr-1.5 h-3.5 w-3.5" />
@@ -75,9 +82,9 @@ export function ResultDialog({ open, onOpenChange, givenUp, attempts, answer, on
           </Button>
         </div>
 
-        {/* 4. 계속 플레이: 왼쪽 아래 작은 글자 버튼, 누르면 닫힘. 하루 한 번 게임이라 "다시 플레이"로 읽히지 않는 문구. 로그인 안내는 헤더 로그인 강조로 (요구사항 2-4, 2-5, 8) */}
-        {/* 다음 퀴즈 시각 + "그때까지" 할 수 있는 것 (정답 교체 매일 00시 KST, docs/spec/rules.md R-3) */}
-        {/* 위 제목·공유 버튼처럼 가운데 정렬 */}
+        {/* 4. 맨 아래 가운데: 다음 퀴즈 시각 안내(정답 교체 매일 00시 KST, docs/spec/rules.md R-3) + 계속 플레이.
+            계속 플레이는 밑줄 친 작은 글자 버튼이고 누르면 닫힘. 하루 한 번 게임이라 "다시 플레이"로 읽히지 않는 문구 (요구사항 2-4).
+            로그인 안내는 결과창 안이 아니라 헤더 로그인 강조로 (요구사항 2-5, 8) */}
         <div className="-mb-1 flex flex-col items-center gap-1">
           <p className="text-xs text-gray-400">새로운 퀴즈는 매일 밤 12시에 열려요</p>
           <button

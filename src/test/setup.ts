@@ -27,7 +27,7 @@ vi.mock("@/utils/supabase/client", () => ({
   createClient: () => ({
     auth: {
       getSession: async () => ({ data: { session: null } }),
-      // 결과 상자의 로그인 안내가 로그인 여부를 본다 (useAuthUser)
+      // 헤더 로그인 버튼(AuthButton)이 로그인 여부를 본다 (useAuthUser)
       getUser: async () => ({ data: { user: null } }),
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
     },

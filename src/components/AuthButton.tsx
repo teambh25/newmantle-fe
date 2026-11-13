@@ -15,6 +15,8 @@ interface AuthButtonProps {
 }
 
 const SPOTLIGHT_TOOLTIP_ID = 'login-spotlight-tooltip'
+/** 결과창이 이 표시가 붙은 요소를 누를 때는 바깥 클릭으로 닫히지 않는다 (GameResult.tsx) */
+export const SPOTLIGHT_ATTR = 'data-result-spotlight'
 
 export default function AuthButton({ hideTooltip = false, tooltipAlign = 'center', spotlight = false }: AuthButtonProps) {
     const { user, displayName, isLoading } = useAuthUser()
@@ -54,6 +56,7 @@ export default function AuthButton({ hideTooltip = false, tooltipAlign = 'center
             <a
                 href="/login"
                 aria-describedby={spotlightVisible ? SPOTLIGHT_TOOLTIP_ID : undefined}
+                {...(spotlightVisible ? { [SPOTLIGHT_ATTR]: '' } : {})}
                 className={`text-sm px-3 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition font-semibold whitespace-nowrap ${spotlightVisible ? 'relative z-[60] pointer-events-auto ring-2 ring-white shadow-[0_0_18px_6px_rgba(147,197,253,0.75)]' : ''}`}
             >
                 로그인

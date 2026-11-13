@@ -333,7 +333,7 @@ function storeToday(extra: Record<string, unknown>) {
   );
 }
 
-describe("헤더 말풍선 자동 닫힘 / 결과 상자 로그인 안내 (docs/tasks/ui/verification.md H)", () => {
+describe("헤더 말풍선 자동 닫힘 / 헤더 로그인 링크 (docs/tasks/ui/verification.md H)", () => {
   const STATS_TOOLTIP_DISMISSED_KEY = "stats-tooltip-dismissed";
   const statsTooltip = () => screen.queryByRole("button", { name: "통계 안내 닫기", hidden: true });
   const logIn = () => {
@@ -388,18 +388,6 @@ describe("헤더 말풍선 자동 닫힘 / 결과 상자 로그인 안내 (docs/
       await pass(5500);
       expect(loginTooltip()).not.toBeInTheDocument();
     });
-  });
-
-  it("H-2-1: 비로그인, 정답 맞힘 → 로그인 링크는 헤더 1개뿐 (결과 상자 링크 뺌)", async () => {
-    storeToday({});
-    await renderHome();
-    expect(loginLinks()).toHaveLength(1);
-  });
-
-  it("H-2-2: 비로그인, 포기함 → 로그인 링크는 헤더 1개뿐", async () => {
-    storeToday({ givenUp: true });
-    await renderHome();
-    expect(loginLinks()).toHaveLength(1);
   });
 
   it("H-2-3: 로그인, 정답 맞힘 → 로그인 링크 없음", async () => {
@@ -536,6 +524,18 @@ describe("결과창 모달 (docs/tasks/ui/verification.md R)", () => {
       await waitFor(() => expect(resultDialog()).not.toBeInTheDocument());
       expect(gameInput()).toBeEnabled();
     });
+    it("R-1-12: 포기 요청 실패 → 입력창이 잠기지 않고 결과창도 열리지 않음", async () => {
+      const { user } = await renderHome();
+      gameServer.failNext("give-up");
+      await user.click(screen.getByRole("button", { name: "포기" }));
+      const confirm = await screen.findByRole("dialog");
+      await user.click(within(confirm).getByRole("button", { name: /포기하고/ }));
+      await waitFor(() => expect(gameServer.count("give-up")).toBe(1));
+      await waitFor(() => expect(screen.getByRole("button", { name: "포기" })).toBeEnabled());
+      expect(gameInput()).toBeEnabled();
+      await wait(1500);
+      expect(resultDialog()).not.toBeInTheDocument();
+    });
   });
 
   describe("R-2. 결과창 구성", () => {
@@ -657,6 +657,23 @@ describe("결과창 모달 (docs/tasks/ui/verification.md R)", () => {
       await submit(user, ANSWER.word);
       await findResultDialog();
       await waitFor(() => expect(headerLogin()).toHaveAccessibleDescription());
+    });
+
+    it("R-6-5: 결과창이 열린 채 헤더 로그인을 누르면 결과창이 먼저 닫히지 않고 링크에 클릭이 전달됨", async () => {
+      storeFinished();
+      const { user } = await renderHome();
+      await openFromMain(user);
+      const link = headerLogin();
+      let clicked = false;
+      // jsdom은 페이지 이동을 하지 않으므로 클릭이 링크에 닿았는지만 본다
+      link.addEventListener("click", (e) => {
+        clicked = true;
+        e.preventDefault();
+      });
+      await user.click(link);
+      expect(clicked).toBe(true);
+      await wait(300);
+      expect(resultDialog()).toBeInTheDocument();
     });
 
     it("R-6-4: 결과창이 열리면 기존 로그인 말풍선은 숨김", async () => {

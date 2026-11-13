@@ -27,16 +27,6 @@ const dialog = () => screen.queryByRole("dialog");
 
 /** 게임 결과가 표시됐는지: 결과창(이름 "게임 결과" dialog)이 열려 있음 (docs/tasks/ui/result-box.md) */
 const givenUpShown = () => screen.queryByRole("dialog", { name: "게임 결과" }) !== null;
-/** 결과창에 표시된 시도 횟수 (결과창 안에서 숫자가 들어간 문장은 시도 횟수뿐) */
-function resultAttempts(): number | null {
-  const d = screen.queryByRole("dialog", { name: "게임 결과" });
-  if (!d) return null;
-  const withNumber = within(d)
-    .queryAllByText(/\d/)
-    .map((el) => el.textContent?.match(/\d+/)?.[0])
-    .find(Boolean);
-  return withNumber ? Number(withNumber) : null;
-}
 
 /** 확인 창의 선택지 (X 닫기 버튼 제외) */
 function dialogOptions() {
@@ -304,7 +294,9 @@ describe("C. 포기", () => {
     for (const w of ["하나", "둘", "셋"]) await submitWord(user, w, -1);
     await giveUpViaDialog(user, { keepResultOpen: true });
 
-    expect(resultAttempts()).toBe(3);
+    // 결과창에 시도 횟수 3이 보임 (다른 숫자와 붙어 있지 않은 3)
+    const result = screen.getByRole("dialog", { name: "게임 결과" });
+    expect(within(result).getByText(/(^|\D)3(\D|$)/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /공유하기/ }));
     const link = await waitFor(async () => {
