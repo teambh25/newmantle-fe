@@ -8,7 +8,7 @@ import { useAutoDismiss } from '@/hooks/useAutoDismiss'
 interface AuthButtonProps {
     /** 다른 안내(첫 방문 모달)가 떠 있는 동안 로그인 말풍선을 숨긴다 */
     hideTooltip?: boolean
-    /** 말풍선 정렬. 화면 오른쪽 끝에 있으면 "end"로 버튼 오른쪽에 맞춰 화면 밖으로 잘리지 않게 (docs/tasks/ui/plan.md 10장) */
+    /** 말풍선 정렬. 화면 오른쪽 끝에 있으면 "end"로 버튼 오른쪽에 맞춰 화면 밖으로 잘리지 않게 (docs/tasks/ui/header/plan.md 3) */
     tooltipAlign?: 'center' | 'end'
 }
 
@@ -26,7 +26,7 @@ export default function AuthButton({ hideTooltip = false, tooltipAlign = 'center
         setShowTooltip(false)
     }
 
-    // 보인 지 5초 뒤 닫은 것과 같이 처리 (docs/tasks/ui/plan.md 8장)
+    // 보인 지 5초 뒤 닫은 것과 같이 처리 (docs/tasks/ui/header/plan.md 5)
     const tooltipVisible = !isLoading && !user && showTooltip && !hideTooltip
     useAutoDismiss(tooltipVisible, dismissTooltip)
 
@@ -34,7 +34,7 @@ export default function AuthButton({ hideTooltip = false, tooltipAlign = 'center
         return <div className="h-8 w-16 opacity-0"></div>
     }
 
-    // 로그아웃은 설정 메뉴에 있다 (docs/tasks/ui/plan.md 1장). 헤더에는 닉네임만, 길면 말줄임
+    // 로그아웃은 설정 메뉴에 있다 (docs/tasks/ui/header/plan.md 1). 헤더에는 닉네임만, 길면 말줄임
     return user ? (
         <span
             className="flex items-center text-sm text-gray-900 font-medium whitespace-nowrap min-w-0"

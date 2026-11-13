@@ -16,7 +16,7 @@ import { fetchSharerStats } from "@/utils/api";
 import { createClient } from "@/utils/supabase/client";
 import { shortenWord, topicParticle } from "@/utils/korean";
 
-/** 요청 실패 안내. 원인은 적지 않고 어떤 기능이 실패했는지만 적는다 (docs/tasks/ui/plan.md 11장) */
+/** 요청 실패 안내. 원인은 적지 않고 어떤 기능이 실패했는지만 적는다 (docs/tasks/ui/input/plan.md 3) */
 const REQUEST_ERROR_MESSAGES: Record<GameRequestKind | "submit", string> = {
   submit: "단어 제출에 실패했어요. 잠시 후 다시 시도해 주세요.",
   hint: "힌트를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.",
@@ -24,7 +24,7 @@ const REQUEST_ERROR_MESSAGES: Record<GameRequestKind | "submit", string> = {
   giveUp: "포기 처리에 실패했어요. 잠시 후 다시 시도해 주세요.",
 };
 
-/** 구분선 위 한 줄(순위표에 없는 항목)의 순위·유사도 칸 (docs/tasks/ui/plan.md 12장, word-list.md 3-2) */
+/** 구분선 위 한 줄(순위표에 없는 항목)의 순위·유사도 칸 (docs/tasks/ui/input/plan.md 3, word-list/plan.md 1) */
 const TOP_ROW_LABELS: Record<TopRowTone, { rank: string; similarity: string }> = {
   unknown: { rank: "없음", similarity: "없음" },
   failed: { rank: "오류", similarity: "오류" },
@@ -34,7 +34,7 @@ const TOP_ROW_LABELS: Record<TopRowTone, { rank: string; similarity: string }> =
 };
 
 interface NewMantleFormProps {
-  /** 첫 입력 유도 말풍선 (docs/tasks/ui/plan.md 7장). 순서는 메인이 정한다 */
+  /** 첫 입력 유도 말풍선 (docs/tasks/ui/input/plan.md 2). 순서는 메인이 정한다 */
   showInputTooltip?: boolean;
   onInputTooltipDone?: () => void;
 }
@@ -47,12 +47,12 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
   const [sharerHintCount, setSharerHintCount] = useState<number | null>(null);
   const [isLoadingSharerStats, setIsLoadingSharerStats] = useState(false);
   const [pendingWord, setPendingWord] = useState<string | null>(null);
-  // 없는 단어·제출 실패를 목록 맨 위에 잠깐 보여 준다. 저장하지 않는다 (docs/tasks/ui/plan.md 12장)
+  // 없는 단어·제출 실패를 목록 맨 위에 잠깐 보여 준다. 저장하지 않는다 (docs/tasks/ui/input/plan.md 3)
   const [submitNotice, setSubmitNotice] = useState<{ word: string; tone: "unknown" | "failed" } | null>(null);
-  // 방금 다시 낸 이미 제출한 단어. 맨 위 줄이 이 단어일 때만 반복 아이콘 (docs/tasks/ui/plan.md 12장)
+  // 방금 다시 낸 이미 제출한 단어. 맨 위 줄이 이 단어일 때만 반복 아이콘 (docs/tasks/ui/input/plan.md 3)
   const [repeatedWord, setRepeatedWord] = useState<string | null>(null);
   const { toast } = useToast();
-  // 힌트·초성 힌트·포기 실패 안내. 토스트 대신 입력창 아래에 띄운다 (docs/tasks/ui/plan.md 11장)
+  // 힌트·초성 힌트·포기 실패 안내. 토스트 대신 입력창 아래에 띄운다 (docs/tasks/ui/input/plan.md 3)
   const [requestError, setRequestError] = useState<string | null>(null);
   const gameLogic = useGameState(gameDate, "classic", {
     onRequestError: (kind) => setRequestError(REQUEST_ERROR_MESSAGES[kind]),
@@ -103,7 +103,7 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
     }
   }, [gameDate]);
 
-  // 초성 힌트는 표에서 빼고 입력창 위 날짜 제목에 둔다. 게임이 끝나면 초성 대신 정답 (docs/tasks/ui/word-list.md 3-4)
+  // 초성 힌트는 표에서 빼고 입력창 위 날짜 제목에 둔다. 게임이 끝나면 초성 대신 정답 (docs/tasks/ui/word-list/plan.md 4)
   const isConsonant = (w: { attempt: number; rank: number }) => w.attempt === -1 && w.rank === 0;
   const gameOver = gameLogic.gameCompleted || gameLogic.givenUp;
   const answerWord = gameLogic.sortedWords.find((w) => w.correct)?.word;
@@ -112,8 +112,8 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
   // 초성·정답은 제목에 보이므로 표에서 뺀다
   const inHeading = (w: { attempt: number; rank: number; correct: boolean }) => isConsonant(w) || w.correct;
   const listedWords = gameLogic.sortedWords.filter((w) => !inHeading(w));
-  // 방금 입력 칸은 늘 가장 최근 항목, 기록 표는 그 밖의 순위를 아는 단어 (docs/tasks/ui/word-list.md 3-2).
-  // 기록 표에 없는 것(임시 줄, 초성, 정답)은 방금 칸에만 둔다 (docs/tasks/ui/plan.md 12장)
+  // 방금 입력 칸은 늘 가장 최근 항목, 기록 표는 그 밖의 순위를 아는 단어 (docs/tasks/ui/word-list/plan.md 1).
+  // 기록 표에 없는 것(임시 줄, 초성, 정답)은 방금 칸에만 둔다 (docs/tasks/ui/input/plan.md 3)
   const latestItem = gameLogic.submittedWords[0];
   const topRow: { word: string; tone: TopRowTone; attempt?: number } | null = submitNotice
     ? submitNotice
@@ -210,7 +210,7 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
   };
 
   return (
-    // PC는 게임 영역(결과 상자·단어 목록)을 480px로 가운데에, 입력창은 그보다 조금 좁은 420px. 모바일은 화면 폭 그대로 (docs/tasks/ui/plan.md 4장)
+    // PC는 게임 영역(결과 상자·단어 목록)을 480px로 가운데에, 입력창은 그보다 조금 좁은 420px. 모바일은 화면 폭 그대로 (docs/tasks/ui/input/plan.md 1)
     <div className="w-full max-w-2xl sm:max-w-[480px] sm:mx-auto">
       <div className="flex flex-col items-center mx-0">
         <GameResult
@@ -246,7 +246,7 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
             setPendingWord(null);
             // 임시 줄은 응답과 함께 바꾼다. 요청 전에 지우면 직전 단어가 방금 입력 칸으로 잠깐 돌아온다 (V-13)
             setSubmitNotice(null);
-            // 없는 단어·제출 실패는 목록 맨 위 임시 줄로. 입력창은 없는 단어면 비우고 placeholder 안내, 실패면 단어를 남기고 빨간 배경 (docs/tasks/ui/plan.md 12장)
+            // 없는 단어·제출 실패는 목록 맨 위 임시 줄로. 입력창은 없는 단어면 비우고 placeholder 안내, 실패면 단어를 남기고 빨간 배경 (docs/tasks/ui/input/plan.md 3)
             if (res.reason === "duplicate") setRepeatedWord(word);
             if (res.reason === "unknownWord") {
               setSubmitNotice({ word, tone: "unknown" });
@@ -290,7 +290,7 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
           }
         />
 
-        {/* 표 자리 확보: 단어가 적어도 7줄 + "더보기" 높이만큼 차지해서, 입력할 때마다 아래 내용이 밀리지 않게 (docs/tasks/ui/word-list.md 3-5).
+        {/* 표 자리 확보: 단어가 적어도 7줄 + "더보기" 높이만큼 차지해서, 입력할 때마다 아래 내용이 밀리지 않게 (docs/tasks/ui/word-list/plan.md 5).
             값 = 방금 입력 칸 87px(머리 48 + 줄 37 + 위 선 1 + 아래 굵은 선 2) + 기록 6줄 221px + "더보기" 56px = 365px (헤드리스 측정 372px에서 간격 8px을 뺌, 375·1024 같음) */}
         <div className="w-full min-h-[365px]">
           {/* 시작할 때도 빈 표(머리줄)를 바로 보여 준다 */}

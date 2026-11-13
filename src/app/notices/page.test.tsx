@@ -1,4 +1,4 @@
-// 화면 레벨: 공지사항 페이지 (docs/tasks/ui/notices.md NT-9)
+// 화면 레벨: 공지사항 페이지 (docs/tasks/ui/notices/verification.md NT-9)
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import NoticesPage from "./page";

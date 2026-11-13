@@ -2,11 +2,11 @@ import { useState, useRef, useEffect, useCallback } from "react";
 
 interface GameFormOptions {
   /** 요청 실패(tone "error")면 입력한 단어를 남겨 엔터만 다시 누르면 되게 하고, 글자를 치기 시작하면 오류를 푼다.
-   *  없는 단어(tone "warning")는 비운다 (classic, docs/tasks/ui/plan.md 9장 6차, 11장) */
+   *  없는 단어(tone "warning")는 비운다 (classic, docs/tasks/ui/input/plan.md 3) */
   keepInputOnFailure?: boolean;
 }
 
-/** warning: 내 입력이 잘못됨(없는 단어), error: 요청 실패 (docs/tasks/ui/plan.md 11장) */
+/** warning: 내 입력이 잘못됨(없는 단어), error: 요청 실패 (docs/tasks/ui/input/plan.md 3) */
 export type GameFormErrorTone = "warning" | "error";
 
 export function useGameForm(

@@ -4,7 +4,7 @@ import { ChevronLeft } from "lucide-react";
 import NotificationFeed from "@/components/classic/NotificationFeed";
 import MarkNoticesSeen from "@/components/classic/MarkNoticesSeen";
 
-// 공지사항 전체 목록. 테마와 상관없이 classic UI (docs/tasks/ui/notices.md 1장)
+// 공지사항 전체 목록. 테마와 상관없이 classic UI (docs/tasks/ui/notices/plan.md 1)
 
 export const metadata: Metadata = {
   title: "공지사항 - 뉴맨틀",

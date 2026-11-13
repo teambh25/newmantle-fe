@@ -1,4 +1,4 @@
-// 로직 레벨: 조사 고르기 (docs/tasks/ui/verification.md K)
+// 로직 레벨: 조사 고르기 (docs/tasks/ui/input/verification.md K)
 import { describe, expect, it } from "vitest";
 import { shortenWord, topicParticle } from "./korean";
 

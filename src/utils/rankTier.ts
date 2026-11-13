@@ -1,4 +1,4 @@
-// 단어 목록 순위 배지 단계 (docs/tasks/ui/word-list.md 3-1)
+// 단어 목록 순위 배지 단계 (docs/tasks/ui/word-list/plan.md 2)
 import { HINT_LIMIT_RANK } from "@/utils/gameRules";
 
 export type RankTier = 1 | 2 | 3 | 4 | 5 | 0;

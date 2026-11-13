@@ -11,10 +11,10 @@ import { SubmittedWord } from "@/utils/api";
 import { CircleAlert, Flag, Lightbulb, Loader2, Repeat } from "lucide-react";
 import { getRankTier, RankTier } from "@/utils/rankTier";
 
-/** 기록 표에 기본으로 보이는 줄 수. 방금 입력 칸 1줄과 합쳐 7줄. 넘으면 "더보기" (docs/tasks/ui/word-list.md 3-5) */
+/** 기록 표에 기본으로 보이는 줄 수. 방금 입력 칸 1줄과 합쳐 7줄. 넘으면 "더보기" (docs/tasks/ui/word-list/plan.md 5) */
 export const VISIBLE_HISTORY_COUNT = 6;
 
-// 줄 배경: 정답에 가까울수록 진한 파랑 (word-list.md 3-1)
+// 줄 배경: 정답에 가까울수록 진한 파랑 (word-list/plan.md 2)
 const TIER_ROW: Record<RankTier, string> = {
   1: "bg-blue-200",
   2: "bg-blue-100",
@@ -38,7 +38,7 @@ const COL = {
 
 export type TopRowTone = "unknown" | "failed" | "consonant" | "answer" | "givenUp";
 
-/** 방금 입력 칸에 올 수 있는 것 (docs/tasks/ui/word-list.md 3-2, plan.md 12장) */
+/** 방금 입력 칸에 올 수 있는 것 (docs/tasks/ui/word-list/plan.md 1, input/plan.md 3) */
 export type LatestRow =
   | { kind: "word"; word: SubmittedWord; isRepeat: boolean }
   /** 기록 표에 안 들어가는 항목: 없는 단어·제출 실패(저장 안 함), 초성, 정답 */
@@ -69,7 +69,7 @@ function WordRow({ word, isRepeat = false }: { word: SubmittedWord; isRepeat?: b
     <TableRow className={TIER_ROW[tier]}>
       <TableCell className={COL.num}>
         {isHint ? (
-          // 힌트 단어: 단어 글자와 같은 갈색 전구 (word-list.md 3-3)
+          // 힌트 단어: 단어 글자와 같은 갈색 전구 (word-list/plan.md 3)
           <span role="img" aria-label="힌트로 받은 단어" className="inline-flex justify-center w-full">
             <Lightbulb className="h-4 w-4 text-amber-700" aria-hidden="true" />
           </span>
@@ -132,7 +132,7 @@ interface WordTableProps {
 }
 
 /**
- * 위는 방금 입력 칸(머리줄 + 한 줄, 위아래 선만), 아래는 기록 표 (docs/tasks/ui/word-list.md 3-2).
+ * 위는 방금 입력 칸(머리줄 + 한 줄, 위아래 선만), 아래는 기록 표 (docs/tasks/ui/word-list/plan.md 1).
  * 다음 항목이 오면 방금 칸의 단어가 기록 표 순위 자리로 들어간다
  */
 const WordTable: React.FC<WordTableProps> = ({ latest, history, showAll }) => {

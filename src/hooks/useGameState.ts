@@ -101,7 +101,7 @@ function getInitialGameState(): GameData {
 export type GameRequestKind = "hint" | "consonantHint" | "giveUp";
 
 interface GameStateOptions {
-  /** 힌트·초성 힌트·포기 요청이 실패하면 토스트 대신 부른다 (classic: 입력창 아래 안내, docs/tasks/ui/plan.md 11장) */
+  /** 힌트·초성 힌트·포기 요청이 실패하면 토스트 대신 부른다 (classic: 입력창 아래 안내, docs/tasks/ui/input/plan.md 3) */
   onRequestError?: (kind: GameRequestKind) => void;
 }
 
@@ -216,7 +216,7 @@ export function useGameState(gameDate: string, theme?: string, { onRequestError 
         };
       });
 
-      // 축하 멘트는 결과 상자에 있으므로 토스트는 띄우지 않는다 (docs/tasks/ui/result-box.md 6)
+      // 축하 멘트는 결과 상자에 있으므로 토스트는 띄우지 않는다 (docs/tasks/ui/result-box/plan.md 6)
       if (newWord.correct) {
         logEvent("Game Completed", {
           attempts: gameState.attempts + 1,

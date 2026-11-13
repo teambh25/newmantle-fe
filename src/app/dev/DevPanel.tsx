@@ -1,5 +1,5 @@
 "use client";
-// 개발 전용: 가짜 단어 목록·실패 화면을 정하고 메인으로 이동 (docs/tasks/ui/dev-page.md)
+// 개발 전용: 가짜 단어 목록·실패 화면을 정하고 메인으로 이동 (docs/tasks/ui/dev-page/plan.md)
 import { useEffect } from "react";
 import { getKSTDateString } from "@/utils/date";
 import { RULE_MODAL_SEEN_KEY } from "@/hooks/useRuleIntroModal";

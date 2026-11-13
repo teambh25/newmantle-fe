@@ -1,4 +1,4 @@
-// 단어 목록 순위 배지 단계 (docs/tasks/ui/verification.md W-1)
+// 단어 목록 순위 배지 단계 (docs/tasks/ui/word-list/verification.md W-1)
 import { describe, expect, it } from "vitest";
 import { getRankTier, OUT_OF_RANK_TIER } from "@/utils/rankTier";
 import { HINT_LIMIT_RANK } from "@/utils/gameRules";

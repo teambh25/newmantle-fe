@@ -1,4 +1,4 @@
-// 로직 레벨: 최신 공지 안 읽음 판단 (docs/tasks/ui/notices.md 3장, NT-1 ~ NT-4)
+// 로직 레벨: 최신 공지 안 읽음 판단 (docs/tasks/ui/notices/plan.md 3, notices/verification.md NT-1 ~ NT-4)
 import { describe, expect, it } from "vitest";
 import type { Notification } from "@/static/notifications";
 import { isLatestUnread } from "./notifications";

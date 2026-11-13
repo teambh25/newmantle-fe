@@ -367,7 +367,7 @@ describe("E-1. Amplitude", () => {
   });
 });
 
-describe("결과 상자 (docs/tasks/ui/verification.md R)", () => {
+describe("결과 상자 (docs/tasks/ui/result-box/verification.md R)", () => {
   it("R-3-1: 정답 제출 → 토스트 없음, 축하 효과는 실행", async () => {
     const h = renderGame();
     await h.submitAnswer();

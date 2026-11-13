@@ -121,7 +121,7 @@ export function SettingsButton({ theme, onThemeChange, variant }: SettingsButton
                 피드백 남기기
               </span>
             </button>
-            {/* 공지사항 진입점. 헤더 아이콘은 폭이 넘쳐 설정 메뉴에 둔다 (docs/tasks/ui/notices.md 4장) */}
+            {/* 공지사항 진입점. 헤더 아이콘은 폭이 넘쳐 설정 메뉴에 둔다 (docs/tasks/ui/notices/plan.md 4) */}
             <Link
               href="/notices"
               onClick={() => setOpen(false)}
@@ -135,7 +135,7 @@ export function SettingsButton({ theme, onThemeChange, variant }: SettingsButton
             </Link>
           </div>
 
-          {/* 계정: 로그인했을 때만. 회원 탈퇴 진입점도 여기에 붙인다 (docs/tasks/ui/plan.md 1장) */}
+          {/* 계정: 로그인했을 때만. 회원 탈퇴 진입점도 여기에 붙인다 (docs/tasks/ui/header/plan.md 1) */}
           {user && (
             <div className="mt-2 pt-2 border-t border-gray-100">
               <button

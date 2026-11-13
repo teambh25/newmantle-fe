@@ -1,5 +1,5 @@
 "use client";
-// 개발 전용: 모든 화면 왼쪽 아래 DEV 표시 (누르면 /dev), 대기 중인 실패를 다음 요청 한 번에 적용 (docs/tasks/ui/dev-page.md 3·4)
+// 개발 전용: 모든 화면 왼쪽 아래 DEV 표시 (누르면 /dev), 대기 중인 실패를 다음 요청 한 번에 적용 (docs/tasks/ui/dev-page/plan.md 3·4)
 // DevTools.tsx가 개발 서버에서만 불러온다. 배포 빌드에는 들어가지 않는다.
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";

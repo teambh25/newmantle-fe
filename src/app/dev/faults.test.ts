@@ -1,4 +1,4 @@
-// 로직 레벨: 개발용 실패 주입 (docs/tasks/ui/dev-page.md 3)
+// 로직 레벨: 개발용 실패 주입 (docs/tasks/ui/dev-page/plan.md 3)
 import { describe, expect, it } from "vitest";
 import { takeFault } from "./faults";
 

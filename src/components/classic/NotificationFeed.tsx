@@ -1,7 +1,7 @@
 import { notifications } from "@/static/notifications";
 import { getTypeColor, getTypeLabel, sortNotifications } from "@/utils/notifications";
 
-// /notices: 전체 공지 목록, 최신순 (docs/tasks/ui/notices.md 1장)
+// /notices: 전체 공지 목록, 최신순 (docs/tasks/ui/notices/plan.md 1)
 export default function NotificationFeed() {
   return (
     <div className="space-y-4">

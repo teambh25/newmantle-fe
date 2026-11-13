@@ -69,7 +69,7 @@ describe("통계 화면", () => {
   });
 });
 
-describe("통계 화면 헤더 (docs/tasks/ui/verification.md L-3)", () => {
+describe("통계 화면 헤더 (docs/tasks/ui/header/verification.md L-3)", () => {
   it("L-3-1: 헤더에 로그아웃 버튼이 없고, 설정 메뉴에 있음", async () => {
     vi.stubGlobal(
       "fetch",
@@ -90,7 +90,7 @@ describe("통계 화면 헤더 (docs/tasks/ui/verification.md L-3)", () => {
   });
 });
 
-describe("통계 유도 말풍선 (docs/tasks/ui/verification.md T-2)", () => {
+describe("통계 유도 말풍선 (docs/tasks/ui/header/verification.md T-2)", () => {
   it("T-2-1: 통계 페이지에 들어가면 stats-tooltip-dismissed 저장", async () => {
     vi.stubGlobal(
       "fetch",

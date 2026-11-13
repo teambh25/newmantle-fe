@@ -65,7 +65,7 @@ async function renderHome({ strict = false } = {}) {
   return { user, ...view };
 }
 
-/** 이전에 단어를 입력해 본 기존 유저 (입력창 말풍선 대상 아님, docs/tasks/ui/plan.md 7장) */
+/** 이전에 단어를 입력해 본 기존 유저 (입력창 말풍선 대상 아님, docs/tasks/ui/input/plan.md 2) */
 function setPlayed() {
   localStorage.setItem(
     "newmantle_game_data",
@@ -163,7 +163,7 @@ describe("첫 방문 안내 모달", () => {
   });
 
   it("M-6-1: 비로그인 첫 방문 시 모달이 열려 있는 동안 로그인 말풍선이 없고, 닫은 뒤 보임", async () => {
-    // 입력해 본 적 없으면 입력창 말풍선이 먼저라 로그인 말풍선이 뒤로 밀린다 (docs/tasks/ui/plan.md 7장, I-1-1).
+    // 입력해 본 적 없으면 입력창 말풍선이 먼저라 로그인 말풍선이 뒤로 밀린다 (docs/tasks/ui/input/plan.md 2, I-1-1).
     // M-6(모달 → 로그인 말풍선)은 입력해 본 기존 유저 기준으로 확인한다
     setPlayed();
     const { user } = await renderHome();
@@ -212,7 +212,7 @@ describe("규칙 진입점", () => {
     expect(screen.queryByRole("heading", { name: "도움말" })).not.toBeInTheDocument();
   });
 
-  it("N-4-1: 원작(꼬맨틀) 외부 링크가 푸터에 있음 (본문에는 없음, docs/tasks/ui/footer.md)", async () => {
+  it("N-4-1: 원작(꼬맨틀) 외부 링크가 푸터에 있음 (본문에는 없음, docs/tasks/ui/footer/plan.md)", async () => {
     await renderHome();
     const footer = screen.getByRole("contentinfo");
     const link = within(footer).getByRole("link", { name: /꼬맨틀/ });
@@ -221,7 +221,7 @@ describe("규칙 진입점", () => {
   });
 });
 
-describe("로그아웃 위치 (docs/tasks/ui/verification.md L)", () => {
+describe("로그아웃 위치 (docs/tasks/ui/header/verification.md L)", () => {
   beforeEach(() => {
     localStorage.setItem(MODAL_SEEN_KEY, "1");
   });
@@ -266,7 +266,7 @@ describe("로그아웃 위치 (docs/tasks/ui/verification.md L)", () => {
   });
 });
 
-describe("통계 유도 말풍선 (docs/tasks/ui/verification.md T)", () => {
+describe("통계 유도 말풍선 (docs/tasks/ui/header/verification.md T)", () => {
   const STATS_TOOLTIP_DISMISSED_KEY = "stats-tooltip-dismissed";
   const statsTooltip = () =>
     screen.queryByRole("button", { name: "통계 안내 닫기", hidden: true });
@@ -333,7 +333,7 @@ function storeToday(extra: Record<string, unknown>) {
   );
 }
 
-describe("헤더 말풍선 자동 닫힘 / 결과 상자 로그인 안내 (docs/tasks/ui/verification.md H)", () => {
+describe("헤더 말풍선 자동 닫힘 / 결과 상자 로그인 안내 (docs/tasks/ui/header/verification.md H-1, result-box/verification.md H-2)", () => {
   const STATS_TOOLTIP_DISMISSED_KEY = "stats-tooltip-dismissed";
   const statsTooltip = () => screen.queryByRole("button", { name: "통계 안내 닫기", hidden: true });
   const logIn = () => {
@@ -415,7 +415,7 @@ describe("헤더 말풍선 자동 닫힘 / 결과 상자 로그인 안내 (docs/
   });
 });
 
-describe("결과 상자 (docs/tasks/ui/verification.md R)", () => {
+describe("결과 상자 (docs/tasks/ui/result-box/verification.md R)", () => {
   const resultBox = () => screen.findByRole("region", { name: "게임 결과" });
 
   beforeEach(() => {
@@ -454,7 +454,7 @@ describe("결과 상자 (docs/tasks/ui/verification.md R)", () => {
   });
 });
 
-describe("첫 입력 유도 말풍선 / 말풍선 순서 (docs/tasks/ui/verification.md I)", () => {
+describe("첫 입력 유도 말풍선 / 말풍선 순서 (docs/tasks/ui/input/verification.md I)", () => {
   const INPUT_TOOLTIP_DONE_KEY = "newmantle_input_tooltip_done";
   const inputTooltip = () => screen.queryByRole("button", { name: "입력 안내", hidden: true });
   const statsTooltip = () =>
@@ -602,7 +602,7 @@ describe("첫 입력 유도 말풍선 / 말풍선 순서 (docs/tasks/ui/verifica
   });
 });
 
-describe("공지 배너 / 공지사항 진입점 (docs/tasks/ui/notices.md NT)", () => {
+describe("공지 배너 / 공지사항 진입점 (docs/tasks/ui/notices/verification.md NT)", () => {
   const LAST_SEEN_KEY = "newmantle_last_seen_notification_id";
   const LEGACY_CHECK_KEY = "newmantle_last_notification_check";
   // 최신 공지 = 정렬 1순위 (날짜순). 지난 일을 기록한 공지는 id가 더 커도 최신이 아님 (docs/spec/notices.md)

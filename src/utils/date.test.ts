@@ -37,7 +37,7 @@ describe.each(["Asia/Seoul", "America/Los_Angeles"])("기기 타임존 %s, KST �
   });
 });
 
-// 입력창 위 게임 날짜 표시 (docs/tasks/ui/verification.md G)
+// 입력창 위 게임 날짜 표시 (docs/tasks/ui/word-list/verification.md G)
 describe.each(["Asia/Seoul", "America/Los_Angeles"])("게임 날짜 표시, 기기 타임존 %s", (tz) => {
   it("G-1: 2026-11-11 → 11월 11일 수요일", () => {
     setClock(tz, KST_AFTERNOON);

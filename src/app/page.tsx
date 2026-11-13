@@ -34,7 +34,7 @@ export default function Home() {
   useGuestLink();
   const ruleModal = useRuleIntroModal();
   const inputTooltip = useInputTooltip();
-  // 말풍선은 한 번에 하나: 모달 → 입력창 말풍선 → 헤더 말풍선 (docs/tasks/ui/plan.md 7장)
+  // 말풍선은 한 번에 하나: 모달 → 입력창 말풍선 → 헤더 말풍선 (docs/tasks/ui/input/plan.md 2)
   const showInputTooltip = ruleModal.closed && inputTooltip.show;
   const hideHeaderTooltip = !ruleModal.closed || !inputTooltip.done;
 
@@ -176,10 +176,10 @@ export default function Home() {
       ) : (
         /* ──────────── 클래식 UI ──────────── */
         <div className="flex flex-col min-h-screen font-sans">
-          {/* 안 읽은 최신 공지만 맨 위 띠로. 전체 목록은 /notices (docs/tasks/ui/notices.md 2장) */}
+          {/* 안 읽은 최신 공지만 맨 위 띠로. 전체 목록은 /notices (docs/tasks/ui/notices/plan.md 2) */}
           <NoticeBanner />
           <main className="flex-grow flex flex-col items-center justify-start p-4 sm:p-6 md:p-8">
-            {/* 작은 화면(375px)에서 한 줄에 들어가도록 부제를 숨기고 간격을 줄인다 (docs/tasks/ui/plan.md 1장) */}
+            {/* 작은 화면(375px)에서 한 줄에 들어가도록 부제를 숨기고 간격을 줄인다 (docs/tasks/ui/header/plan.md 1) */}
             <div className="w-full max-w-2xl flex flex-row items-center justify-between gap-2 mb-6 mt-2 sm:mt-0">
               <Link href="/" className="flex flex-row items-end justify-start space-x-3 whitespace-nowrap hover:opacity-80 transition-opacity">
                 <h1 className="text-2xl sm:text-3xl font-bold text-blue-600 leading-none">
@@ -200,7 +200,7 @@ export default function Home() {
                 </Link>
                 <StatsLink hideTooltip={hideHeaderTooltip} />
                 <SettingsButton theme={theme} onThemeChange={setTheme} variant="classic" />
-                {/* 로그인은 오른쪽 끝 (docs/tasks/ui/plan.md 10장). 첫 방문 모달·입력창 말풍선이 끝나기 전에는 헤더 말풍선을 숨긴다 (docs/tasks/rule/plan.md M-6, docs/tasks/ui/plan.md 7장) */}
+                {/* 로그인은 오른쪽 끝 (docs/tasks/ui/header/plan.md 3). 첫 방문 모달·입력창 말풍선이 끝나기 전에는 헤더 말풍선을 숨긴다 (docs/tasks/rule/plan.md M-6, docs/tasks/ui/input/plan.md 2) */}
                 <AuthButton hideTooltip={hideHeaderTooltip} tooltipAlign="end" />
               </div>
             </div>

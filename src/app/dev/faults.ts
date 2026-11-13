@@ -1,4 +1,4 @@
-// 개발 전용: 게임 요청을 다음 한 번 실패시켜 실패 화면을 본다 (docs/tasks/ui/dev-page.md)
+// 개발 전용: 게임 요청을 다음 한 번 실패시켜 실패 화면을 본다 (docs/tasks/ui/dev-page/plan.md)
 // 대기 중인 실패는 localStorage에 두고, /dev 페이지가 쓰고 DevBadge가 읽어 적용한다.
 
 export type FaultTarget = "guess" | "hint" | "consonant" | "giveUp";

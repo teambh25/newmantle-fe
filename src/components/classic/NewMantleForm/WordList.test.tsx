@@ -1,4 +1,4 @@
-// 화면 레벨: 입력 단어 목록 (docs/tasks/ui/verification.md W-2 ~ W-4)
+// 화면 레벨: 입력 단어 목록 (docs/tasks/ui/word-list/verification.md W-2 ~ W-4)
 import { describe, expect, it } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";

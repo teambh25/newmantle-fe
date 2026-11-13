@@ -491,7 +491,7 @@ describe("D. 공통 / 예외", () => {
   });
 });
 
-// 제출 버튼 대신 엔터 (docs/tasks/ui/verification.md E)
+// 제출 버튼 대신 엔터 (docs/tasks/ui/input/verification.md E)
 describe("E. 엔터 제출", () => {
   it("E-1: 단어 입력 후 엔터 → 추측 요청 1회", async () => {
     const { user } = await setup();
@@ -505,7 +505,7 @@ describe("E. 엔터 제출", () => {
   });
 });
 
-// 없는 단어 안내 (docs/tasks/ui/verification.md Y)
+// 없는 단어 안내 (docs/tasks/ui/input/verification.md Y)
 describe("Y. 없는 단어", () => {
   it("Y-1-1: 없는 단어 제출 → 입력창이 오류 상태", async () => {
     const { user } = await setup();
@@ -650,7 +650,7 @@ describe("Y. 없는 단어", () => {
 
 });
 
-// 이미 제출한 단어 (docs/tasks/ui/verification.md Y-4, plan.md 12장)
+// 이미 제출한 단어 (docs/tasks/ui/input/verification.md Y-4, input/plan.md 3)
 describe("Y-4. 이미 제출한 단어", () => {
   const repeatIcon = () => screen.queryByRole("img", { name: "이미 입력한 단어" });
 
@@ -735,7 +735,7 @@ describe("Y-4. 이미 제출한 단어", () => {
   });
 });
 
-// 방금 입력 칸과 기록 표 (docs/tasks/ui/verification.md W-6, word-list.md 3-2)
+// 방금 입력 칸과 기록 표 (docs/tasks/ui/word-list/verification.md W-6, word-list/plan.md 1)
 describe("W-6. 방금 입력 칸과 기록 표", () => {
   it("W-6-1: 100위·500위 → 방금 입력에 500위, 기록에 100위", async () => {
     const { user } = await setup();
@@ -779,7 +779,7 @@ describe("W-6. 방금 입력 칸과 기록 표", () => {
   });
 });
 
-// 구분선 위 = 가장 최근 입력·힌트 (docs/tasks/ui/verification.md W-5, word-list.md 3-2)
+// 구분선 위 = 가장 최근 입력·힌트 (docs/tasks/ui/word-list/verification.md W-5, word-list/plan.md 1)
 describe("W-5. 구분선 위", () => {
   async function twoWords() {
     const { user } = await setup();
@@ -824,7 +824,7 @@ describe("W-5. 구분선 위", () => {
   });
 });
 
-// 요청 실패 안내 (docs/tasks/ui/verification.md Y-3, plan.md 11장)
+// 요청 실패 안내 (docs/tasks/ui/input/verification.md Y-3, input/plan.md 3)
 describe("Y-3. 요청 실패는 입력창 아래", () => {
   /** 토스트가 뜨는지도 보기 위해 Toaster를 같이 렌더링한다 */
   async function setupWithToaster() {

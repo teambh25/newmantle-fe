@@ -14,13 +14,13 @@ interface GameResultProps {
   onShare: () => void;
 }
 
-// 정답은 초록, 포기는 축하 색 없이 회색 (날짜 제목 타일과 같은 뜻, docs/tasks/ui/result-box.md)
+// 정답은 초록, 포기는 축하 색 없이 회색 (날짜 제목 타일과 같은 뜻, docs/tasks/ui/result-box/plan.md)
 const BOX_TONE = {
   solved: "bg-green-50 border-green-500 text-green-700",
   givenUp: "bg-gray-50 border-gray-300 text-gray-700",
 };
 
-// 공유·피드백 버튼은 상자 색을 따른다 (docs/tasks/ui/result-box.md 7)
+// 공유·피드백 버튼은 상자 색을 따른다 (docs/tasks/ui/result-box/plan.md 7)
 const ACTION_BUTTON = {
   solved: "bg-white border-green-500 text-green-700 hover:bg-green-100 hover:text-green-800",
   givenUp: "bg-white border-gray-300 text-gray-700",
@@ -48,7 +48,7 @@ export function GameResult({ givenUp, gameCompleted, solvedAttempts, correctAtte
       </p>
       <p>(내일은 새로운 단어로 도전할 수 있어요!)</p>
 
-      {/* 비로그인만: 로그인하면 게스트 기록이 계정으로 연결된다. 로그인 버튼은 헤더에 있다 (docs/tasks/ui/plan.md 8장) */}
+      {/* 비로그인만: 로그인하면 게스트 기록이 계정으로 연결된다. 로그인 버튼은 헤더에 있다 (docs/tasks/ui/result-box/plan.md 5) */}
       {!authLoading && !user && (
         <p className="mt-2 text-sm">{givenUp ? "로그인하면 오늘 기록이 남아요" : "로그인하면 오늘 맞힌 기록이 남아요"}</p>
       )}

@@ -13,14 +13,14 @@ interface GameFormProps {
   submitAction: (word: string) => Promise<{ error?: string }>;
   gameCompleted: boolean;
   displayDate?: string;
-  /** 날짜 제목 둘째 줄에 타일로 보여줄 정답 정보: 진행 중엔 초성, 끝나면 정답. 없으면 "오늘의 정답은?" (docs/tasks/ui/word-list.md 3-4) */
+  /** 날짜 제목 둘째 줄에 타일로 보여줄 정답 정보: 진행 중엔 초성, 끝나면 정답. 없으면 "오늘의 정답은?" (docs/tasks/ui/word-list/plan.md 4) */
   reveal?: string | null;
   hintButton?: React.ReactNode;
   giveUpButton?: React.ReactNode;
   /** 입력창 아래 첫 입력 유도 말풍선. 첫 단어를 제출하면 onInputTooltipDone으로 닫는다 */
   showInputTooltip?: boolean;
   onInputTooltipDone?: () => void;
-  /** 힌트·초성 힌트·포기 실패 안내. 입력창 아래에 빨갛게 띄운다 (제출 실패도 같은 자리, docs/tasks/ui/plan.md 12장) */
+  /** 힌트·초성 힌트·포기 실패 안내. 입력창 아래에 빨갛게 띄운다 (제출 실패도 같은 자리, docs/tasks/ui/input/plan.md 3) */
   requestError?: string | null;
   /** 입력창 글자를 고칠 때. 요청 실패 안내를 닫는 데 쓴다 */
   onInputEdit?: () => void;
@@ -58,12 +58,12 @@ export const GameForm: React.FC<GameFormProps> = ({
     { keepInputOnFailure: true }
   );
 
-  // 안내는 한 번에 하나. 힌트·포기 실패가 뜨면 없는 단어·제출 실패 표시는 푼다 (docs/tasks/ui/plan.md 9장 6차)
+  // 안내는 한 번에 하나. 힌트·포기 실패가 뜨면 없는 단어·제출 실패 표시는 푼다 (docs/tasks/ui/input/plan.md 3)
   useEffect(() => {
     if (requestError) clearError();
   }, [requestError, clearError]);
 
-  // 주 안내는 단어 목록 맨 위 임시 줄 (docs/tasks/ui/plan.md 12장). 입력창 쪽은:
+  // 주 안내는 단어 목록 맨 위 임시 줄 (docs/tasks/ui/input/plan.md 3). 입력창 쪽은:
   // 요청 실패(제출·힌트·초성 힌트·포기): 입력창을 막는 느낌으로 빨간 테두리 + 옅은 빨간 배경 + 아래 빨간 문구
   const submitFailure = !requestError && isError && errorTone === "error" ? errorMessage : null;
   const failureMessage = requestError ?? submitFailure;
@@ -107,7 +107,7 @@ export const GameForm: React.FC<GameFormProps> = ({
         style={{ position: "absolute", width: 0, height: 0, opacity: 0 }}
         aria-hidden="true"
       />
-      {/* 제출은 엔터. 입력창 안 오른쪽에 힌트·포기 글씨 버튼과 제출(엔터) 아이콘. PC는 폭 420px로 가운데 (docs/tasks/ui/plan.md 4장) */}
+      {/* 제출은 엔터. 입력창 안 오른쪽에 힌트·포기 글씨 버튼과 제출(엔터) 아이콘. PC는 폭 420px로 가운데 (docs/tasks/ui/input/plan.md 1) */}
       <div className="relative flex items-center sm:max-w-[420px] sm:mx-auto">
         <Input
           type="text"
@@ -117,7 +117,7 @@ export const GameForm: React.FC<GameFormProps> = ({
             onInputEdit?.();
           }}
           placeholder={unknownWord ?? "단어 입력 후 엔터"}
-          // 글자를 치기 시작하면 안내가 풀린다. 오류 상태(aria-invalid)는 단어 자체가 틀린 없는 단어만 (docs/tasks/ui/plan.md 9장, 11장)
+          // 글자를 치기 시작하면 안내가 풀린다. 오류 상태(aria-invalid)는 단어 자체가 틀린 없는 단어만 (docs/tasks/ui/input/plan.md 3)
           aria-invalid={!!unknownWord}
           aria-describedby={failureMessage || srOnlyNotice ? GAME_INPUT_ERROR_ID : undefined}
           className={`w-full pr-[112px] sm:pr-[176px] ${inputStyle}`}
@@ -132,7 +132,7 @@ export const GameForm: React.FC<GameFormProps> = ({
         <div className="absolute right-1 flex items-center">
           {hintButton}
           {giveUpButton}
-          {/* 엔터 아이콘은 PC만. 모바일은 키보드 "보내기"로 제출 (docs/tasks/ui/plan.md 4장) */}
+          {/* 엔터 아이콘은 PC만. 모바일은 키보드 "보내기"로 제출 (docs/tasks/ui/input/plan.md 1) */}
           <div className="hidden sm:block w-px h-5 bg-gray-200 mx-1" aria-hidden="true" />
           <Button
             type="submit"
@@ -162,7 +162,7 @@ export const GameForm: React.FC<GameFormProps> = ({
             {srOnlyNotice}
           </p>
         )}
-        {/* 첫 입력 유도 말풍선: 누르면 입력창으로 포커스, 첫 단어를 제출하면 닫힘 (docs/tasks/ui/plan.md 7장) */}
+        {/* 첫 입력 유도 말풍선: 누르면 입력창으로 포커스, 첫 단어를 제출하면 닫힘 (docs/tasks/ui/input/plan.md 2) */}
         {/* 안내와 같은 자리라 안내가 떠 있으면 숨긴다 */}
         {showInputTooltip && !failureMessage && (
           <button
