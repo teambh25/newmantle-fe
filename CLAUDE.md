@@ -36,6 +36,7 @@ Harness guide: `src/test/README.md` (fake game server, `renderGame`, presets, cl
 3. Run them and confirm they **fail for the right reason** (missing behavior, not a typo or missing mock). A test that passes before implementation does not distinguish the bug, so revisit the case
 4. Implement until they pass, then update the Phase progress in `plan.md`
 - `docs/tasks/<task>/verification.md` is the old format. Do not create new ones; existing files remain only as the source of existing test IDs and presets
+- Things checked by eye on screen (layout, color, timing, real-phone behavior) are not tested in code; add them to `docs/manual-checks.md` instead
 - When adding tests to code that already exists, do not edit implementation files to see them fail. Check that in an isolated copy (git worktree) and only after asking
 
 ### What to test
