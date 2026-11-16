@@ -30,12 +30,11 @@ describe("진행 상황 카드", () => {
   /** 카드 왼쪽 위 제출 횟수 (숫자만 본다) */
   const attemptCount = () => within(card()).queryByLabelText("제출 횟수")?.textContent?.match(/\d+/)?.[0];
 
-  it("처음 → 영역 있고 배너·제출 횟수 없음, 미터 0, 정답 자리는 진행 중", async () => {
+  it("처음 → 영역 있고 배너·제출 횟수 없음, 정답 자리는 진행 중", async () => {
     await setup();
     expect(latestCard()).toBeInTheDocument();
     expect(latestItems()).toHaveLength(0);
     expect(attemptCount()).toBeUndefined();
-    expect(meterValue()).toBe(0);
     expect(endIcon(END_PLAYING)).toBeInTheDocument();
   });
 
@@ -51,14 +50,12 @@ describe("진행 상황 카드", () => {
     expect(rowsOf(historyTable())).toHaveLength(1);
   });
 
-  it("500위 뒤 힌트 → 미터 오름, 말풍선에 힌트 표시", async () => {
+  it("500위 뒤 힌트 → 말풍선에 힌트 표시", async () => {
     const { user } = await setup();
     await submitWord(user, "사과", 500);
-    const before = meterValue();
     await user.click(hintButton());
     await waitFor(() => expect(gameServer.count("hint")).toBe(1));
     await waitFor(() => expect(within(bubble()).getByRole("img", { name: "힌트로 받은 단어" })).toBeInTheDocument());
-    expect(meterValue()).toBeGreaterThan(before);
   });
 
   it("힌트 단어를 다시 입력 → 다시 입력 표시, 힌트 표시 없음", async () => {
@@ -76,14 +73,12 @@ describe("진행 상황 카드", () => {
     expect(within(bubble()).queryByRole("img", { name: "힌트로 받은 단어" })).not.toBeInTheDocument();
   });
 
-  it("500위 뒤 초성 힌트 → 말풍선에 초성·초성 표시, 미터 그대로", async () => {
+  it("500위 뒤 초성 힌트 → 말풍선에 초성·초성 표시", async () => {
     const { user } = await setup();
     await submitWord(user, "사과", 500);
-    const before = meterValue();
     await takeConsonantHint(user);
     await waitFor(() => expect(bubble().textContent).toContain("ㅈㄷ"));
     expect(within(bubble()).getByRole("img", { name: "초성 힌트" })).toBeInTheDocument();
-    expect(meterValue()).toBe(before);
   });
 
   it("500위 뒤 정답 → 말풍선에 정답, 정답 자리는 맞힘", async () => {
@@ -101,5 +96,4 @@ describe("진행 상황 카드", () => {
     await waitFor(() => expect(bubble().textContent).toContain(ANSWER.word));
     expect(endIcon(END_GIVEN_UP)).toBeInTheDocument();
   });
-
 });

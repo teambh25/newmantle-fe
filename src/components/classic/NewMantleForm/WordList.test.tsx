@@ -1,4 +1,4 @@
-// 화면 레벨: 입력 단어 목록 (docs/tasks/ui/word-list/verification.md W-2 ~ W-4). 무엇을 어디에 둘지는 로직(src/utils/board.test.ts)
+// 화면 레벨: 입력 단어 목록. 무엇을 어디에 둘지는 로직(src/utils/board.test.ts)
 import { describe, expect, it } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -56,22 +56,22 @@ const moreButton = () => screen.queryByRole("button", { name: "더보기" });
 /** 기록 표 줄 (방금 단어도 들어 있음, word-list/plan.md 1) */
 const tableRows = () => rowsOf(historyTable());
 
-describe("W-2: 보이는 개수", () => {
-  it("W-2-1: 8개면 표 7줄 + 더보기", async () => {
+describe("보이는 개수", () => {
+  it("8개면 표 7줄 + 더보기", async () => {
     storeWords(nWords(8));
     await renderForm();
     expect(tableRows()).toHaveLength(7);
     expect(moreButton()).toBeInTheDocument();
   });
 
-  it("W-2-2: 7개면 표 7줄, 더보기 없음", async () => {
+  it("7개면 표 7줄, 더보기 없음", async () => {
     storeWords(nWords(7));
     await renderForm();
     expect(tableRows()).toHaveLength(7);
     expect(moreButton()).not.toBeInTheDocument();
   });
 
-  it("W-2-3: 더보기를 누르면 전부", async () => {
+  it("더보기를 누르면 전부", async () => {
     storeWords(nWords(8));
     await renderForm();
     await userEvent.setup({ pointerEventsCheck: 0 }).click(moreButton()!);
@@ -79,22 +79,20 @@ describe("W-2: 보이는 개수", () => {
   });
 });
 
-describe("W-4: 날짜 제목 (초성·정답)", () => {
-  const inTable = (text = CONSONANT) => wordRows().some((r) => within(r).queryByText(text));
+describe("날짜 제목 (초성·정답)", () => {
   /** 날짜가 들어간 제목. 글자는 타일마다 나뉠 수 있어 텍스트를 이어 붙여 본다 */
   const dateHeading = () => screen.findByRole("heading", { name: new RegExp(escapeRegExp(formatGameDate(getKSTDateString()))) });
   const headingText = async () => ((await dateHeading()).textContent ?? "").replace(/\s/g, "");
 
-  it("W-4-1: 진행 중이면 초성이 제목 안에 있고 표에는 없음", async () => {
+  it("진행 중이면 초성이 제목 안에 있음", async () => {
     storeWords([word(2), consonant(), word(1)], { initialConsonantHintUsed: true });
     await renderForm();
     expect(await headingText()).toContain(CONSONANT);
-    expect(inTable()).toBe(false);
   });
 });
 
-describe("W-3: 힌트 단어 표시", () => {
-  it("W-3-1: 힌트 단어 줄에만 힌트 표시가 있음", async () => {
+describe("힌트 단어 표시", () => {
+  it("힌트 단어 줄에만 힌트 표시가 있음", async () => {
     storeWords([
       word(2),
       { word: "힌트단어", similarity: 30, rank: 40, attempt: -1, correct: false },

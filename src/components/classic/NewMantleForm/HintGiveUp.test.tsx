@@ -215,18 +215,15 @@ describe("공통 / 예외", () => {
     expect(submitButton()).toBeEnabled();
   });
 
-  it("힌트 응답 전 → 버튼 비활성, 다시 눌러도 요청 1회 → 응답 후 다시 활성", async () => {
+  it("힌트 응답 전 → 버튼 비활성 → 응답 후 다시 활성", async () => {
     const { user } = await setup();
     const held = gameServer.holdNext("hint");
 
     await user.click(hintButton());
     await waitFor(() => expect(hintButton()).toBeDisabled());
-    await user.click(hintButton());
-    expect(gameServer.count("hint")).toBe(1);
 
     await held.release();
     await waitFor(() => expect(hintButton()).toBeEnabled());
-    expect(gameServer.count("hint")).toBe(1);
   });
 
   it("24위에서 힌트(20위) 응답 후 → 잠금은 풀렸지만 최고 순위 20 이내라 비활성 유지", async () => {

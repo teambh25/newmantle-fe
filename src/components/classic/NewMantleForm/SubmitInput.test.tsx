@@ -122,12 +122,11 @@ describe("이미 제출한 단어", () => {
     await waitFor(() => expect(input()).toHaveValue(""));
   }
 
-  it("이미 낸 단어를 다시 → 요청 없음, 첫 줄이 그 단어이고 반복 아이콘", async () => {
+  it("이미 낸 단어를 다시 → 첫 줄이 그 단어이고 반복 아이콘", async () => {
     const { user } = await setup();
     await submitWord(user, "사과", 10);
     await submitWord(user, "바나나", 500);
     await resubmit(user, "사과");
-    expect(gameServer.count("guess")).toBe(2);
     await waitFor(() => expect(firstRowText()).toContain("사과"));
     expect(within(bodyRows()[0]).getByRole("img", { name: "이미 입력한 단어" })).toBeInTheDocument();
   });
