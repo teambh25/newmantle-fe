@@ -35,14 +35,21 @@ async function renderForm() {
   await waitFor(() => expect(screen.getByRole("textbox")).toBeEnabled());
 }
 
-const latestTable = () => screen.queryByRole("table", { name: "방금 입력" });
+/** 방금 입력 칸 = 진행 상황 카드 (docs/tasks/ui/progress-card/plan.md 4) */
+const latestCard = () => screen.queryByRole("region", { name: "방금 입력" });
 const historyTable = () => screen.queryByRole("table", { name: "기록" });
 /** 표 안 머리줄을 뺀 줄 */
 const rowsOf = (t: HTMLElement | null) =>
   t ? within(t).queryAllByRole("row").filter((r) => within(r).queryAllByRole("columnheader").length === 0) : [];
-/** 보이는 단어 줄: 방금 입력 칸 + 기록 표 */
+/** 카드의 방금 항목(말풍선). 아무것도 안 했으면 빈 배열 */
+function latestItems(): HTMLElement[] {
+  const card = latestCard();
+  const bubble = card && within(card).queryByRole("status");
+  return bubble ? [bubble] : [];
+}
+/** 보이는 단어 줄: 방금 항목 + 기록 표 */
 function wordRows() {
-  return [...rowsOf(latestTable()), ...rowsOf(historyTable())];
+  return [...latestItems(), ...rowsOf(historyTable())];
 }
 const moreButton = () => screen.queryByRole("button", { name: "더보기" });
 
@@ -126,7 +133,8 @@ describe("W-4: 날짜 제목 (초성·정답)", () => {
     await renderForm();
     expect(await headingText()).toContain(ANSWER);
     expect(rowsWithAnswer()).toEqual([wordRows()[0]]);
-    expect(within(wordRows()[0]).getByRole("img", { name: "포기" })).toBeInTheDocument();
+    // 포기 표시는 카드의 정답 자리 아이콘 (progress-card/plan.md 2)
+    expect(within(latestCard()!).getByRole("img", { name: "포기" })).toBeInTheDocument();
     expect(document.body.textContent).not.toContain(CONSONANT);
   });
 

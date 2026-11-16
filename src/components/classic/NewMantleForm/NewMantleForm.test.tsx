@@ -82,14 +82,21 @@ async function giveUpViaDialog(user: User) {
   await waitFor(() => expect(givenUpShown()).toBe(true));
 }
 
-const latestTable = () => screen.queryByRole("table", { name: "방금 입력" });
+/** 방금 입력 칸 = 진행 상황 카드 (docs/tasks/ui/progress-card/plan.md 4) */
+const latestCard = () => screen.queryByRole("region", { name: "방금 입력" });
 const historyTable = () => screen.queryByRole("table", { name: "기록" });
 /** 표 안 머리줄을 뺀 줄 */
 const rowsOf = (t: HTMLElement | null) =>
   t ? within(t).queryAllByRole("row").filter((r) => within(r).queryAllByRole("columnheader").length === 0) : [];
-/** 보이는 단어 줄: 방금 입력 칸 + 기록 표 (표가 없으면 빈 배열) */
+/** 카드의 방금 항목(말풍선). 아무것도 안 했으면 빈 배열 */
+function latestItems(): HTMLElement[] {
+  const card = latestCard();
+  const bubble = card && within(card).queryByRole("status");
+  return bubble ? [bubble] : [];
+}
+/** 보이는 단어 줄: 방금 항목 + 기록 표 (없으면 빈 배열) */
 function bodyRows() {
-  return [...rowsOf(latestTable()), ...rowsOf(historyTable())];
+  return [...latestItems(), ...rowsOf(historyTable())];
 }
 const firstRowText = () => bodyRows()[0]?.textContent ?? "";
 const rowsWith = (word: string) => bodyRows().filter((r) => r.textContent?.includes(word));
@@ -507,18 +514,10 @@ describe("E. 엔터 제출", () => {
 
 // 없는 단어 안내 (docs/tasks/ui/input/verification.md Y)
 describe("Y. 없는 단어", () => {
-  it("Y-1-1: 없는 단어 제출 → 입력창이 오류 상태", async () => {
+  it("Y-1-1: 없는 단어 제출 → 입력창 오류 상태·알림 없음 (안내는 카드 배너)", async () => {
     const { user } = await setup();
     gameServer.setUnknown("없는말");
     await submitWord(user, "없는말");
-    expect(input()).toHaveAttribute("aria-invalid", "true");
-  });
-
-  it("Y-1-2: 오류 뒤 입력창에 글자 입력 → 오류 상태와 안내가 사라짐", async () => {
-    const { user } = await setup();
-    gameServer.setUnknown("없는말");
-    await submitWord(user, "없는말");
-    await user.type(input(), "가");
     expect(input()).not.toHaveAttribute("aria-invalid", "true");
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
@@ -528,7 +527,6 @@ describe("Y. 없는 단어", () => {
     gameServer.setUnknown("없는말");
     await submitWord(user, "없는말");
     expect(input()).toHaveValue("");
-    expect(screen.getByRole("alert")).toHaveTextContent("없는말");
     expect(firstRowText()).toContain("없는말");
     expect(storedWords()).not.toContain("없는말");
   });
@@ -625,13 +623,13 @@ describe("Y. 없는 단어", () => {
     await user.type(input(), "없는말둘");
     await user.click(submitButton());
     await waitFor(() => expect(input()).toBeDisabled());
-    expect(rowsOf(latestTable())[0].textContent).toContain("없는말");
+    expect(latestItems()[0].textContent).toContain("없는말");
     expect(rowsOf(historyTable()).map((r) => r.textContent)).toEqual([
       expect.stringContaining("사과"),
       expect.stringContaining("바나나"),
     ]);
     await held.release();
-    await waitFor(() => expect(rowsOf(latestTable())[0].textContent).toContain("없는말둘"));
+    await waitFor(() => expect(latestItems()[0].textContent).toContain("없는말둘"));
     expect(rowsOf(historyTable())).toHaveLength(2);
   });
 
@@ -685,11 +683,12 @@ describe("Y-4. 이미 제출한 단어", () => {
     await submitWord(user, "바나나", 500);
     await resubmit(user, "사과");
     await waitFor(() => expect(firstRowText()).toContain("사과"));
-    const numCell = () => within(rowsWith("사과")[0]).getAllByRole("cell")[0];
-    expect(within(numCell()).getByRole("img", { name: "이미 입력한 단어" })).toBeInTheDocument();
-    expect(numCell().textContent).toBe("");
+    // 카드 말풍선: 번호 자리에 반복 아이콘만 (progress-card/plan.md 3)
+    const bubble = latestItems()[0];
+    expect(within(bubble).getByRole("img", { name: "이미 입력한 단어" })).toBeInTheDocument();
+    expect(bubble.textContent).not.toContain("#");
     await submitWord(user, "포도", 300);
-    expect(numCell().textContent).toBe("1");
+    expect(within(rowsWith("사과")[0]).getAllByRole("cell")[0].textContent).toBe("1");
   });
 
   it("Y-4-3: 500위 단어를 다시 낸 뒤 초성 → 반복 아이콘 없음, 첫 줄은 초성", async () => {
@@ -741,7 +740,7 @@ describe("W-6. 방금 입력 칸과 기록 표", () => {
     const { user } = await setup();
     await submitWord(user, "사과", 100);
     await submitWord(user, "바나나", 500);
-    const latest = rowsOf(latestTable());
+    const latest = latestItems();
     const history = rowsOf(historyTable());
     expect(latest).toHaveLength(1);
     expect(latest[0].textContent).toContain("바나나");
@@ -755,7 +754,7 @@ describe("W-6. 방금 입력 칸과 기록 표", () => {
     await submitWord(user, "바나나", 500);
     gameServer.setUnknown("없는말");
     await submitWord(user, "없는말");
-    const latest = rowsOf(latestTable());
+    const latest = latestItems();
     const history = rowsOf(historyTable()).map((r) => r.textContent ?? "");
     expect(latest).toHaveLength(1);
     expect(latest[0].textContent).toContain("없는말");
@@ -767,15 +766,15 @@ describe("W-6. 방금 입력 칸과 기록 표", () => {
   it("W-6-3: 단어 1개 → 방금 입력에 그 단어, 기록 줄 없음", async () => {
     const { user } = await setup();
     await submitWord(user, "사과", 100);
-    expect(rowsOf(latestTable())).toHaveLength(1);
-    expect(rowsOf(latestTable())[0].textContent).toContain("사과");
+    expect(latestItems()).toHaveLength(1);
+    expect(latestItems()[0].textContent).toContain("사과");
     expect(rowsOf(historyTable())).toHaveLength(0);
   });
 
-  it("W-6-4: 제출한 단어 없음 → 방금 입력 표가 바로 보이고 줄 없음", async () => {
+  it("W-6-4: 제출한 단어 없음 → 방금 입력 영역이 바로 보이고 단어 없음", async () => {
     await setup();
-    expect(latestTable()).toBeInTheDocument();
-    expect(rowsOf(latestTable())).toHaveLength(0);
+    expect(latestCard()).toBeInTheDocument();
+    expect(latestItems()).toHaveLength(0);
   });
 });
 
@@ -824,8 +823,8 @@ describe("W-5. 구분선 위", () => {
   });
 });
 
-// 요청 실패 안내 (docs/tasks/ui/input/verification.md Y-3, input/plan.md 3)
-describe("Y-3. 요청 실패는 입력창 아래", () => {
+// 요청 실패 안내 (docs/tasks/ui/input/verification.md Y-3, 안내 자리는 progress-card/plan.md 3)
+describe("Y-3. 요청 실패는 카드 배너 알림", () => {
   /** 토스트가 뜨는지도 보기 위해 Toaster를 같이 렌더링한다 */
   async function setupWithToaster() {
     // 토스트 상태는 모듈 전역이라 앞 테스트(링크 복사 등)의 토스트를 닫아 둔다
@@ -842,7 +841,13 @@ describe("Y-3. 요청 실패는 입력창 아래", () => {
     await waitFor(() => expect(input()).toBeEnabled());
     return { user };
   }
-  const toastShown = () => screen.queryByRole("status") !== null;
+  /** 알림은 카드(배너) 안에만 있고 입력창 아래 등 카드 밖에는 없음 (progress-card/plan.md 3) */
+  async function alertInCardOnly() {
+    await waitFor(() => expect(within(latestCard()!).getByRole("alert")).toBeInTheDocument());
+    expect(screen.getAllByRole("alert").every((el) => latestCard()!.contains(el))).toBe(true);
+  }
+  /** 토스트(status). 카드 말풍선도 status라 카드 밖만 센다 */
+  const toastShown = () => screen.queryAllByRole("status").some((el) => !latestCard()?.contains(el));
 
   async function failHint(user: User) {
     gameServer.failNext("hint");
@@ -851,15 +856,14 @@ describe("Y-3. 요청 실패는 입력창 아래", () => {
     await waitFor(() => expect(hintButton()).toBeEnabled());
   }
 
-  it("Y-3-1: 서버 오류로 제출 실패 → 단어가 남고 오류 상태 아님, 알림, 토스트 없음, 표 첫 줄에 임시 줄", async () => {
+  it("Y-3-1: 서버 오류로 제출 실패 → 단어가 남고 오류 상태 아님, 카드 안 알림, 토스트 없음, 저장 안 됨", async () => {
     const { user } = await setupWithToaster();
     gameServer.failNext("guess");
     await submitWord(user, "사과");
     expect(input()).toHaveValue("사과");
     expect(input()).not.toHaveAttribute("aria-invalid", "true");
-    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    await alertInCardOnly();
     expect(toastShown()).toBe(false);
-    expect(firstRowText()).toContain("사과");
     expect(storedWords()).not.toContain("사과");
   });
 
@@ -875,30 +879,30 @@ describe("Y-3. 요청 실패는 입력창 아래", () => {
     expect(rowsWith("사과")).toHaveLength(1);
   });
 
-  it("Y-3-3: 힌트 실패 → 아래 안내, 토스트 없음", async () => {
+  it("Y-3-3: 힌트 실패 → 카드 안 알림, 토스트 없음", async () => {
     const { user } = await setupWithToaster();
     await failHint(user);
-    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    await alertInCardOnly();
     expect(toastShown()).toBe(false);
   });
 
-  it("Y-3-4: 초성 힌트 실패 → 아래 안내, 토스트 없음", async () => {
+  it("Y-3-4: 초성 힌트 실패 → 카드 안 알림, 토스트 없음", async () => {
     const { user } = await setupWithToaster();
     gameServer.failNext("hint");
     await openGiveUpDialog(user);
     await user.click(dialogOptions().consonant!);
     await waitFor(() => expect(gameServer.consonantHintCount()).toBe(1));
-    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    await alertInCardOnly();
     expect(toastShown()).toBe(false);
   });
 
-  it("Y-3-5: 포기 실패 → 아래 안내, 토스트 없음", async () => {
+  it("Y-3-5: 포기 실패 → 카드 안 알림, 토스트 없음", async () => {
     const { user } = await setupWithToaster();
     gameServer.failNext("give-up");
     await openGiveUpDialog(user);
     await user.click(dialogOptions().giveUp!);
     await waitFor(() => expect(gameServer.count("give-up")).toBe(1));
-    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    await alertInCardOnly();
     expect(toastShown()).toBe(false);
   });
 
@@ -919,6 +923,28 @@ describe("Y-3. 요청 실패는 입력창 아래", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
+  it("Y-3-9: 연속 두 번 실패 → 두 번째에 토스트", async () => {
+    const { user } = await setupWithToaster();
+    gameServer.failNext("guess");
+    await submitWord(user, "사과");
+    await alertInCardOnly();
+    expect(toastShown()).toBe(false);
+    gameServer.failNext("guess");
+    await user.type(input(), "{Enter}");
+    await waitFor(() => expect(gameServer.count("guess")).toBe(2));
+    await waitFor(() => expect(toastShown()).toBe(true));
+  });
+
+  it("Y-3-10: 실패 사이에 성공이 있으면 토스트 없음", async () => {
+    const { user } = await setupWithToaster();
+    await failHint(user);
+    await submitWord(user, "사과", 500);
+    gameServer.failNext("guess");
+    await submitWord(user, "바나나");
+    await alertInCardOnly();
+    expect(toastShown()).toBe(false);
+  });
+
   it("Y-3-8: 없는 단어 안내 중 힌트 실패 → 안내는 하나, 입력창은 오류 상태 아님", async () => {
     const { user } = await setupWithToaster();
     gameServer.setUnknown("없는말");
@@ -927,5 +953,176 @@ describe("Y-3. 요청 실패는 입력창 아래", () => {
     await waitFor(() => expect(screen.getAllByRole("alert")).toHaveLength(1));
     expect(screen.getByRole("alert")).not.toHaveTextContent("없는말");
     expect(input()).not.toHaveAttribute("aria-invalid", "true");
+  });
+});
+
+// 진행 상황 카드 (docs/tasks/ui/progress-card/verification.md PC)
+describe("PC. 진행 상황 카드", () => {
+  const card = () => latestCard()!;
+  const meterValue = () => Number(within(card()).getByRole("meter").getAttribute("aria-valuenow"));
+  const bubble = () => latestItems()[0];
+  /** 정답 자리 아이콘: 진행 중 / 맞힘 / 포기 */
+  const endIcon = (name: RegExp) => within(card()).queryByRole("img", { name });
+  const END_PLAYING = /정답 자리/;
+  const END_SOLVED = /^정답$/;
+  const END_GIVEN_UP = /^포기$/;
+  /** 카드 오른쪽 위 제출 횟수 (숫자만 본다) */
+  const attemptCount = () => within(card()).queryByLabelText("제출 횟수")?.textContent?.match(/\d+/)?.[0];
+
+  it("PC-1-1: 처음 → 영역 있고 배너·제출 횟수 없음, 미터 0, 정답 자리는 진행 중", async () => {
+    await setup();
+    expect(latestCard()).toBeInTheDocument();
+    expect(latestItems()).toHaveLength(0);
+    expect(attemptCount()).toBeUndefined();
+    expect(meterValue()).toBe(0);
+    expect(endIcon(END_PLAYING)).toBeInTheDocument();
+  });
+
+  it("PC-1-2: 500위 제출 → 배너에 단어·500위, 제출 횟수 1, 미터 > 0, 기록 표 없음", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 500);
+    expect(bubble().textContent).toContain("사과");
+    expect(bubble().textContent).toContain("500위");
+    // 평소 단어에는 아이콘 없음 (힌트·다시 내기 등 예외만 아이콘)
+    expect(within(bubble()).queryByRole("img")).not.toBeInTheDocument();
+    expect(attemptCount()).toBe("1");
+    expect(meterValue()).toBeGreaterThan(0);
+    expect(historyTable()).not.toBeInTheDocument();
+  });
+
+  it("PC-1-3: 단어 2개 → 카드에 머리줄 없음, 기록 표에 머리줄 4칸", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 500);
+    await submitWord(user, "바나나", 100);
+    expect(within(card()).queryAllByRole("columnheader")).toHaveLength(0);
+    expect(within(historyTable()!).getAllByRole("columnheader")).toHaveLength(4);
+  });
+
+  it("PC-1-4: 힌트·다시 내기 뒤에도 제출 횟수 그대로", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 500);
+    await submitWord(user, "바나나", 300);
+    expect(attemptCount()).toBe("2");
+    await user.click(hintButton());
+    await waitFor(() => expect(gameServer.count("hint")).toBe(1));
+    await waitFor(() => expect(within(bubble()).getByRole("img", { name: "힌트로 받은 단어" })).toBeInTheDocument());
+    expect(attemptCount()).toBe("2");
+    await user.type(input(), "사과");
+    await user.click(submitButton());
+    await waitFor(() => expect(within(bubble()).getByRole("img", { name: "이미 입력한 단어" })).toBeInTheDocument());
+    expect(attemptCount()).toBe("2");
+  });
+
+  it("PC-2-1: 500위 뒤 100위 → 미터 오름, 말풍선에 100위 단어", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 500);
+    const before = meterValue();
+    await submitWord(user, "바나나", 100);
+    expect(meterValue()).toBeGreaterThan(before);
+    expect(bubble().textContent).toContain("바나나");
+  });
+
+  it("PC-2-2: 500위·100위 뒤 300위 → 미터 그대로, 말풍선에 300위 단어", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 500);
+    await submitWord(user, "바나나", 100);
+    const before = meterValue();
+    await submitWord(user, "포도", 300);
+    expect(meterValue()).toBe(before);
+    expect(bubble().textContent).toContain("포도");
+  });
+
+  it("PC-2-3: 순위 밖 제출 → 말풍선에 단어, 미터 0", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", -1);
+    expect(bubble().textContent).toContain("사과");
+    expect(meterValue()).toBe(0);
+  });
+
+  it("PC-2-4: 500위 뒤 힌트 → 미터 오름, 말풍선에 힌트 표시", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 500);
+    const before = meterValue();
+    await user.click(hintButton());
+    await waitFor(() => expect(gameServer.count("hint")).toBe(1));
+    await waitFor(() => expect(within(bubble()).getByRole("img", { name: "힌트로 받은 단어" })).toBeInTheDocument());
+    expect(meterValue()).toBeGreaterThan(before);
+  });
+
+  it("PC-2-5: 힌트 단어를 다시 입력 → 다시 입력 표시, 힌트 표시 없음", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 500);
+    await user.click(hintButton());
+    await waitFor(() => expect(gameServer.count("hint")).toBe(1));
+    await waitFor(() => expect(within(bubble()).getByRole("img", { name: "힌트로 받은 단어" })).toBeInTheDocument());
+    // 가짜 서버는 힌트 단어를 "힌트{순위}"로 준다
+    const hintWord = `힌트${gameServer.normalHintRanks()[0]}`;
+    await submitWord(user, "바나나", 300);
+    await user.type(input(), hintWord);
+    await user.click(submitButton());
+    await waitFor(() => expect(within(bubble()).getByRole("img", { name: "이미 입력한 단어" })).toBeInTheDocument());
+    expect(within(bubble()).queryByRole("img", { name: "힌트로 받은 단어" })).not.toBeInTheDocument();
+  });
+
+  it("PC-3-1: 500위 뒤 없는 단어 → 배너에 단어, 입력창은 비고 안내 placeholder 없음, 미터 그대로", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 500);
+    const before = meterValue();
+    gameServer.setUnknown("없는말");
+    await submitWord(user, "없는말");
+    await waitFor(() => expect(bubble().textContent).toContain("없는말"));
+    expect(input()).toHaveValue("");
+    expect(input()).toHaveAttribute("placeholder", "단어 입력 후 엔터");
+    expect(meterValue()).toBe(before);
+  });
+
+  it("PC-3-2: 500위 뒤 초성 힌트 → 말풍선에 초성·초성 표시, 미터 그대로", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 500);
+    const before = meterValue();
+    await takeConsonantHint(user);
+    await waitFor(() => expect(bubble().textContent).toContain("ㅈㄷ"));
+    expect(within(bubble()).getByRole("img", { name: "초성 힌트" })).toBeInTheDocument();
+    expect(meterValue()).toBe(before);
+  });
+
+  it("PC-4-1: 500위 뒤 정답 → 말풍선에 정답, 정답 자리는 맞힘", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 500);
+    await submitWord(user, ANSWER.word);
+    await waitFor(() => expect(bubble().textContent).toContain(ANSWER.word));
+    expect(endIcon(END_SOLVED)).toBeInTheDocument();
+  });
+
+  it("PC-4-2: 500위 뒤 포기 → 말풍선에 정답, 정답 자리는 포기", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 500);
+    await giveUpViaDialog(user);
+    await waitFor(() => expect(bubble().textContent).toContain(ANSWER.word));
+    expect(endIcon(END_GIVEN_UP)).toBeInTheDocument();
+  });
+
+  it("PC-4-3: 정답 뒤 100위 → 말풍선에 100위 단어, 정답 자리는 맞힘 그대로, 미터 끝까지 그대로", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 500);
+    await submitWord(user, ANSWER.word);
+    await waitFor(() => expect(endIcon(END_SOLVED)).toBeInTheDocument());
+    const before = meterValue();
+    await submitWord(user, "바나나", 100);
+    expect(bubble().textContent).toContain("바나나");
+    expect(bubble().textContent).not.toContain(ANSWER.word);
+    expect(endIcon(END_SOLVED)).toBeInTheDocument();
+    expect(meterValue()).toBe(before);
+    expect(meterValue()).toBe(100);
+  });
+
+  it("PC-4-4: 500위 뒤 정답 → 미터 끝까지(100)", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 500);
+    const before = meterValue();
+    await submitWord(user, ANSWER.word);
+    await waitFor(() => expect(endIcon(END_SOLVED)).toBeInTheDocument());
+    expect(meterValue()).toBe(100);
+    expect(before).toBeLessThan(100);
   });
 });

@@ -1,8 +1,9 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import WordTable, { VISIBLE_HISTORY_COUNT, type LatestRow, type TopRowTone } from "./WordTable";
+import WordTable, { VISIBLE_HISTORY_COUNT } from "./WordTable";
+import ProgressCard, { type GameEnd, type LatestRow, type TopRowTone } from "./ProgressCard";
 import { GameForm } from "./GameForm";
 import { GameResult } from "./GameResult";
 import { compareByRank, useGameState, type GameRequestKind } from "@/hooks/useGameState";
@@ -14,24 +15,16 @@ import GiveUpButton from "../GiveUpButton";
 import CompetitiveBar from "@/components/CompetitiveBar";
 import { fetchSharerStats } from "@/utils/api";
 import { createClient } from "@/utils/supabase/client";
-import { shortenWord, topicParticle } from "@/utils/korean";
 
-/** 요청 실패 안내. 원인은 적지 않고 어떤 기능이 실패했는지만 적는다 (docs/tasks/ui/input/plan.md 3) */
+/** 요청 실패 안내. 카드 배너에 짧게, 어떤 기능이 실패했는지만 (docs/tasks/ui/progress-card/plan.md 3) */
 const REQUEST_ERROR_MESSAGES: Record<GameRequestKind | "submit", string> = {
-  submit: "단어 제출에 실패했어요. 잠시 후 다시 시도해 주세요.",
-  hint: "힌트를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.",
-  consonantHint: "초성을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.",
-  giveUp: "포기 처리에 실패했어요. 잠시 후 다시 시도해 주세요.",
+  submit: "단어 제출 실패",
+  hint: "힌트 실패",
+  consonantHint: "초성 힌트 실패",
+  giveUp: "포기 실패",
 };
-
-/** 구분선 위 한 줄(순위표에 없는 항목)의 순위·유사도 칸 (docs/tasks/ui/input/plan.md 3, word-list/plan.md 1) */
-const TOP_ROW_LABELS: Record<TopRowTone, { rank: string; similarity: string }> = {
-  unknown: { rank: "없음", similarity: "없음" },
-  failed: { rank: "오류", similarity: "오류" },
-  consonant: { rank: "초성", similarity: "100.00" },
-  answer: { rank: "정답", similarity: "100.00" },
-  givenUp: { rank: "정답", similarity: "100.00" },
-};
+/** 어떤 요청이든 연속으로 이만큼 실패하면 서버 문제로 보고 토스트 (progress-card/plan.md 3) */
+const SERVER_TROUBLE_FAILURES = 2;
 
 interface NewMantleFormProps {
   /** 첫 입력 유도 말풍선 (docs/tasks/ui/input/plan.md 2). 순서는 메인이 정한다 */
@@ -54,8 +47,19 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
   const { toast } = useToast();
   // 힌트·초성 힌트·포기 실패 안내. 토스트 대신 입력창 아래에 띄운다 (docs/tasks/ui/input/plan.md 3)
   const [requestError, setRequestError] = useState<string | null>(null);
+  // 연속 실패 수. 무엇이든 성공(목록 맨 위가 바뀜, 제출 응답)하면 0으로. 연속이면 서버 문제로 보고 토스트
+  const failuresRef = useRef(0);
+  const countFailure = () => {
+    failuresRef.current += 1;
+    if (failuresRef.current === SERVER_TROUBLE_FAILURES) {
+      toast({ title: "서버와 연결이 원활하지 않아요", description: "잠시 후 다시 시도해 주세요.", variant: "destructive" });
+    }
+  };
   const gameLogic = useGameState(gameDate, "classic", {
-    onRequestError: (kind) => setRequestError(REQUEST_ERROR_MESSAGES[kind]),
+    onRequestError: (kind) => {
+      setRequestError(REQUEST_ERROR_MESSAGES[kind]);
+      countFailure();
+    },
   });
   // 새 요청을 시작하면 이전 실패 안내를 닫는다
   const startRequest = (request: () => void) => () => {
@@ -115,8 +119,12 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
   // 방금 입력 칸은 늘 가장 최근 항목, 기록 표는 그 밖의 순위를 아는 단어 (docs/tasks/ui/word-list/plan.md 1).
   // 기록 표에 없는 것(임시 줄, 초성, 정답)은 방금 칸에만 둔다 (docs/tasks/ui/input/plan.md 3)
   const latestItem = gameLogic.submittedWords[0];
-  const topRow: { word: string; tone: TopRowTone; attempt?: number } | null = submitNotice
-    ? submitNotice
+  const topRow: { word: string; tone: TopRowTone; attempt?: number; message?: string } | null = submitNotice
+    ? {
+        ...submitNotice,
+        // 제출 실패 배너 문구 (progress-card/plan.md 3)
+        message: submitNotice.tone === "failed" ? REQUEST_ERROR_MESSAGES.submit : undefined,
+      }
     : latestItem && isConsonant(latestItem)
       ? { word: latestItem.word, tone: "consonant" }
       : latestItem?.correct
@@ -128,17 +136,23 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
   const latestRow: LatestRow | null = pendingWord
     ? { kind: "pending", word: pendingWord, attempt: gameLogic.attempts + 1 }
     : topRow
-      ? { kind: "notice", ...topRow, ...TOP_ROW_LABELS[topRow.tone] }
+      ? { kind: "notice", ...topRow }
       : latestListed
         ? { kind: "word", word: latestListed, isRepeat: repeatedWord !== null && latestListed.word === repeatedWord }
         : null;
   const historyWords = latestListed ? rankedWords.filter((w) => w !== latestListed) : rankedWords;
+  // 진행 상황 카드 게이지: 최고 순위 = 순위 있는 단어(입력·힌트, 끝난 뒤 단어 포함) 중 가장 작은 순위 (progress-card/plan.md 2)
+  const ranks = gameLogic.submittedWords.filter((w) => !w.correct && w.rank >= 1).map((w) => w.rank);
+  const bestRank = ranks.length > 0 ? Math.min(...ranks) : null;
+  // 포기도 gameCompleted가 true라 포기를 먼저 본다
+  const gameEnd: GameEnd = gameLogic.givenUp ? "givenUp" : gameLogic.gameCompleted ? "solved" : "playing";
 
   // 목록 맨 위에 다른 줄이 올라오면(제출 결과, 이미 낸 단어, 힌트·초성·포기) 임시 줄을 내린다. 입력창에 글자를 칠 때는 남긴다
   const topWord = gameLogic.sortedWords[0];
   const topKey = topWord ? `${topWord.attempt}:${topWord.word}` : "";
   useEffect(() => {
     setSubmitNotice(null);
+    failuresRef.current = 0;
   }, [topKey]);
 
   const handleCopyLink = async () => {
@@ -248,11 +262,14 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
             setSubmitNotice(null);
             // 없는 단어·제출 실패는 목록 맨 위 임시 줄로. 입력창은 없는 단어면 비우고 placeholder 안내, 실패면 단어를 남기고 빨간 배경 (docs/tasks/ui/input/plan.md 3)
             if (res.reason === "duplicate") setRepeatedWord(word);
+            // 없는 단어: 안내는 카드 배너, 입력창은 비움 (오류로 돌려주지 않음, progress-card/plan.md 3)
             if (res.reason === "unknownWord") {
               setSubmitNotice({ word, tone: "unknown" });
-              return { error: `'${shortenWord(word)}'${topicParticle(word)} 없는 단어`, tone: "warning" };
+              return {};
             }
+            if (res.reason !== "failed") failuresRef.current = 0;
             if (res.reason === "failed") {
+              countFailure();
               setSubmitNotice({ word, tone: "failed" });
               return { error: REQUEST_ERROR_MESSAGES.submit, tone: "error" };
             }
@@ -291,10 +308,18 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
         />
 
         {/* 표 자리 확보: 단어가 적어도 7줄 + "더보기" 높이만큼 차지해서, 입력할 때마다 아래 내용이 밀리지 않게 (docs/tasks/ui/word-list/plan.md 5).
-            값 = 방금 입력 칸 + 기록 표 소제목 + 기록 6줄 + "더보기"를 헤드리스로 잰 404px (375·1024 같음) */}
-        <div className="w-full min-h-[404px]">
-          {/* 시작할 때도 빈 표(머리줄)를 바로 보여 준다 */}
-          <WordTable latest={latestRow} history={historyWords} showAll={showAllWords} />
+            값 = 진행 상황 카드 + 기록 표 소제목 + 머리줄 + 기록 6줄 + "더보기"를 헤드리스로 잰 497px (375·1024 같음, 눈금·말풍선 줄 포함) */}
+        <div className="w-full min-h-[497px]">
+          {/* 방금 입력 칸 = 진행 상황 카드. 시작할 때도 바로 보여 준다 (docs/tasks/ui/progress-card/plan.md) */}
+          <ProgressCard
+            latest={latestRow}
+            best={bestRank}
+            end={gameEnd}
+            error={requestError}
+            attempts={gameLogic.attempts}
+            words={gameLogic.submittedWords}
+          />
+          <WordTable history={historyWords} showAll={showAllWords} />
           {historyWords.length > VISIBLE_HISTORY_COUNT && (
             <div className="text-center mt-4">
               <Button

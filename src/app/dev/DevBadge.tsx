@@ -3,7 +3,7 @@
 // DevTools.tsx가 개발 서버에서만 불러온다. 배포 빌드에는 들어가지 않는다.
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { DEV_FAULTS_EVENT, readFaults, takeFault, TARGET_LABELS, writeFaults, type FaultTarget } from "./faults";
+import { DEV_FAULTS_EVENT, faultSummary, readFaults, takeFault, writeFaults, type FaultTarget } from "./faults";
 
 export default function DevBadge() {
   const pathname = usePathname();
@@ -46,7 +46,7 @@ export default function DevBadge() {
       </a>
       {pending.length > 0 && (
         <>
-          <span className="truncate">다음 {pending.map((t) => TARGET_LABELS[t]).join("·")} 실패</span>
+          <span className="truncate">다음 {faultSummary(pending)} 실패</span>
           <button type="button" onClick={() => writeFaults([])} className="underline shrink-0">
             취소
           </button>

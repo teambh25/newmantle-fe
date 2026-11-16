@@ -13,11 +13,11 @@ function goHome() {
   window.location.href = "/";
 }
 
-/** 그 요청이 다음 한 번 실패하도록 해 두고 메인으로. 힌트·초성·포기는 버튼이 눌리도록 기록을 비운다 (20위 안 단어가 있으면 힌트가 꺼짐) */
-function armFault(target: FaultTarget) {
-  if (target !== "guess") localStorage.removeItem(GAME_KEY);
+/** 그 요청들이 다음에 차례로 실패하도록 해 두고 메인으로. 힌트·초성·포기는 버튼이 눌리도록 기록을 비운다 (20위 안 단어가 있으면 힌트가 꺼짐) */
+function armFaults(targets: FaultTarget[]) {
+  if (targets.some((t) => t !== "guess")) localStorage.removeItem(GAME_KEY);
   localStorage.setItem(RULE_MODAL_SEEN_KEY, "1");
-  writeFaults([target]);
+  writeFaults(targets);
   goHome();
 }
 
@@ -90,10 +90,14 @@ export default function DevPanel() {
         description="누르면 그 요청이 다음 한 번 실패하도록 해 두고 메인으로 이동합니다. 힌트·초성 힌트·포기는 기록을 비우고 시작합니다. 없는 단어는 직접 입력해 보세요."
       >
         {FAULT_TARGETS.map((target) => (
-          <button key={target} onClick={() => armFault(target)} className={ROW}>
+          <button key={target} onClick={() => armFaults([target])} className={ROW}>
             {TARGET_LABELS[target]} 실패
           </button>
         ))}
+        {/* 연속 2번 실패하면 서버 문제 토스트 (progress-card/plan.md 3) */}
+        <button onClick={() => armFaults(["guess", "guess"])} className={ROW}>
+          단어 제출 2번 연속 실패 (토스트)
+        </button>
       </Section>
     </main>
   );

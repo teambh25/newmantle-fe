@@ -18,4 +18,10 @@ describe("개발용 실패 주입", () => {
     expect(takeFault("https://api.example.com/v2/stats/me", ["guess"])).toBeNull();
     expect(takeFault("https://example.supabase.co/auth/v1/user", ["guess"])).toBeNull();
   });
+
+  it("DV-3: 같은 종류가 여러 번 대기 중이면 한 번에 하나씩만 꺼짐 (연속 실패)", () => {
+    const once = takeFault(`${BASE}/guess/a`, ["guess", "guess"]);
+    expect(once).toEqual(["guess"]);
+    expect(takeFault(`${BASE}/guess/b`, once!)).toEqual([]);
+  });
 });
