@@ -30,7 +30,7 @@ const SurveyForm: React.FC<SurveyFormProps> = ({ entry, startRow = 21 }) => {
             role="status"
             className="excel-cell border-r-0 justify-start font-normal text-[13px] text-[#217346] flex-grow bg-[#e6f2eb]"
           >
-            의견 고마워요! 더 나은 게임을 만드는 데 소중히 활용할게요.
+            의견 고마워요! 더 나은 게임을 만드는 데 활용할게요.
           </div>
         </div>
       ) : (

@@ -77,3 +77,4 @@
 - 웹훅 URL 노출 대응, 서버 쪽 횟수 제한 (Out에서 이동)
 - privacy-terms 수집 항목 표에 새 웹훅 필드 반영, Amplitude 본문 제거 반영 (Out에서 이동)
 - 피드백 실패 토스트 위치·색 정리 (error-ui todo, Dec-4)
+- 피드백 긍정/부정 분류: 선택 사항 버튼 + 웹훅 `sentiment` 필드 + Amplitude 속성. 피드백이 쌓여 분류가 번거로워지면 (Dec-19)

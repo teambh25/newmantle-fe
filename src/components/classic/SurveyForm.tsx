@@ -15,7 +15,7 @@ const SurveyForm: React.FC<{ entry: FeedbackEntry }> = ({ entry }) => {
       <div role="status" className="w-full max-w-2xl py-4 text-center">
         <p className="font-semibold text-gray-800">의견 보내주셔서 고마워요!</p>
         <p className="mt-1 text-sm text-gray-500">
-          보내주신 의견은 더 나은 게임을 만드는 데 소중히 활용할게요.
+          더 나은 게임을 만드는 데 활용할게요.
         </p>
       </div>
     );
