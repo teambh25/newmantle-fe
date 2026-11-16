@@ -2,8 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { CircleAlert, Lightbulb, Loader2, PartyPopper, Repeat, X } from "lucide-react";
 import type { SubmittedWord } from "@/utils/api";
 import { getRankTier, type RankTier } from "@/utils/rankTier";
-import { TRACK_END_POSITION, trackCellBottom, trackCellSize, trackPosition } from "@/utils/rankTrack";
+import { TRACK_END_POSITION, trackCellBottom, trackPosition } from "@/utils/rankTrack";
 import { recordBubbles, visibleBubbles } from "@/utils/progressMarks";
+import { GAUGE_BAR_END as BAR_END, gaugeFill, type GameEnd, type LatestRow } from "@/utils/board";
 
 /** 말풍선 글자(11px)의 실제 폭 + 좌우 여백·테두리 14px. 겹침 판단용 */
 let measureCtx: CanvasRenderingContext2D | null = null;
@@ -14,18 +15,6 @@ function measuredBubbleWidth(word: string): number {
   return Math.ceil(measureCtx.measureText(word).width) + 14;
 }
 import { TIER_TEXT } from "./tierColors";
-
-export type TopRowTone = "unknown" | "failed" | "consonant" | "answer" | "givenUp";
-
-/** 방금 입력 칸에 올 수 있는 것 (docs/tasks/ui/progress-card/plan.md 3, input/plan.md 3) */
-export type LatestRow =
-  | { kind: "word"; word: SubmittedWord; isRepeat: boolean }
-  /** 기록 표에 안 들어가는 항목: 없는 단어·제출 실패(저장 안 함), 초성, 정답 */
-  | { kind: "notice"; word: string; tone: TopRowTone; attempt?: number; message?: string }
-  /** 제출 중 (0.3초 넘게 걸릴 때) */
-  | { kind: "pending"; word: string; attempt: number };
-
-export type GameEnd = "playing" | "solved" | "givenUp";
 
 interface ProgressCardProps {
   /** 방금 항목. 아직 아무것도 안 했으면 null */
@@ -41,8 +30,6 @@ interface ProgressCardProps {
   end: GameEnd;
 }
 
-/** 게이지 막대 끝(1위 칸 위 끝). 그 오른쪽은 정답 자리 */
-const BAR_END = trackCellBottom(1) + trackCellSize(1);
 /** 단계 경계 (순위 밖 | 301–999 | 101–300 | 51–100 | 21–50 | 1–20) */
 const BOUNDARIES: RankTier[] = [5, 4, 3, 2, 1];
 /** 숫자 눈금: 경계 오른쪽 칸이 시작하는 순위 (999위 = 순위권 시작) (plan.md 2) */
@@ -163,9 +150,8 @@ function BannerContent({ latest }: { latest: LatestRow }) {
  */
 const ProgressCard: React.FC<ProgressCardProps> = ({ latest, best, end, error = null, attempts, words }) => {
   const pos = latestPosition(latest);
-  // 맞히면 끝까지 채운다 (그 뒤 단어를 내도 그대로). 포기는 최고 순위까지
   const solved = end === "solved";
-  const fill = solved ? BAR_END : best === null ? 0 : trackPosition(best);
+  const fill = gaugeFill(best, end);
   const atEnd = pos === TRACK_END_POSITION;
   // 말풍선 겹침 판단에 카드 안쪽 폭이 필요하다
   const innerRef = useRef<HTMLDivElement>(null);

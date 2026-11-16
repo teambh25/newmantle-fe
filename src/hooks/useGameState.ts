@@ -9,7 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { logEvent } from "@/utils/amplitude";
 import { triggerConfetti } from "@/utils/confetti";
 import { getKSTDateString, toLegacyDateString } from "@/utils/date";
-import { getNextHintRank, getTopRank, isHintDisabled } from "@/utils/gameRules";
+import { compareByRank, getNextHintRank, getTopRank, isHintDisabled } from "@/utils/gameRules";
 
 const STORAGE_KEY = "newmantle_game_data";
 
@@ -105,13 +105,6 @@ interface GameStateOptions {
   onRequestError?: (kind: GameRequestKind) => void;
 }
 
-/** 단어 목록 순서: 순위 순, 순위 밖은 뒤에서 유사도 순 */
-export function compareByRank(a: SubmittedWord, b: SubmittedWord): number {
-  if (a.rank === -1 && b.rank === -1) return (b.similarity ?? 0) - (a.similarity ?? 0);
-  if (a.rank === -1) return 1;
-  if (b.rank === -1) return -1;
-  return a.rank - b.rank;
-}
 
 export function useGameState(gameDate: string, theme?: string, { onRequestError }: GameStateOptions = {}) {
   const [gameState, setGameState] = useState<GameData>(getInitialGameState);

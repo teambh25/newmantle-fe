@@ -189,6 +189,21 @@ describe("C. 포기", () => {
   });
 });
 
+describe("Y-4. 이미 제출한 단어", () => {
+  it("Y-4-5: 이미 낸 단어를 다시 → 요청 없이 맨 앞으로 옮겨지고 원래 시도 번호 그대로, 시도 횟수 그대로", async () => {
+    const h = renderGame();
+    await h.submit("사과", 10);
+    await h.submit("바나나", 500);
+    const guessesBefore = gameServer.count("guess");
+
+    await h.submit("사과");
+
+    expect(gameServer.count("guess")).toBe(guessesBefore);
+    expect(h.game.submittedWords.map((w) => [w.word, w.attempt])).toEqual([["사과", 1], ["바나나", 2]]);
+    expect(h.game.attempts).toBe(2);
+  });
+});
+
 describe("D-1. 정답 후", () => {
   it("대조군: 포기하지 않고 정답을 맞히면 축하 효과가 실행된다", async () => {
     const h = renderGame();

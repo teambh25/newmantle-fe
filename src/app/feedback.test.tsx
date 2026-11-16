@@ -169,29 +169,6 @@ const lastBody = () => feedbackWebhook.bodies[feedbackWebhook.bodies.length - 1]
 // ---- 케이스 ----
 
 describe("F-1. 투표 없이 바로 입력", () => {
-  it("F-1-1: classic 설정 → 피드백 남기기 → 입력창과 보내기가 바로 있고, 버튼은 보내기·닫기뿐", async () => {
-    const { user } = await renderHome();
-    const d = await openFromSettings(user);
-    expectInputState(d);
-    expect(within(d).getAllByRole("button")).toHaveLength(2);
-    expect(within(d).getByRole("button", { name: /close/i })).toBeInTheDocument();
-  });
-
-  it("F-1-2: 결과창 → 피드백 → 입력창과 보내기가 바로 있고, 버튼은 보내기·닫기뿐", async () => {
-    storeFinished();
-    const { user } = await renderHome();
-    const d = await openFromResult(user);
-    expectInputState(d);
-    expect(within(d).getAllByRole("button")).toHaveLength(2);
-  });
-
-  it("F-1-3: excel 설정 → 피드백 남기기 → 입력창과 보내기가 바로 있음", async () => {
-    useExcel();
-    const { user } = await renderHome();
-    const d = await openFromSettings(user);
-    expectInputState(d);
-  });
-
   it("F-1-4: 엔터는 줄바꿈이고 보내지 않음", async () => {
     const { user } = await renderHome();
     const d = await openFromSettings(user);

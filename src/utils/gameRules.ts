@@ -31,3 +31,11 @@ export function getNextHintRank(topRank: number | null): number {
 export function isHintDisabled(topRank: number | null): boolean {
   return topRank !== null && topRank <= HINT_LIMIT_RANK;
 }
+
+/** 단어 목록 순서: 순위 순, 순위 밖은 뒤에서 유사도 순 */
+export function compareByRank(a: SubmittedWord, b: SubmittedWord): number {
+  if (a.rank === -1 && b.rank === -1) return (b.similarity ?? 0) - (a.similarity ?? 0);
+  if (a.rank === -1) return 1;
+  if (b.rank === -1) return -1;
+  return a.rank - b.rank;
+}

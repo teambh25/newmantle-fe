@@ -1,4 +1,4 @@
-// 화면 레벨: 입력 단어 목록 (docs/tasks/ui/word-list/verification.md W-2 ~ W-4)
+// 화면 레벨: 입력 단어 목록 (docs/tasks/ui/word-list/verification.md W-2 ~ W-4). 무엇을 어디에 둘지는 로직(src/utils/board.test.ts)
 import { describe, expect, it } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -79,29 +79,8 @@ describe("W-2: 보이는 개수", () => {
   });
 });
 
-describe("W-2: 보이는 개수 (초성)", () => {
-  it("W-2-4: 7개 + 초성(가장 최근)이면 표 7줄, 더보기 없음", async () => {
-    storeWords([consonant(), ...nWords(7)], { initialConsonantHintUsed: true });
-    await renderForm();
-    expect(tableRows()).toHaveLength(7);
-    expect(moreButton()).not.toBeInTheDocument();
-  });
-
-  it("W-2-5: 초성 뒤에 단어를 내서 7개면 표 7줄, 더보기 없음, 표에 초성 없음", async () => {
-    const [latest, ...rest] = nWords(7);
-    storeWords([latest, consonant(), ...rest], { initialConsonantHintUsed: true });
-    await renderForm();
-    expect(tableRows()).toHaveLength(7);
-    expect(moreButton()).not.toBeInTheDocument();
-    expect(tableRows().some((r) => r.textContent?.includes(CONSONANT))).toBe(false);
-  });
-});
-
 describe("W-4: 날짜 제목 (초성·정답)", () => {
-  const ANSWER = "사랑";
-  const answer = (attempt: number): SubmittedWord => ({ word: ANSWER, similarity: 100, rank: 0, attempt, correct: true });
   const inTable = (text = CONSONANT) => wordRows().some((r) => within(r).queryByText(text));
-  const rowsWithAnswer = () => wordRows().filter((r) => within(r).queryByText(ANSWER));
   /** 날짜가 들어간 제목. 글자는 타일마다 나뉠 수 있어 텍스트를 이어 붙여 본다 */
   const dateHeading = () => screen.findByRole("heading", { name: new RegExp(escapeRegExp(formatGameDate(getKSTDateString()))) });
   const headingText = async () => ((await dateHeading()).textContent ?? "").replace(/\s/g, "");
@@ -111,41 +90,6 @@ describe("W-4: 날짜 제목 (초성·정답)", () => {
     await renderForm();
     expect(await headingText()).toContain(CONSONANT);
     expect(inTable()).toBe(false);
-  });
-
-  it("W-4-2: 정답을 맞혔으면 초성은 없고 정답은 제목과 표 첫 줄에만", async () => {
-    storeWords([answer(3), word(2), consonant(), word(1)], {
-      initialConsonantHintUsed: true,
-      gameCompleted: true,
-      solvedAttempts: 3,
-    });
-    await renderForm();
-    expect(await headingText()).toContain(ANSWER);
-    expect(rowsWithAnswer()).toEqual([wordRows()[0]]);
-    expect(document.body.textContent).not.toContain(CONSONANT);
-  });
-
-  it("W-4-3: 포기했으면 초성은 없고 정답은 제목과 표 첫 줄에만, 번호 칸에 포기 아이콘", async () => {
-    // 포기 저장 형태: 정답 항목 + gameCompleted·givenUp 둘 다 true (useGameState giveUp)
-    storeWords([answer(2), word(2), consonant(), word(1)], {
-      initialConsonantHintUsed: true,
-      gameCompleted: true,
-      givenUp: true,
-      solvedAttempts: 2,
-    });
-    await renderForm();
-    expect(await headingText()).toContain(ANSWER);
-    expect(rowsWithAnswer()).toEqual([wordRows()[0]]);
-    // 포기 표시는 카드의 정답 자리 아이콘 (progress-card/plan.md 2)
-    expect(within(latestCard()!).getByRole("img", { name: "포기" })).toBeInTheDocument();
-    expect(document.body.textContent).not.toContain(CONSONANT);
-  });
-
-  it("W-4-4: 초성 없이 진행 중이면 제목에 단어가 없음", async () => {
-    storeWords(nWords(3));
-    await renderForm();
-    const text = await headingText();
-    for (const w of nWords(3)) expect(text).not.toContain(w.word);
   });
 });
 

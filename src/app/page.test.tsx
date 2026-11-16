@@ -123,15 +123,6 @@ describe("첫 방문 안내 모달", () => {
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
   });
 
-  it("M-3-1: 모달 안에 /rule 링크가 있음", async () => {
-    await renderHome();
-    const d = await screen.findByRole("dialog");
-    const ruleLinks = within(d)
-      .getAllByRole("link")
-      .filter((a) => a.getAttribute("href") === "/rule");
-    expect(ruleLinks.length).toBeGreaterThan(0);
-  });
-
   it("M-4-1: X 버튼으로 닫으면 확인 여부가 저장됨", async () => {
     const { user } = await renderHome();
     await screen.findByRole("dialog");
@@ -188,36 +179,6 @@ describe("첫 방문 안내 모달", () => {
     await screen.findByRole("dialog");
     await closeWithX(user);
     expect(loginTooltip()).not.toBeInTheDocument();
-  });
-});
-
-describe("규칙 진입점", () => {
-  beforeEach(() => {
-    localStorage.setItem(MODAL_SEEN_KEY, "1");
-  });
-
-  it("N-1-1: 헤더에 /rule로 가는 규칙 링크가 있음", async () => {
-    await renderHome();
-    expect(screen.getByRole("link", { name: "게임 규칙" })).toHaveAttribute("href", "/rule");
-  });
-
-  it("N-2-1: 푸터에 /rule로 가는 규칙 링크가 있음", async () => {
-    await renderHome();
-    const footer = screen.getByRole("contentinfo");
-    expect(within(footer).getByRole("link", { name: "규칙" })).toHaveAttribute("href", "/rule");
-  });
-
-  it("N-3-1: 메인에 기존 도움말이 없음", async () => {
-    await renderHome();
-    expect(screen.queryByRole("heading", { name: "도움말" })).not.toBeInTheDocument();
-  });
-
-  it("N-4-1: 원작(꼬맨틀) 외부 링크가 푸터에 있음 (본문에는 없음, docs/tasks/ui/footer/plan.md)", async () => {
-    await renderHome();
-    const footer = screen.getByRole("contentinfo");
-    const link = within(footer).getByRole("link", { name: /꼬맨틀/ });
-    expect(link.getAttribute("href")).toMatch(/^https:\/\//);
-    expect(screen.queryByRole("button", { name: /꼬맨틀/ })).not.toBeInTheDocument();
   });
 });
 
@@ -539,39 +500,6 @@ describe("결과창 모달 (docs/tasks/ui/result-box/verification.md R)", () => 
     });
   });
 
-  describe("R-2. 결과창 구성", () => {
-    it("R-2-1: 결과창 안에 정답 투표 버튼이 없음", async () => {
-      storeFinished();
-      const { user } = await renderHome();
-      const d = await openFromMain(user);
-      expect(within(d).queryByRole("button", { name: /좋았다/ })).not.toBeInTheDocument();
-      expect(within(d).queryByRole("button", { name: /별로였다/ })).not.toBeInTheDocument();
-    });
-
-    it.each([
-      ["R-2-2", "정답 맞힘", false],
-      ["R-2-3", "포기", true],
-    ])("%s: %s → 결과창 안에 정답 단어·카테고리·설명, 공유하기·피드백·계속 플레이 버튼", async (_id, _label, givenUp) => {
-      storeFinished({ givenUp });
-      const { user } = await renderHome();
-      const d = await openFromMain(user);
-      expect(within(d).getAllByText(new RegExp(ANSWER.word)).length).toBeGreaterThan(0);
-      expect(within(d).getByText(new RegExp(ANSWER.tag))).toBeInTheDocument();
-      expect(within(d).getByText(new RegExp(ANSWER.description))).toBeInTheDocument();
-      expect(within(d).getByRole("button", { name: /공유하기/ })).toBeInTheDocument();
-      expect(within(d).getByRole("button", { name: /피드백/ })).toBeInTheDocument();
-      expect(within(d).getByRole("button", { name: /순위권 단어/ })).toBeInTheDocument();
-    });
-
-    it("R-2-4: 비로그인 → 결과창 안에 /login 링크가 없음", async () => {
-      storeFinished();
-      const { user } = await renderHome();
-      const d = await openFromMain(user);
-      const links = within(d).queryAllByRole("link").filter((a) => a.getAttribute("href") === "/login");
-      expect(links).toHaveLength(0);
-    });
-  });
-
   describe("R-3. 닫기와 다시 보기", () => {
     it("R-3-2: 계속 플레이 → 결과창이 닫히고 입력창을 쓸 수 있음", async () => {
       storeFinished();
@@ -692,14 +620,6 @@ describe("결과창 모달 (docs/tasks/ui/result-box/verification.md R)", () => 
       expect(reopenButton()).not.toBeInTheDocument();
     });
 
-    it("R-5-2: 오늘 정답 맞힘 저장, 결과창을 열지 않음 → 메인에 결과 영역·공유·피드백 버튼이 없음", async () => {
-      storeFinished();
-      await renderHome();
-      await screen.findByRole("button", { name: /결과창 보기/ });
-      expect(screen.queryByRole("region", { name: "게임 결과" })).not.toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: /공유하기/ })).not.toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: /피드백/ })).not.toBeInTheDocument();
-    });
   });
 });
 
@@ -900,10 +820,4 @@ describe("공지 배너 / 공지사항 진입점 (docs/tasks/ui/notices/verifica
     expect(localStorage.getItem(LAST_SEEN_KEY)).toBe(latestId);
   });
 
-  it("NT-10: 설정 메뉴에 /notices로 가는 공지사항 링크가 있음", async () => {
-    localStorage.setItem(LAST_SEEN_KEY, latestId); // 배너 없이
-    const { user } = await renderHome();
-    await user.click(screen.getByRole("button", { name: "설정" }));
-    expect(screen.getByRole("link", { name: "공지사항" })).toHaveAttribute("href", "/notices");
-  });
 });

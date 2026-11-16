@@ -3,10 +3,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import WordTable, { VISIBLE_HISTORY_COUNT } from "./WordTable";
-import ProgressCard, { type GameEnd, type LatestRow, type TopRowTone } from "./ProgressCard";
+import ProgressCard from "./ProgressCard";
+import { buildBoard } from "@/utils/board";
 import { GameForm } from "./GameForm";
 import { FeedbackDialog, ResultDialog, ResultStrip } from "./GameResult";
-import { compareByRank, useGameState, type GameRequestKind } from "@/hooks/useGameState";
+import { useGameState, type GameRequestKind } from "@/hooks/useGameState";
 import { logEvent } from "@/utils/amplitude";
 import { useGameDate } from "@/hooks/useGameDate";
 import { formatGameDate } from "@/utils/date";
@@ -145,45 +146,21 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
     }
   }, [gameDate]);
 
-  // 초성 힌트는 표에서 빼고 입력창 위 날짜 제목에 둔다. 게임이 끝나면 초성 대신 정답 (docs/tasks/ui/word-list/plan.md 4)
-  const isConsonant = (w: { attempt: number; rank: number }) => w.attempt === -1 && w.rank === 0;
+  // 제목·방금 입력 칸·기록 표·게이지에 보일 것 (src/utils/board.ts)
   const gameOver = gameLogic.gameCompleted || gameLogic.givenUp;
-  const answerWord = gameLogic.sortedWords.find((w) => w.correct)?.word;
-  const consonantWord = gameLogic.sortedWords.find(isConsonant)?.word;
-  const reveal = (gameOver ? answerWord : consonantWord) ?? null;
-  // 초성·정답은 제목에 보이므로 표에서 뺀다
-  const inHeading = (w: { attempt: number; rank: number; correct: boolean }) => isConsonant(w) || w.correct;
-  const listedWords = gameLogic.sortedWords.filter((w) => !inHeading(w));
-  // 방금 입력 칸은 늘 가장 최근 항목, 기록 표는 그 밖의 순위를 아는 단어 (docs/tasks/ui/word-list/plan.md 1).
-  // 기록 표에 없는 것(임시 줄, 초성, 정답)은 방금 칸에만 둔다 (docs/tasks/ui/input/plan.md 3)
-  const latestItem = gameLogic.submittedWords[0];
-  const topRow: { word: string; tone: TopRowTone; attempt?: number; message?: string } | null = submitNotice
-    ? {
-        ...submitNotice,
-        // 제출 실패 배너 문구 (progress-card/plan.md 3)
-        message: submitNotice.tone === "failed" ? REQUEST_ERROR_MESSAGES.submit : undefined,
-      }
-    : latestItem && isConsonant(latestItem)
-      ? { word: latestItem.word, tone: "consonant" }
-      : latestItem?.correct
-        ? { word: latestItem.word, tone: gameLogic.givenUp ? "givenUp" : "answer", attempt: latestItem.attempt }
-        : null;
-  // 기록 표는 순위를 아는 모든 단어(방금 단어·다시 낸 단어 포함)를 순위순으로 (word-list/plan.md 1)
-  const historyWords = [...listedWords].sort(compareByRank);
-  // 방금 칸에 올 단어(입력·힌트). 제출 중이거나 임시 줄·초성·정답이면 없음
-  const latestListed = !pendingWord && !topRow && latestItem && !inHeading(latestItem) ? latestItem : null;
-  const latestRow: LatestRow | null = pendingWord
-    ? { kind: "pending", word: pendingWord, attempt: gameLogic.attempts + 1 }
-    : topRow
-      ? { kind: "notice", ...topRow }
-      : latestListed
-        ? { kind: "word", word: latestListed, isRepeat: repeatedWord !== null && latestListed.word === repeatedWord }
-        : null;
-  // 진행 상황 카드 게이지: 최고 순위 = 순위 있는 단어(입력·힌트, 끝난 뒤 단어 포함) 중 가장 작은 순위 (progress-card/plan.md 2)
-  const ranks = gameLogic.submittedWords.filter((w) => !w.correct && w.rank >= 1).map((w) => w.rank);
-  const bestRank = ranks.length > 0 ? Math.min(...ranks) : null;
-  // 포기도 gameCompleted가 true라 포기를 먼저 본다
-  const gameEnd: GameEnd = gameLogic.givenUp ? "givenUp" : gameLogic.gameCompleted ? "solved" : "playing";
+  const board = buildBoard({
+    words: gameLogic.submittedWords,
+    gameCompleted: gameLogic.gameCompleted,
+    givenUp: gameLogic.givenUp,
+    attempts: gameLogic.attempts,
+    // 제출 실패 배너 문구 (progress-card/plan.md 3)
+    notice: submitNotice && {
+      ...submitNotice,
+      message: submitNotice.tone === "failed" ? REQUEST_ERROR_MESSAGES.submit : undefined,
+    },
+    pendingWord,
+    repeatedWord,
+  });
 
   // 목록 맨 위에 다른 줄이 올라오면(제출 결과, 이미 낸 단어, 힌트·초성·포기) 임시 줄을 내린다. 입력창에 글자를 칠 때는 남긴다
   const topWord = gameLogic.sortedWords[0];
@@ -324,7 +301,7 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
           }}
           gameCompleted={gameLogic.gameCompleted}
           displayDate={displayDate}
-          reveal={reveal}
+          reveal={board.reveal}
           showInputTooltip={showInputTooltip}
           onInputTooltipDone={onInputTooltipDone}
           requestError={requestError}
@@ -366,15 +343,15 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
         <div className="w-full">
           {/* 방금 입력 칸 = 진행 상황 카드. 시작할 때도 바로 보여 준다 (docs/tasks/ui/progress-card/plan.md) */}
           <ProgressCard
-            latest={latestRow}
-            best={bestRank}
-            end={gameEnd}
+            latest={board.latest}
+            best={board.best}
+            end={board.end}
             error={requestError}
             attempts={gameLogic.attempts}
             words={gameLogic.submittedWords}
           />
-          <WordTable history={historyWords} showAll={showAllWords} />
-          {historyWords.length > VISIBLE_HISTORY_COUNT && (
+          <WordTable history={board.history} showAll={showAllWords} />
+          {board.history.length > VISIBLE_HISTORY_COUNT && (
             <div className="text-center mt-4">
               <Button
                 onClick={() => setShowAllWords(!showAllWords)}

@@ -22,6 +22,10 @@ describe("PC-5: 지난 기록 말풍선", () => {
     expect(ranks([500, 300, 400, 100, "out"])).toEqual([500, 300, 100]);
   });
 
+  it("PC-2-6: 방금 낸 단어가 새 최고면 바로 말풍선에 들어감", () => {
+    expect(ranks([500, 100])).toEqual([500, 100]);
+  });
+
   it("PC-5-2: 순위 밖·초성 없음, 힌트 포함", () => {
     const bubbles = recordBubbles(history(["out", 500, { hint: 80 }, "consonant", 120]));
     expect(bubbles.map((b) => b.rank)).toEqual([500, 80]);
