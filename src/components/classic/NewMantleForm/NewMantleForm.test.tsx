@@ -997,7 +997,7 @@ describe("PC. 진행 상황 카드", () => {
   const END_PLAYING = /정답 자리/;
   const END_SOLVED = /^정답$/;
   const END_GIVEN_UP = /^포기$/;
-  /** 카드 오른쪽 위 제출 횟수 (숫자만 본다) */
+  /** 카드 왼쪽 위 제출 횟수 (숫자만 본다) */
   const attemptCount = () => within(card()).queryByLabelText("제출 횟수")?.textContent?.match(/\d+/)?.[0];
 
   it("PC-1-1: 처음 → 영역 있고 배너·제출 횟수 없음, 미터 0, 정답 자리는 진행 중", async () => {
@@ -1093,6 +1093,14 @@ describe("PC. 진행 상황 카드", () => {
     await user.click(submitButton());
     await waitFor(() => expect(within(bubble()).getByRole("img", { name: "이미 입력한 단어" })).toBeInTheDocument());
     expect(within(bubble()).queryByRole("img", { name: "힌트로 받은 단어" })).not.toBeInTheDocument();
+  });
+
+  it("PC-2-6: 500위 뒤 100위(새 최고) → 카드 안 배너와 지난 기록 말풍선 모두에 100위 단어", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 500);
+    await submitWord(user, "바나나", 100);
+    // 말풍선은 화면 읽기 프로그램에 안 읽혀(aria-hidden) 글자로 찾는다. 배너 1 + 말풍선 1
+    await waitFor(() => expect(within(card()).getAllByText("바나나")).toHaveLength(2));
   });
 
   it("PC-3-1: 500위 뒤 없는 단어 → 배너에 단어, 입력창은 비고 안내 placeholder 없음, 미터 그대로", async () => {

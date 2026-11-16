@@ -32,11 +32,6 @@ describe("PC-5: 지난 기록 말풍선", () => {
     expect(ranks([500, "answer", 100, "out"])).toEqual([500, 100]);
   });
 
-  it("PC-5-4: 방금 낸 새 단어는 빼기", () => {
-    const words = history([500, 100]);
-    expect(recordBubbles(words, words[0]).map((b) => b.rank)).toEqual([500]);
-  });
-
   it("PC-5-8: 다시 낸 단어는 남고, 순서는 처음 낸 때 기준", () => {
     const words = history([500, 100, 300]);
     // 500위 단어를 다시 내면 저장 순서에서 맨 앞으로 옮겨진다 (useGameState moveWordToTop)

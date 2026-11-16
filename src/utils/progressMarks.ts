@@ -20,17 +20,17 @@ function chronological(words: SubmittedWord[]): SubmittedWord[] {
 
 /**
  * 최고 기록을 깬 단어들, 시간 순 (먼저 한 것이 앞).
- * 순위 밖·초성·정답은 빼고 힌트는 넣는다. 게임이 끝난 뒤 낸 단어도 넣는다 (채움과 같은 기준).
- * exclude: 방금 낸 새 단어. 배너와 ▼가 보여 주므로 뺀다 (다시 낸 단어는 빼지 않음). words는 저장 형태 (최근 것이 앞)
+ * 순위 밖·초성·정답은 빼고 힌트는 넣는다. 게임이 끝난 뒤 낸 단어도, 방금 낸 새 최고도 넣는다 (채움과 같은 기준).
+ * words는 저장 형태 (최근 것이 앞)
  */
-export function recordBubbles(words: SubmittedWord[], exclude?: SubmittedWord | null): RecordBubble[] {
+export function recordBubbles(words: SubmittedWord[]): RecordBubble[] {
   const out: RecordBubble[] = [];
   let best = Infinity;
   for (const w of chronological(words)) {
     if (w.correct || w.rank < 1) continue;
     if (w.rank >= best) continue;
     best = w.rank;
-    if (w !== exclude) out.push({ word: w.word, rank: w.rank });
+    out.push({ word: w.word, rank: w.rank });
   }
   return out;
 }

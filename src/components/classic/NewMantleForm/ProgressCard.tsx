@@ -34,7 +34,7 @@ interface ProgressCardProps {
   best: number | null;
   /** 힌트·초성 힌트·포기 실패 안내. 있으면 배너에 방금 항목 대신 알림으로 (plan.md 3) */
   error?: string | null;
-  /** 지금까지 제출 횟수 (힌트·다시 내기는 안 셈). 카드 오른쪽 위 */
+  /** 지금까지 제출 횟수 (힌트·다시 내기는 안 셈). 카드 왼쪽 위 */
   attempts: number;
   /** 저장된 기록 (최근 것이 앞). 바 아래 지난 기록 말풍선에 쓴다 */
   words: SubmittedWord[];
@@ -110,7 +110,7 @@ function BannerFailure({ text }: { text: string }) {
 /** 정답 글자 색: 맞힘·초성(사실상 정답)은 맞힘 폭죽·채움과 같은 파랑, 포기는 회색 */
 const ANSWER_TEXT = "text-blue-600";
 
-/** 배너 내용 (plan.md 3 표). 아이콘 단어 순위 (유사도), 순위권 밖은 아이콘 단어 점수. 제출 횟수는 카드 오른쪽 위가 맡는다 */
+/** 배너 내용 (plan.md 3 표). 아이콘 단어 순위 (유사도), 순위권 밖은 아이콘 단어 점수. 제출 횟수는 카드 왼쪽 위가 맡는다 */
 function BannerContent({ latest }: { latest: LatestRow }) {
   if (latest.kind === "pending") {
     return <BannerRow mark={<Loader2 className={`${icon} animate-spin text-gray-400`} aria-hidden="true" />} word={latest.word} />;
@@ -178,17 +178,16 @@ const ProgressCard: React.FC<ProgressCardProps> = ({ latest, best, end, error = 
     setWidth(el.clientWidth);
     return () => ro.disconnect();
   }, []);
-  // 방금 낸 새 단어만 뺀다. 다시 낸 단어는 그대로 둔다
-  const fresh = latest?.kind === "word" && !latest.isRepeat ? latest.word : null;
-  const bubbles = recordBubbles(words, fresh);
+  // 방금 낸 새 최고도 바로 말풍선에 (plan.md 2)
+  const bubbles = recordBubbles(words);
   // 폭을 모르면(jsdom 등) 최고만 보여서 글자를 잴 일이 없다
   const shown = visibleBubbles(bubbles, width, width > 0 ? measuredBubbleWidth : undefined);
 
   return (
     <section aria-label="방금 입력" className="relative w-full rounded-lg border border-gray-200 bg-white px-4 pt-2 pb-3">
-      {/* 제출 횟수: 오른쪽 위 배지 (색 대신 옅은 회색 배경 + 굵은 진회색, 파랑은 "가깝다" 뜻이라 안 씀). 힌트·다시 내기에도 그대로 (plan.md 1). 아직 안 냈으면 없음 */}
+      {/* 제출 횟수: 왼쪽 위 작은 회색 글씨. 배경·굵은 글씨 배지는 시선이 먼저 걸려 뺌, 대비는 지킴(gray-500). 파랑은 "가깝다" 뜻이라 안 씀. 힌트·다시 내기에도 그대로 (plan.md 1). 아직 안 냈으면 없음 */}
       {attempts > 0 && (
-        <span aria-label="제출 횟수" className="absolute right-2.5 top-1.5 rounded-full bg-gray-100 px-2 text-xs font-semibold leading-5 tabular-nums text-gray-700">
+        <span aria-label="제출 횟수" className="absolute left-3 top-2 text-xs font-medium leading-5 tabular-nums text-gray-500">
           {attempts}트
         </span>
       )}
@@ -205,7 +204,7 @@ const ProgressCard: React.FC<ProgressCardProps> = ({ latest, best, end, error = 
           </div>
         ) : (
           // 처음: 폭죽 컨셉으로 첫 입력을 부른다 (문구는 여기서 고침)
-          <p className="text-xs text-gray-400">단어를 입력해서 폭죽을 채워 보세요</p>
+          <p className="text-xs text-gray-400">정답을 찾아 폭죽을 터뜨려 보세요!</p>
         )}
       </div>
 
