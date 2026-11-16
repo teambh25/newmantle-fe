@@ -150,7 +150,7 @@ async function expectSentState(d: HTMLElement) {
   });
 }
 
-/** 보내기 성공 후: 피드백 창이 닫힘 (Dec-16) */
+/** 피드백 창이 닫힘 (결과창은 제외하고 셈, Dec-18) */
 async function expectFeedbackClosed() {
   await waitFor(() => {
     const result = screen.queryByRole("dialog", { name: "게임 결과" });

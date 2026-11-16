@@ -10,10 +10,10 @@ const WEBHOOK_URL = "https://hook.eu2.make.com/ojb3ezccxcl55rqyhy3lgklp2jlqvxtg"
 /** 마지막으로 보낸 KST 날짜. 퀴즈 날짜당 1회 (Dec-2, Dec-14) */
 const SENT_DATE_KEY = "newmantle_feedback_sent_date";
 const GAME_DATA_KEY = "newmantle_game_data";
-export const FEEDBACK_MAX_LENGTH = 500;
+const FEEDBACK_MAX_LENGTH = 500;
 
 export type FeedbackEntry = "settings" | "result";
-export type FeedbackTheme = "classic" | "excel";
+type FeedbackTheme = "classic" | "excel";
 type GameStatus = "playing" | "solved" | "given_up";
 
 function readSentDate(): string | null {
