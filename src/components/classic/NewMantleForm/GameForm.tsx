@@ -23,6 +23,10 @@ interface GameFormProps {
   requestError?: string | null;
   /** 입력창 글자를 고칠 때. 요청 실패 안내를 닫는 데 쓴다 */
   onInputEdit?: () => void;
+  /** 날짜 제목과 입력창 사이 한 줄 (게임 완료 표시, docs/tasks/ui/result-box/plan.md 요구사항 4) */
+  statusBar?: React.ReactNode;
+  /** 입력 잠금: 정답·포기 뒤 결과창을 닫을 때까지 (docs/tasks/ui/result-box/plan.md 요구사항 1) */
+  inputLocked?: boolean;
 }
 
 export const GameForm: React.FC<GameFormProps> = ({
@@ -36,6 +40,8 @@ export const GameForm: React.FC<GameFormProps> = ({
   onInputTooltipDone,
   requestError = null,
   onInputEdit,
+  statusBar,
+  inputLocked = false,
 }) => {
   const {
     inputWord,
@@ -82,7 +88,7 @@ export const GameForm: React.FC<GameFormProps> = ({
                 {Array.from(reveal).map((ch, i) => (
                   <span
                     key={i}
-                    // 초성·정답 모두 파랑. 맞힘·포기 구분은 결과 상자 색이 한다
+                    // 초성·정답 모두 파랑. 맞힘·포기 구분은 결과창 색이 한다
                     className="inline-flex h-7 min-w-7 sm:h-8 sm:min-w-8 px-1 items-center justify-center rounded text-lg sm:text-xl leading-none bg-blue-100 text-blue-700"
                   >
                     {ch}
@@ -95,6 +101,7 @@ export const GameForm: React.FC<GameFormProps> = ({
           )}
         </span>
       </h2>
+      {statusBar}
       <input
         type="text"
         ref={dummyInputRef}
@@ -112,7 +119,7 @@ export const GameForm: React.FC<GameFormProps> = ({
           }}
           placeholder="단어 입력 후 엔터"
           className={`w-full pr-[112px] sm:pr-[176px] ${inputStyle}`}
-          disabled={isLoading}
+          disabled={isLoading || inputLocked}
           ref={inputRef}
           id={GAME_INPUT_ID}
           enterKeyHint="send"
@@ -127,7 +134,7 @@ export const GameForm: React.FC<GameFormProps> = ({
           <div className="hidden sm:block w-px h-5 bg-gray-200 mx-1" aria-hidden="true" />
           <Button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || inputLocked}
             aria-label="제출"
             variant="ghost"
             size="icon"

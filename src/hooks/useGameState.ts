@@ -165,10 +165,11 @@ export function useGameState(gameDate: string, theme?: string, { onRequestError 
   /**
    * 제출 결과. 실패면 error(안내 문구)와 함께 reason으로 종류를 알려 준다.
    * duplicate: 이미 제출한 단어, unknownWord: 게임 단어 목록에 없음(404), failed: 그 밖의 실패(서버·네트워크·날짜)
+   * solved: 이 제출로 게임이 처음 끝남 (정답). 결과창 자동 표시 기준 (docs/tasks/ui/result-box/plan.md 요구사항 1)
    */
   const submitWordAction = async (
     word: string
-  ): Promise<{ error?: string; reason?: "duplicate" | "unknownWord" | "failed" }> => {
+  ): Promise<{ error?: string; reason?: "duplicate" | "unknownWord" | "failed"; solved?: boolean }> => {
     try {
       if (findWordIndex(gameState.submittedWords, word) !== -1) {
         setGameState((prev) => {
@@ -216,7 +217,7 @@ export function useGameState(gameDate: string, theme?: string, { onRequestError 
         };
       });
 
-      // 축하 멘트는 결과 상자에 있으므로 토스트는 띄우지 않는다 (docs/tasks/ui/result-box/plan.md 6)
+      // 축하 멘트는 결과창에 있으므로 토스트는 띄우지 않는다 (docs/tasks/ui/result-box/plan.md)
       if (newWord.correct) {
         logEvent("Game Completed", {
           attempts: gameState.attempts + 1,
@@ -232,7 +233,9 @@ export function useGameState(gameDate: string, theme?: string, { onRequestError 
         }
       }
 
-      return {}; // success
+      // 이미 끝난 게임(정답 후·포기 후)의 추가 제출은 solved가 아니다
+      const solved = newWord.correct && !gameState.gameCompleted && !gameState.givenUp;
+      return solved ? { solved } : {}; // success
     } catch (error) {
       if (error instanceof Error) {
         if (error.message === "Invalid guess request") {
@@ -319,9 +322,10 @@ export function useGameState(gameDate: string, theme?: string, { onRequestError 
     }
   };
 
-  const giveUp = async () => {
+  /** 포기. 정답을 받아 포기 처리했으면 true (결과창 자동 표시 기준) */
+  const giveUp = async (): Promise<boolean> => {
     if (gameState.gameCompleted || gameState.givenUp || giveUpPendingRef.current) {
-      return;
+      return false;
     }
 
     giveUpPendingRef.current = true;
@@ -355,12 +359,14 @@ export function useGameState(gameDate: string, theme?: string, { onRequestError 
         initialConsonantHintUsed: gameState.initialConsonantHintUsed,
         theme,
       });
+      return true;
     } catch (error) {
       console.error("정답 가져오기 실패:", error);
       notifyRequestError("giveUp", {
         title: "정답 가져오기 실패",
         description: "정답을 가져오는 중 오류가 발생했습니다. 다시 시도해주세요.",
       });
+      return false;
     } finally {
       giveUpPendingRef.current = false;
       setGiveUpPending(false);

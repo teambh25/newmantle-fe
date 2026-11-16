@@ -5,7 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import WordTable, { VISIBLE_HISTORY_COUNT } from "./WordTable";
 import ProgressCard, { type GameEnd, type LatestRow, type TopRowTone } from "./ProgressCard";
 import { GameForm } from "./GameForm";
-import { GameResult } from "./GameResult";
+import { FeedbackDialog, ResultDialog, ResultStrip } from "./GameResult";
 import { compareByRank, useGameState, type GameRequestKind } from "@/hooks/useGameState";
 import { logEvent } from "@/utils/amplitude";
 import { useGameDate } from "@/hooks/useGameDate";
@@ -25,14 +25,18 @@ const REQUEST_ERROR_MESSAGES: Record<GameRequestKind | "submit", string> = {
 };
 /** 어떤 요청이든 연속으로 이만큼 실패하면 서버 문제로 보고 토스트 (progress-card/plan.md 3) */
 const SERVER_TROUBLE_FAILURES = 2;
+/** 정답·포기 후 결과창을 여는 지연 (ms). 화면을 보며 정한다 */
+const RESULT_OPEN_DELAY_MS = 700;
 
 interface NewMantleFormProps {
   /** 첫 입력 유도 말풍선 (docs/tasks/ui/input/plan.md 2). 순서는 메인이 정한다 */
   showInputTooltip?: boolean;
   onInputTooltipDone?: () => void;
+  /** 결과창 열림 상태를 메인에 알린다 (헤더 로그인 강조, docs/tasks/ui/result-box/plan.md 요구사항 8) */
+  onResultOpenChange?: (open: boolean) => void;
 }
 
-export default function NewMantleForm({ showInputTooltip = false, onInputTooltipDone }: NewMantleFormProps = {}) {
+export default function NewMantleForm({ showInputTooltip = false, onInputTooltipDone, onResultOpenChange }: NewMantleFormProps = {}) {
   const gameDate = useGameDate();
   const [displayDate, setDisplayDate] = useState("");
   const [showAllWords, setShowAllWords] = useState(false);
@@ -44,6 +48,11 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
   const [submitNotice, setSubmitNotice] = useState<{ word: string; tone: "unknown" | "failed" } | null>(null);
   // 방금 다시 낸 이미 제출한 단어. 맨 위 줄이 이 단어일 때만 반복 아이콘 (docs/tasks/ui/input/plan.md 3)
   const [repeatedWord, setRepeatedWord] = useState<string | null>(null);
+  const [resultOpen, setResultOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  // 정답·포기 순간부터 결과창을 닫을 때까지 입력창 잠금 (요구사항 1)
+  const [inputLocked, setInputLocked] = useState(false);
+  const resultTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { toast } = useToast();
   // 힌트·초성 힌트·포기 실패 안내. 토스트 대신 입력창 아래에 띄운다 (docs/tasks/ui/input/plan.md 3)
   const [requestError, setRequestError] = useState<string | null>(null);
@@ -65,6 +74,35 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
   const startRequest = (request: () => void) => () => {
     setRequestError(null);
     request();
+  };
+
+  // 결과창은 정답·포기 그 순간에만 자동으로 연다. 꽃가루와 제목의 정답이 먼저 보이게 짧게 늦춘다 (docs/tasks/ui/result-box/plan.md 요구사항 1)
+  const openResultSoon = () => {
+    if (resultTimerRef.current) clearTimeout(resultTimerRef.current);
+    setInputLocked(true);
+    resultTimerRef.current = setTimeout(() => setResultOpen(true), RESULT_OPEN_DELAY_MS);
+  };
+  // 어떤 방법으로 닫든(계속 플레이·X·바깥·ESC) 입력창을 다시 연다
+  const handleResultOpenChange = (open: boolean) => {
+    setResultOpen(open);
+    if (!open) setInputLocked(false);
+  };
+  useEffect(() => () => {
+    if (resultTimerRef.current) clearTimeout(resultTimerRef.current);
+  }, []);
+  useEffect(() => {
+    onResultOpenChange?.(resultOpen);
+  }, [resultOpen, onResultOpenChange]);
+
+  // 피드백은 결과창을 닫고 연다 (모달을 겹치지 않는다, 요구사항 3)
+  const openFeedback = () => {
+    handleResultOpenChange(false);
+    setFeedbackOpen(true);
+  };
+  // 이 피드백 창은 결과창에서만 열린다. 닫으면(보냈든 안 보냈든) 결과창으로 돌아간다 (docs/tasks/ui/feedback/decision.md Dec-18)
+  const handleFeedbackOpenChange = (open: boolean) => {
+    setFeedbackOpen(open);
+    if (!open) setResultOpen(true);
   };
 
   useEffect(() => {
@@ -154,6 +192,9 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
     setSubmitNotice(null);
     failuresRef.current = 0;
   }, [topKey]);
+  // 결과창 정보: 시도 횟수와 제출 기록에 저장된 정답 정보 (요구사항 6)
+  const resultAttempts = gameLogic.solvedAttempts ?? gameLogic.correctAttempts;
+  const answerInfo = gameLogic.sortedWords.find((w) => w.correct)?.answer ?? null;
 
   const handleCopyLink = async () => {
     const baseUrl = window.location.origin;
@@ -227,13 +268,18 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
     // PC는 게임 영역(결과 상자·단어 목록)을 480px로 가운데에, 입력창은 그보다 조금 좁은 420px. 모바일은 화면 폭 그대로 (docs/tasks/ui/input/plan.md 1)
     <div className="w-full max-w-2xl sm:max-w-[480px] sm:mx-auto">
       <div className="flex flex-col items-center mx-0">
-        <GameResult
-          givenUp={gameLogic.givenUp}
-          gameCompleted={gameLogic.gameCompleted}
-          solvedAttempts={gameLogic.solvedAttempts}
-          correctAttempts={gameLogic.correctAttempts}
-          onShare={handleCopyLink}
-        />
+        {gameOver && (
+          <ResultDialog
+            open={resultOpen}
+            onOpenChange={handleResultOpenChange}
+            givenUp={gameLogic.givenUp}
+            attempts={resultAttempts}
+            answer={answerInfo}
+            onShare={handleCopyLink}
+            onFeedback={openFeedback}
+          />
+        )}
+        <FeedbackDialog open={feedbackOpen} onOpenChange={handleFeedbackOpenChange} />
 
         {sharedAttempts !== null && (
           <CompetitiveBar
@@ -260,6 +306,7 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
             setPendingWord(null);
             // 임시 줄은 응답과 함께 바꾼다. 요청 전에 지우면 직전 단어가 방금 입력 칸으로 잠깐 돌아온다 (V-13)
             setSubmitNotice(null);
+            if (res.solved) openResultSoon();
             // 없는 단어·제출 실패는 목록 맨 위 임시 줄로. 입력창은 없는 단어면 비우고 placeholder 안내, 실패면 단어를 남기고 빨간 배경 (docs/tasks/ui/input/plan.md 3)
             if (res.reason === "duplicate") setRepeatedWord(word);
             // 없는 단어: 안내는 카드 배너, 입력창은 비움 (오류로 돌려주지 않음, progress-card/plan.md 3)
@@ -282,6 +329,12 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
           onInputTooltipDone={onInputTooltipDone}
           requestError={requestError}
           onInputEdit={() => setRequestError(null)}
+          inputLocked={inputLocked}
+          statusBar={
+            gameOver ? (
+              <ResultStrip givenUp={gameLogic.givenUp} attempts={resultAttempts} onReopen={() => setResultOpen(true)} />
+            ) : null
+          }
           hintButton={
             <HintButton
               onHintRequest={startRequest(gameLogic.requestHint)}
@@ -295,7 +348,9 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
           }
           giveUpButton={
             <GiveUpButton
-              onGiveUp={startRequest(gameLogic.giveUp)}
+              onGiveUp={startRequest(async () => {
+                if (await gameLogic.giveUp()) openResultSoon();
+              })}
               disabled={
                 gameLogic.gameCompleted ||
                 gameLogic.givenUp ||

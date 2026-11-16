@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import NoticeBanner from "@/components/classic/NoticeBanner";
 import ClassicFooter from "@/components/classic/Footer";
 import RuleIntroModal from "@/components/classic/RuleIntroModal";
@@ -37,6 +38,8 @@ export default function Home() {
   // 말풍선은 한 번에 하나: 모달 → 입력창 말풍선 → 헤더 말풍선 (docs/tasks/ui/input/plan.md 2)
   const showInputTooltip = ruleModal.closed && inputTooltip.show;
   const hideHeaderTooltip = !ruleModal.closed || !inputTooltip.done;
+  // 결과창이 열린 동안 헤더 로그인 버튼 강조 (docs/tasks/ui/result-box/plan.md 요구사항 8)
+  const [resultOpen, setResultOpen] = useState(false);
 
   // hydration 전(localStorage 읽기 전)에는 아무것도 렌더링하지 않아 디자인 깜빡임(FOUC) 방지
   if (!mounted) {
@@ -200,14 +203,15 @@ export default function Home() {
                 </Link>
                 <StatsLink hideTooltip={hideHeaderTooltip} />
                 <SettingsButton theme={theme} onThemeChange={setTheme} variant="classic" />
-                {/* 로그인은 오른쪽 끝 (docs/tasks/ui/header/plan.md 3). 첫 방문 모달·입력창 말풍선이 끝나기 전에는 헤더 말풍선을 숨긴다 (docs/tasks/rule/plan.md M-6, docs/tasks/ui/input/plan.md 2) */}
-                <AuthButton hideTooltip={hideHeaderTooltip} tooltipAlign="end" />
+                {/* 로그인은 오른쪽 끝 (docs/tasks/ui/header/plan.md 3). 첫 방문 모달·입력창 말풍선이 끝나기 전에는 헤더 말풍선을 숨긴다 (docs/tasks/rule/plan.md M-6, docs/tasks/ui/input/plan.md 2). 결과창이 열려 있으면 로그인 강조 (docs/tasks/ui/result-box/plan.md) */}
+                <AuthButton hideTooltip={hideHeaderTooltip} tooltipAlign="end" spotlight={resultOpen} />
               </div>
             </div>
             <div className="w-full max-w-2xl flex-grow flex flex-col">
               <ClassicNewMantleForm
                 showInputTooltip={showInputTooltip}
                 onInputTooltipDone={inputTooltip.dismiss}
+                onResultOpenChange={setResultOpen}
               />
             </div>
           </main>

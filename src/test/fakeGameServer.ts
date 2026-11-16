@@ -36,7 +36,7 @@ const flush = () => new Promise<void>((r) => setTimeout(r, 0));
 
 export const ANSWER = {
   word: "정답",
-  tag: "명사",
+  tag: "감정",
   description: "테스트용 정답",
 };
 

@@ -18,7 +18,8 @@
 | `input/` | 입력창 버튼, 첫 입력 유도 말풍선·말풍선 순서, 제출 결과 안내(없는 단어·요청 실패·이미 낸 단어) | E, I, Y, K |
 | `word-list/` | 단어 목록(방금 입력 칸·기록 표), 순위 단계, 힌트 단어, 날짜·정답 제목, 보이는 개수. 다음 단계 계획 `rank-track.md` | W, G |
 | `progress-card/` | 진행 상황 카드 (방금 입력 칸을 카드 + 가로 게이지로) | PC |
-| `result-box/` | 게임이 끝났을 때 결과 상자 | R, H-2 |
+| `result-box/` | 게임이 끝났을 때 결과창 모달, 메인 완료 표시, 결과창이 열린 동안 헤더 로그인 강조 | R, H-2 |
+| `feedback/` | 피드백 창 (설정 메뉴·결과창 공통, classic·excel) | F |
 | `notices/` | `/notices` 페이지, 새 공지 띠, 읽음 처리, 공지 색 | NT |
 | `footer/` | 푸터 정리, 원작 출처 | (규칙 작업 N-4-1) |
 | `giveup-dialog/` | 포기 확인 창 | (힌트·포기 작업 B-2) |
@@ -48,7 +49,8 @@ mock 정책은 `src/test/README.md`와 같다. Supabase는 가짜 클라이언�
 
 | 파일 | 케이스 |
 | --- | --- |
-| `src/app/page.test.tsx` | L, T, H, I, R-1·R-2, NT-5 ~ 8·10, 푸터 |
+| `src/app/page.test.tsx` | L, T, H, I, R, NT-5 ~ 8·10, 푸터 |
+| `src/app/feedback.test.tsx` | F |
 | `src/app/stats/page.test.tsx` | L-3, T-2 |
 | `src/app/notices/page.test.tsx` | NT-9 |
 | `src/hooks/useGameState.test.ts` | R-3 |
@@ -60,4 +62,4 @@ mock 정책은 `src/test/README.md`와 같다. Supabase는 가짜 클라이언�
 | `src/utils/notifications.test.ts` | NT-1 ~ NT-4 |
 | `src/app/dev/faults.test.ts` | DV |
 
-가짜 서버(`src/test/fakeGameServer.ts`)에는 없는 단어(404)를 이 작업에서 추가했다.
+가짜 서버(`src/test/fakeGameServer.ts`)에는 없는 단어(404)를 이 작업에서 추가했다. 피드백 웹훅은 가짜 웹훅(`src/test/fakeFeedbackWebhook.ts`)으로 가로챈다.

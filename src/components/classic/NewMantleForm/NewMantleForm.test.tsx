@@ -27,16 +27,8 @@ const input = () => screen.getByRole("textbox");
 const submitButton = () => screen.getByRole("button", { name: /제출/ });
 const dialog = () => screen.queryByRole("dialog");
 
-/** 포기 결과가 화면에 표시됐는지 */
-const givenUpShown = () => screen.queryAllByText(/포기하셨습니다/).length > 0;
-/** 결과 창에 표시된 시도 횟수 */
-function resultAttempts(): number | null {
-  const withNumber = screen
-    .queryAllByText(/포기하셨습니다|맞히셨네요/)
-    .map((el) => el.textContent?.match(/\d+/)?.[0])
-    .find(Boolean);
-  return withNumber ? Number(withNumber) : null;
-}
+/** 게임 결과가 표시됐는지: 결과창(이름 "게임 결과" dialog)이 열려 있음 (docs/tasks/ui/result-box/plan.md) */
+const givenUpShown = () => screen.queryByRole("dialog", { name: "게임 결과" }) !== null;
 
 /** 확인 창의 선택지 (X 닫기 버튼 제외) */
 function dialogOptions() {
@@ -64,6 +56,16 @@ async function submitWord(user: User, word: string, rank?: number) {
   await waitFor(() => expect(input()).toBeEnabled());
 }
 
+/** 정답 제출 → 결과창이 열리면 닫고 게임 화면으로 (결과창을 닫을 때까지 입력창이 잠긴다) */
+async function submitAnswer(user: User) {
+  const before = gameServer.count("guess");
+  await user.type(input(), ANSWER.word);
+  await user.click(submitButton());
+  await waitFor(() => expect(gameServer.count("guess")).toBe(before + 1));
+  await closeResultDialog(user);
+  expect(input()).toBeEnabled();
+}
+
 async function openGiveUpDialog(user: User) {
   await user.click(giveUpButton());
   await waitFor(() => expect(dialog()).toBeInTheDocument());
@@ -76,10 +78,22 @@ async function takeConsonantHint(user: User) {
   await waitFor(() => expect(giveUpButton()).toBeEnabled());
 }
 
-async function giveUpViaDialog(user: User) {
+/** 게임이 끝나면 잠시 뒤 열리는 결과창 (docs/tasks/ui/result-box/plan.md) */
+const findResultDialog = () => screen.findByRole("dialog", { name: "게임 결과" }, { timeout: 3000 });
+
+/** 결과창을 닫고 게임 화면으로 돌아간다 (열려 있는 동안 바깥 버튼은 aria-hidden) */
+async function closeResultDialog(user: User) {
+  await user.click(within(await findResultDialog()).getByRole("button", { name: /close/i }));
+  await waitFor(() => expect(screen.queryByRole("dialog", { name: "게임 결과" })).not.toBeInTheDocument());
+}
+
+/** 포기 → 결과창에 포기 결과가 뜰 때까지. 기본은 결과창을 닫고 게임 화면으로 돌아온다 */
+async function giveUpViaDialog(user: User, { keepResultOpen = false } = {}) {
   await openGiveUpDialog(user);
   await user.click(dialogOptions().giveUp!);
-  await waitFor(() => expect(givenUpShown()).toBe(true));
+  await findResultDialog();
+  expect(givenUpShown()).toBe(true);
+  if (!keepResultOpen) await closeResultDialog(user);
 }
 
 /** 방금 입력 칸 = 진행 상황 카드 (docs/tasks/ui/progress-card/plan.md 4) */
@@ -294,7 +308,7 @@ describe("C. 포기", () => {
   it("C-3-1: 정답을 맞힌 뒤 포기 버튼은 비활성이고, 눌러도 안내·확인 창이 뜨지 않음", async () => {
     const { user } = await setup();
     await submitWord(user, "아무말", -1);
-    await submitWord(user, ANSWER.word);
+    await submitAnswer(user);
     expect(giveUpButton()).toBeDisabled();
     await user.click(giveUpButton());
     expect(dialog()).not.toBeInTheDocument();
@@ -304,9 +318,11 @@ describe("C. 포기", () => {
   it("C-4-3: 입력 3개 후 포기 → 결과 창 3, 공유 링크 shared_attempts=3, 공유 이벤트 시도 횟수 3", async () => {
     const { user } = await setup();
     for (const w of ["하나", "둘", "셋"]) await submitWord(user, w, -1);
-    await giveUpViaDialog(user);
+    await giveUpViaDialog(user, { keepResultOpen: true });
 
-    expect(resultAttempts()).toBe(3);
+    // 결과창에 시도 횟수 3이 보임 (다른 숫자와 붙어 있지 않은 3)
+    const result = screen.getByRole("dialog", { name: "게임 결과" });
+    expect(within(result).getByText(/(^|\D)3(\D|$)/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /공유하기/ }));
     const link = await waitFor(async () => {
@@ -345,7 +361,7 @@ describe("D. 공통 / 예외", () => {
   it("D-1-2: 2번째에 정답 후 → 힌트·포기 버튼 비활성, 입력창·제출 버튼 활성", async () => {
     const { user } = await setup();
     await submitWord(user, "아무말", -1);
-    await submitWord(user, ANSWER.word);
+    await submitAnswer(user);
     expect(hintButton()).toBeDisabled();
     expect(giveUpButton()).toBeDisabled();
     expect(input()).toBeEnabled();
@@ -410,7 +426,9 @@ describe("D. 공통 / 예외", () => {
     expect(dialog()).not.toBeInTheDocument();
 
     await held.release();
-    await waitFor(() => expect(givenUpShown()).toBe(true));
+    await findResultDialog();
+    expect(givenUpShown()).toBe(true);
+    await closeResultDialog(user);
     expect(giveUpButton()).toBeDisabled();
     expect(gameServer.count("give-up")).toBe(1);
   });
@@ -481,8 +499,12 @@ describe("D. 공통 / 예외", () => {
     await giveUpViaDialog(first.user);
     first.unmount();
 
-    await setup();
+    const { user } = await setup();
+    // 새로고침 후에는 결과창이 자동으로 열리지 않으므로 다시 보기로 확인한다
+    await user.click(screen.getByRole("button", { name: /결과창 보기/ }));
+    await findResultDialog();
     expect(givenUpShown()).toBe(true);
+    await closeResultDialog(user);
     expect(hintButton()).toBeDisabled();
     expect(giveUpButton()).toBeDisabled();
   });
@@ -490,7 +512,7 @@ describe("D. 공통 / 예외", () => {
   it("D-4-3: 2번째에 정답 후 새로고침 → 힌트·포기 버튼 비활성", async () => {
     const first = await setup();
     await submitWord(first.user, "아무말", -1);
-    await submitWord(first.user, ANSWER.word);
+    await submitAnswer(first.user);
     first.unmount();
 
     await setup();
@@ -847,7 +869,7 @@ describe("W-5. 구분선 위", () => {
 
   it("W-5-4: 100위·500위 뒤 정답 → 줄 순서 정답, 100위, 500위", async () => {
     const user = await twoWords();
-    await submitWord(user, ANSWER.word);
+    await submitAnswer(user);
     await waitFor(() => expect(bodyRows()).toHaveLength(3));
     rowOrder(ANSWER.word);
   });
@@ -1128,7 +1150,7 @@ describe("PC. 진행 상황 카드", () => {
   it("PC-4-1: 500위 뒤 정답 → 말풍선에 정답, 정답 자리는 맞힘", async () => {
     const { user } = await setup();
     await submitWord(user, "사과", 500);
-    await submitWord(user, ANSWER.word);
+    await submitAnswer(user);
     await waitFor(() => expect(bubble().textContent).toContain(ANSWER.word));
     expect(endIcon(END_SOLVED)).toBeInTheDocument();
   });
@@ -1144,7 +1166,7 @@ describe("PC. 진행 상황 카드", () => {
   it("PC-4-3: 정답 뒤 100위 → 말풍선에 100위 단어, 정답 자리는 맞힘 그대로, 미터 끝까지 그대로", async () => {
     const { user } = await setup();
     await submitWord(user, "사과", 500);
-    await submitWord(user, ANSWER.word);
+    await submitAnswer(user);
     await waitFor(() => expect(endIcon(END_SOLVED)).toBeInTheDocument());
     const before = meterValue();
     await submitWord(user, "바나나", 100);
@@ -1159,7 +1181,7 @@ describe("PC. 진행 상황 카드", () => {
     const { user } = await setup();
     await submitWord(user, "사과", 500);
     const before = meterValue();
-    await submitWord(user, ANSWER.word);
+    await submitAnswer(user);
     await waitFor(() => expect(endIcon(END_SOLVED)).toBeInTheDocument());
     expect(meterValue()).toBe(100);
     expect(before).toBeLessThan(100);

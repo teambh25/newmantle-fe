@@ -5,7 +5,7 @@ import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { StrictMode } from "react";
 import Home from "./page";
-import { gameServer } from "@/test/fakeGameServer";
+import { ANSWER, gameServer } from "@/test/fakeGameServer";
 import { notifications } from "@/static/notifications";
 import { getLatestNotification } from "@/utils/notifications";
 import { getKSTDateString } from "@/utils/date";
@@ -333,7 +333,7 @@ function storeToday(extra: Record<string, unknown>) {
   );
 }
 
-describe("헤더 말풍선 자동 닫힘 / 결과 상자 로그인 안내 (docs/tasks/ui/header/verification.md H-1, result-box/verification.md H-2)", () => {
+describe("헤더 말풍선 자동 닫힘 / 헤더 로그인 링크 (docs/tasks/ui/header/verification.md H-1, result-box/verification.md H-2)", () => {
   const STATS_TOOLTIP_DISMISSED_KEY = "stats-tooltip-dismissed";
   const statsTooltip = () => screen.queryByRole("button", { name: "통계 안내 닫기", hidden: true });
   const logIn = () => {
@@ -390,18 +390,6 @@ describe("헤더 말풍선 자동 닫힘 / 결과 상자 로그인 안내 (docs/
     });
   });
 
-  it("H-2-1: 비로그인, 정답 맞힘 → 로그인 링크는 헤더 1개뿐 (결과 상자 링크 뺌)", async () => {
-    storeToday({});
-    await renderHome();
-    expect(loginLinks()).toHaveLength(1);
-  });
-
-  it("H-2-2: 비로그인, 포기함 → 로그인 링크는 헤더 1개뿐", async () => {
-    storeToday({ givenUp: true });
-    await renderHome();
-    expect(loginLinks()).toHaveLength(1);
-  });
-
   it("H-2-3: 로그인, 정답 맞힘 → 로그인 링크 없음", async () => {
     logIn();
     storeToday({});
@@ -415,42 +403,303 @@ describe("헤더 말풍선 자동 닫힘 / 결과 상자 로그인 안내 (docs/
   });
 });
 
-describe("결과 상자 (docs/tasks/ui/result-box/verification.md R)", () => {
-  const resultBox = () => screen.findByRole("region", { name: "게임 결과" });
+describe("결과창 모달 (docs/tasks/ui/result-box/verification.md R)", () => {
+  /** 결과창 (이름 "게임 결과"인 dialog) */
+  const resultDialog = () => screen.queryByRole("dialog", { name: "게임 결과" });
+  const findResultDialog = () => screen.findByRole("dialog", { name: "게임 결과" }, { timeout: 3000 });
+  const reopenButton = () => screen.queryByRole("button", { name: /결과창 보기/ });
+  const gameInput = () => screen.getByRole("textbox");
+  /** 실제 시간을 흘려보낸다 (setTimeout은 가짜가 아님) */
+  const wait = (ms: number) => act(() => new Promise<void>((r) => setTimeout(r, ms)));
+
+  /** 오늘 정답 맞힘 / 포기 저장. 정답 항목에 서버 정답 정보(answer)가 들어 있다 */
+  function storeFinished({ givenUp = false } = {}) {
+    storeToday({
+      submittedWords: [
+        { word: ANSWER.word, similarity: 100, rank: 0, attempt: 2, correct: true, answer: ANSWER },
+        { word: "사과", similarity: 10, rank: 500, attempt: 1, correct: false },
+      ],
+      ...(givenUp ? { givenUp: true } : {}),
+    });
+  }
+
+  async function submit(user: User, word: string) {
+    const before = gameServer.count("guess");
+    await user.type(gameInput(), `${word}{Enter}`);
+    await waitFor(() => expect(gameServer.count("guess")).toBe(before + 1));
+  }
+
+  async function openFromMain(user: User) {
+    await user.click(await screen.findByRole("button", { name: /결과창 보기/ }));
+    return findResultDialog();
+  }
+
+  async function closeResult(user: User) {
+    await user.click(within(screen.getByRole("dialog", { name: "게임 결과" })).getByRole("button", { name: /close/i }));
+    await waitFor(() => expect(resultDialog()).not.toBeInTheDocument());
+  }
 
   beforeEach(() => {
     localStorage.setItem(MODAL_SEEN_KEY, "1");
+    setPlayed();
   });
 
-  it("R-1-1: 정답 맞힘 → 결과 상자 안에 공유·피드백 버튼", async () => {
-    storeToday({});
-    await renderHome();
-    const box = await resultBox();
-    expect(within(box).getByRole("button", { name: /공유하기/ })).toBeInTheDocument();
-    expect(within(box).getByRole("button", { name: /피드백/ })).toBeInTheDocument();
+  describe("R-1. 자동 표시", () => {
+    it("R-1-4: 정답 제출 → 결과창이 열림", async () => {
+      const { user } = await renderHome();
+      await submit(user, ANSWER.word);
+      expect(await findResultDialog()).toBeInTheDocument();
+    });
+
+    it("R-1-5: 응답 직후 제목에 정답이 보일 때는 결과창이 없고, 잠시 뒤 열림", async () => {
+      const { user } = await renderHome();
+      await submit(user, ANSWER.word);
+      // 제목에 정답이 보이는 시점 (스크린 리더용 한 단어)
+      await waitFor(() => expect(screen.getAllByText(ANSWER.word).length).toBeGreaterThan(0));
+      expect(resultDialog()).not.toBeInTheDocument();
+      expect(await findResultDialog()).toBeInTheDocument();
+    });
+
+    it("R-1-6: 포기 확인 → 확인 창이 닫히고 결과창만 열림", async () => {
+      const { user } = await renderHome();
+      await user.click(screen.getByRole("button", { name: "포기" }));
+      const confirm = await screen.findByRole("dialog");
+      await user.click(within(confirm).getByRole("button", { name: /포기하고/ }));
+      await findResultDialog();
+      expect(screen.getAllByRole("dialog")).toHaveLength(1);
+    });
+
+    it("R-1-7: 오늘 정답 맞힘 저장 → 진입 시 자동으로 열리지 않고, 결과 다시 보기 버튼이 있음", async () => {
+      storeFinished();
+      await renderHome();
+      expect(await screen.findByRole("button", { name: /결과창 보기/ })).toBeInTheDocument();
+      await wait(1500);
+      expect(resultDialog()).not.toBeInTheDocument();
+    });
+
+    it("R-1-8: 오늘 포기 저장 → 진입 시 자동으로 열리지 않고, 결과 다시 보기 버튼이 있음", async () => {
+      storeFinished({ givenUp: true });
+      await renderHome();
+      expect(await screen.findByRole("button", { name: /결과창 보기/ })).toBeInTheDocument();
+      await wait(1500);
+      expect(resultDialog()).not.toBeInTheDocument();
+    });
+
+    it("R-1-9: 정답으로 열린 결과창을 닫고 단어를 더 제출 → 표에 추가되고 결과창은 다시 열리지 않음", async () => {
+      const { user } = await renderHome();
+      await submit(user, ANSWER.word);
+      await findResultDialog();
+      await closeResult(user);
+
+      await submit(user, "바나나");
+      // 진행 상황 카드와 기록 표 두 곳에 보인다
+      expect((await screen.findAllByText("바나나")).length).toBeGreaterThan(0);
+      await wait(1500);
+      expect(resultDialog()).not.toBeInTheDocument();
+    });
+
+    it("R-1-10: 정답 제출 → 결과창이 열리기 전엔 입력창 잠금, 닫으면 풀림", async () => {
+      const { user } = await renderHome();
+      await submit(user, ANSWER.word);
+      await waitFor(() => expect(screen.getAllByText(ANSWER.word).length).toBeGreaterThan(0));
+      expect(resultDialog()).not.toBeInTheDocument();
+      expect(gameInput()).toBeDisabled();
+
+      await findResultDialog();
+      await closeResult(user);
+      expect(gameInput()).toBeEnabled();
+    });
+
+    it("R-1-11: 포기 확인 → 결과창이 열리기 전엔 입력창 잠금, 계속 플레이로 풀림", async () => {
+      const { user } = await renderHome();
+      await user.click(screen.getByRole("button", { name: "포기" }));
+      const confirm = await screen.findByRole("dialog");
+      await user.click(within(confirm).getByRole("button", { name: /포기하고/ }));
+      await waitFor(() => expect(gameServer.count("give-up")).toBe(1));
+      await waitFor(() => expect(screen.getAllByText(ANSWER.word).length).toBeGreaterThan(0));
+      expect(resultDialog()).not.toBeInTheDocument();
+      expect(gameInput()).toBeDisabled();
+
+      const d = await findResultDialog();
+      await user.click(within(d).getByRole("button", { name: /순위권 단어/ }));
+      await waitFor(() => expect(resultDialog()).not.toBeInTheDocument());
+      expect(gameInput()).toBeEnabled();
+    });
+    it("R-1-12: 포기 요청 실패 → 입력창이 잠기지 않고 결과창도 열리지 않음", async () => {
+      const { user } = await renderHome();
+      gameServer.failNext("give-up");
+      await user.click(screen.getByRole("button", { name: "포기" }));
+      const confirm = await screen.findByRole("dialog");
+      await user.click(within(confirm).getByRole("button", { name: /포기하고/ }));
+      await waitFor(() => expect(gameServer.count("give-up")).toBe(1));
+      await waitFor(() => expect(screen.getByRole("button", { name: "포기" })).toBeEnabled());
+      expect(gameInput()).toBeEnabled();
+      await wait(1500);
+      expect(resultDialog()).not.toBeInTheDocument();
+    });
   });
 
-  it("R-1-2: 포기함 → 결과 상자 안에 공유·피드백 버튼", async () => {
-    storeToday({ givenUp: true });
-    await renderHome();
-    const box = await resultBox();
-    expect(within(box).getByRole("button", { name: /공유하기/ })).toBeInTheDocument();
-    expect(within(box).getByRole("button", { name: /피드백/ })).toBeInTheDocument();
+  describe("R-2. 결과창 구성", () => {
+    it("R-2-1: 결과창 안에 정답 투표 버튼이 없음", async () => {
+      storeFinished();
+      const { user } = await renderHome();
+      const d = await openFromMain(user);
+      expect(within(d).queryByRole("button", { name: /좋았다/ })).not.toBeInTheDocument();
+      expect(within(d).queryByRole("button", { name: /별로였다/ })).not.toBeInTheDocument();
+    });
+
+    it.each([
+      ["R-2-2", "정답 맞힘", false],
+      ["R-2-3", "포기", true],
+    ])("%s: %s → 결과창 안에 정답 단어·카테고리·설명, 공유하기·피드백·계속 플레이 버튼", async (_id, _label, givenUp) => {
+      storeFinished({ givenUp });
+      const { user } = await renderHome();
+      const d = await openFromMain(user);
+      expect(within(d).getAllByText(new RegExp(ANSWER.word)).length).toBeGreaterThan(0);
+      expect(within(d).getByText(new RegExp(ANSWER.tag))).toBeInTheDocument();
+      expect(within(d).getByText(new RegExp(ANSWER.description))).toBeInTheDocument();
+      expect(within(d).getByRole("button", { name: /공유하기/ })).toBeInTheDocument();
+      expect(within(d).getByRole("button", { name: /피드백/ })).toBeInTheDocument();
+      expect(within(d).getByRole("button", { name: /순위권 단어/ })).toBeInTheDocument();
+    });
+
+    it("R-2-4: 비로그인 → 결과창 안에 /login 링크가 없음", async () => {
+      storeFinished();
+      const { user } = await renderHome();
+      const d = await openFromMain(user);
+      const links = within(d).queryAllByRole("link").filter((a) => a.getAttribute("href") === "/login");
+      expect(links).toHaveLength(0);
+    });
   });
 
-  it("R-1-3: 결과 상자의 피드백 버튼 → 피드백 창이 열림", async () => {
-    storeToday({});
-    const { user } = await renderHome();
-    await user.click(within(await resultBox()).getByRole("button", { name: /피드백/ }));
-    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+  describe("R-3. 닫기와 다시 보기", () => {
+    it("R-3-2: 계속 플레이 → 결과창이 닫히고 입력창을 쓸 수 있음", async () => {
+      storeFinished();
+      const { user } = await renderHome();
+      const d = await openFromMain(user);
+      await user.click(within(d).getByRole("button", { name: /순위권 단어/ }));
+      await waitFor(() => expect(resultDialog()).not.toBeInTheDocument());
+      expect(gameInput()).toBeEnabled();
+    });
+
+    it.each([
+      ["X", async (user: User) => {
+        await user.click(within(screen.getByRole("dialog", { name: "게임 결과" })).getByRole("button", { name: /close/i }));
+      }],
+      ["ESC", async (user: User) => {
+        await user.keyboard("{Escape}");
+      }],
+      ["바깥 클릭", async (user: User) => {
+        await user.click(document.body);
+      }],
+    ])("R-3-3: %s → 결과창이 닫힘", async (_label, close) => {
+      storeFinished();
+      const { user } = await renderHome();
+      await openFromMain(user);
+      await close(user);
+      await waitFor(() => expect(resultDialog()).not.toBeInTheDocument());
+    });
+
+    it("R-3-4: 다시 보기 → 닫기를 두 번 해도 게임 기록이 그대로이고 서버 요청이 없음", async () => {
+      storeFinished();
+      const { user } = await renderHome();
+      await screen.findByRole("button", { name: /결과창 보기/ });
+      const saved = localStorage.getItem("newmantle_game_data");
+      const requests = gameServer.requests.length;
+
+      for (let i = 0; i < 2; i++) {
+        await openFromMain(user);
+        await closeResult(user);
+      }
+      expect(localStorage.getItem("newmantle_game_data")).toBe(saved);
+      expect(gameServer.requests.length).toBe(requests);
+    });
   });
 
-  it("R-2-1: 정답 맞힘 → 정답 투표 버튼이 없음", async () => {
-    storeToday({});
-    await renderHome();
-    await screen.findByRole("button", { name: /공유하기/ });
-    expect(screen.queryByRole("button", { name: /좋았다/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /별로였다/ })).not.toBeInTheDocument();
+  describe("R-4. 피드백", () => {
+    it("R-4-1, R-4-2: 피드백 → 결과창은 닫히고 피드백 창만 열림, 피드백 창을 닫으면 결과창이 다시 열림", async () => {
+      storeFinished();
+      const { user } = await renderHome();
+      const d = await openFromMain(user);
+      await user.click(within(d).getByRole("button", { name: /피드백/ }));
+
+      // R-4-1
+      await waitFor(() => expect(resultDialog()).not.toBeInTheDocument());
+      const dialogs = await screen.findAllByRole("dialog");
+      expect(dialogs).toHaveLength(1);
+
+      // R-4-2 (feedback/decision.md Dec-18)
+      await user.click(within(dialogs[0]).getByRole("button", { name: /close/i }));
+      expect(await findResultDialog()).toBeInTheDocument();
+      expect(screen.getAllByRole("dialog")).toHaveLength(1);
+    });
+  });
+
+  describe("R-6. 헤더 로그인 강조", () => {
+    /** 헤더 로그인 링크 (결과창이 열리면 바깥은 aria-hidden) */
+    const headerLogin = () =>
+      screen.getAllByRole("link", { hidden: true }).find((a) => a.getAttribute("href") === "/login")!;
+
+    it("R-6-1, R-6-2: 결과 다시 보기 → 헤더 로그인에 말풍선, 닫으면 사라짐", async () => {
+      storeFinished();
+      const { user } = await renderHome();
+      expect(headerLogin()).not.toHaveAccessibleDescription();
+
+      await openFromMain(user);
+      await waitFor(() => expect(headerLogin()).toHaveAccessibleDescription());
+
+      await closeResult(user);
+      await waitFor(() => expect(headerLogin()).not.toHaveAccessibleDescription());
+    });
+
+    it("R-6-3: 정답 제출로 결과창이 자동으로 열리면 헤더 로그인에 말풍선", async () => {
+      const { user } = await renderHome();
+      await submit(user, ANSWER.word);
+      await findResultDialog();
+      await waitFor(() => expect(headerLogin()).toHaveAccessibleDescription());
+    });
+
+    it("R-6-5: 결과창이 열린 채 헤더 로그인을 누르면 결과창이 먼저 닫히지 않고 링크에 클릭이 전달됨", async () => {
+      storeFinished();
+      const { user } = await renderHome();
+      await openFromMain(user);
+      const link = headerLogin();
+      let clicked = false;
+      // jsdom은 페이지 이동을 하지 않으므로 클릭이 링크에 닿았는지만 본다
+      link.addEventListener("click", (e) => {
+        clicked = true;
+        e.preventDefault();
+      });
+      await user.click(link);
+      expect(clicked).toBe(true);
+      await wait(300);
+      expect(resultDialog()).toBeInTheDocument();
+    });
+
+    it("R-6-4: 결과창이 열리면 기존 로그인 말풍선은 숨김", async () => {
+      storeFinished();
+      const { user } = await renderHome();
+      expect(await screen.findByRole("button", { name: "로그인 안내 닫기" })).toBeInTheDocument();
+
+      await openFromMain(user);
+      await waitFor(() => expect(loginTooltip()).not.toBeInTheDocument());
+    });
+  });
+
+  describe("R-5. 메인 화면", () => {
+    it("R-5-1: 게임 진행 중 → 결과 다시 보기 버튼이 없음", async () => {
+      await renderHome();
+      expect(reopenButton()).not.toBeInTheDocument();
+    });
+
+    it("R-5-2: 오늘 정답 맞힘 저장, 결과창을 열지 않음 → 메인에 결과 영역·공유·피드백 버튼이 없음", async () => {
+      storeFinished();
+      await renderHome();
+      await screen.findByRole("button", { name: /결과창 보기/ });
+      expect(screen.queryByRole("region", { name: "게임 결과" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /공유하기/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /피드백/ })).not.toBeInTheDocument();
+    });
   });
 });
 

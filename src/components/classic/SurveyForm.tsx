@@ -1,101 +1,47 @@
 "use client";
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { ThumbsUp, ThumbsDown } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { logEvent } from "@/utils/amplitude";
+import { FeedbackEntry, useFeedback } from "@/hooks/useFeedback";
 
-const SurveyForm: React.FC = () => {
-  const [voted, setVoted] = useState<boolean | null>(null);
-  const [feedback, setFeedback] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+// 피드백 창 내용 (docs/tasks/ui/feedback/plan.md). 투표 없이 바로 입력, KST 날짜당 1회
+const SurveyForm: React.FC<{ entry: FeedbackEntry }> = ({ entry }) => {
+  const { text, setText, sent, canSend, submit, maxLength } = useFeedback({
+    entry,
+    theme: "classic",
+  });
 
-  const handleVote = (isPositive: boolean) => {
-    logEvent("Survey Vote", {
-      vote: isPositive ? "positive" : "negative",
-      theme: "simple",
-    });
-    setVoted(isPositive);
-  };
-
-  const handleSubmitFeedback = async () => {
-    setIsSubmitting(true);
-    try {
-      const response = await fetch(
-        "https://hook.eu2.make.com/ojb3ezccxcl55rqyhy3lgklp2jlqvxtg",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            feedback,
-            timestamp: new Date().toISOString(),
-          }),
-        }
-      );
-      if (response.ok) {
-        logEvent("Feedback Submitted", { feedback, theme: "simple" });
-        setFeedback("");
-        alert("피드백이 제출되었습니다. 감사합니다!");
-      } else {
-        throw new Error("피드백 제출에 실패했습니다.");
-      }
-    } catch (error) {
-      console.error("Error submitting feedback:", error);
-      alert("피드백 제출 중 오류가 발생했습니다. 다시 시도해 주세요.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  if (sent) {
+    return (
+      <div role="status" className="w-full max-w-2xl py-4 text-center">
+        <p className="font-semibold text-gray-800">의견 보내주셔서 고마워요!</p>
+        <p className="mt-1 text-sm text-gray-500">
+          더 나은 게임을 만드는 데 활용할게요.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-2xl">
-      <h2 className="text-xl font-bold mb-4 text-gray-800 text-left">
-        게임이 재미있었나요?
-      </h2>
-      <div className="flex justify-center space-x-4">
-        <Button
-          variant={voted === true ? "default" : "outline"}
-          onClick={() => handleVote(true)}
-          disabled={voted !== null}
-        >
-          <ThumbsUp className="mr-2 h-4 w-4" /> 재밌다
-        </Button>
-        <Button
-          variant={voted === false ? "default" : "outline"}
-          onClick={() => handleVote(false)}
-          disabled={voted !== null}
-        >
-          <ThumbsDown className="mr-2 h-4 w-4" /> 재미없다
-        </Button>
-      </div>
-      {voted === false && (
-        <div className="mt-4">
-          <p className="mb-2 text-center">어떤 점이 별로였나요?</p>
-          <p className="mb-2 text-center text-xs">
-            피드백은 게임 개선에 큰 도움이 됩니다.
-          </p>
-          <Input
-            value={feedback}
-            onChange={(e) => setFeedback(e.target.value)}
-            placeholder="여기에 의견을 작성해주세요."
-            className="mb-2"
-          />
-          <Button
-            onClick={handleSubmitFeedback}
-            disabled={!feedback.trim() || isSubmitting}
-            className="w-full"
-          >
-            {isSubmitting ? "제출 중..." : "피드백 제출"}
-          </Button>
-        </div>
-      )}
-      {voted === true && (
-        <p className="mt-4 text-center text-sm text-gray-500">
-          투표해 주셔서 감사합니다!
-        </p>
-      )}
+      <p className="mb-3 text-sm text-gray-600">
+        불편한 점, 바라는 점 무엇이든 적어주세요. 보내주신 의견은 게임을 개선하는 데 큰 도움이
+        돼요.
+      </p>
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        maxLength={maxLength}
+        rows={4}
+        aria-label="피드백 내용"
+        placeholder={"예) 오늘 정답 단어 재밌었어요\n유사도 순위가 이상해요\n이런 기능이 있으면 좋겠어요\n버그를 발견했어요"}
+        className="w-full resize-none rounded-md border border-input bg-white px-3 py-2 text-base sm:text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+      />
+      <p className="mb-2 text-right text-xs text-gray-400">
+        {text.length}/{maxLength}
+      </p>
+      <Button onClick={submit} disabled={!canSend} className="w-full">
+        보내기
+      </Button>
     </div>
   );
 };
