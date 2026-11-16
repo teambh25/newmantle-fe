@@ -67,7 +67,7 @@ export const notifications: Notification[] = [
     title: "UI 전면 개편",
     content:
       "게임 화면이 새롭게 바뀌었어요! 더 깔끔하고 직관적인 화면에서 뉴맨틀을 즐겨보세요",
-    date: "2026-10-30",
-    type: "incident",
+    date: "2026-11-17",
+    type: "update",
   },
 ];
