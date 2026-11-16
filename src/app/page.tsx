@@ -14,12 +14,10 @@ import Link from "next/link";
 import AuthButton from "@/components/AuthButton";
 import StatsLink from "@/components/StatsLink";
 import NicknameSetupModal from "@/components/NicknameSetupModal";
-import { BarChart3, CircleHelp } from "lucide-react";
+import { CircleHelp } from "lucide-react";
 
 // Excel Components
-import ExcelGameDescription from "@/components/excel/GameDescription";
-import ExcelNotificationFeed from "@/components/excel/NotificationFeed";
-import ExcelHelpSection from "@/components/excel/HelpSection";
+import ExcelSheetTabs from "@/components/excel/SheetTabs";
 import ExcelFooter from "@/components/excel/Footer";
 
 const ClassicNewMantleForm = dynamic(() => import("@/components/classic/NewMantleForm"), {
@@ -29,6 +27,10 @@ const ClassicNewMantleForm = dynamic(() => import("@/components/classic/NewMantl
 const ExcelNewMantleForm = dynamic(() => import("@/components/excel/NewMantleForm"), {
   ssr: false,
 });
+
+/** excel 시트에서 게임 아래 빈 행의 시작 번호와 개수 */
+const SHEET_FILLER_START = 20;
+const SHEET_FILLER_ROWS = 40;
 
 export default function Home() {
   const { theme, setTheme, mounted } = useUITheme();
@@ -58,7 +60,7 @@ export default function Home() {
           <header className="w-full bg-[#217346] text-white px-4 py-2 flex items-center justify-between shrink-0 shadow-sm relative z-50">
              <div className="flex items-center space-x-4">
                <Link href="/" className="font-bold text-base flex items-center hover:opacity-80 transition-opacity">
-                 뉴맨틀 - 단어 추측 게임.xlsx
+                 newmantle_word_game.xlsx
                </Link>
                <nav className="hidden md:flex space-x-4 text-sm opacity-90">
                  <span className="cursor-pointer hover:opacity-100">File</span>
@@ -72,14 +74,7 @@ export default function Home() {
                </nav>
              </div>
              <div className="flex items-center space-x-4">
-               <AuthButton />
-               <Link 
-                 href="/stats" 
-                 className="w-8 h-8 flex items-center justify-center border border-gray-300 bg-[#f3f2f1] text-[#217346] hover:bg-[#e1dfdd] rounded-sm transition-all" 
-                 title="통계"
-               >
-                 <BarChart3 size={20} />
-               </Link>
+               <AuthButton variant="excel" />
                <SettingsButton theme={theme} onThemeChange={setTheme} variant="excel" />
              </div>
           </header>
@@ -131,50 +126,23 @@ export default function Home() {
 
                   <ExcelNewMantleForm />
                   
-                  <ExcelHelpSection startRow={20} />
-
-                  {/* Spacer 28, 29 */}
-                  <div className="excel-row bg-white">
-                    <div className="sheet-cell-header">28</div>
-                    <div className="excel-cell h-6 border-b-0"></div>
-                    <div className="excel-cell h-6 border-b-0"></div>
-                    <div className="excel-cell h-6 border-b-0"></div>
-                    <div className="excel-cell h-6 border-b-0"></div>
-                  </div>
-                  <div className="excel-row bg-white">
-                    <div className="sheet-cell-header">29</div>
-                    <div className="excel-cell h-6 border-b-0"></div>
-                    <div className="excel-cell h-6 border-b-0"></div>
-                    <div className="excel-cell h-6 border-b-0"></div>
-                    <div className="excel-cell h-6 border-b-0"></div>
-                  </div>
-
-                  <ExcelNotificationFeed startRow={30} />
-
-                  {/* Empty rows filler */}
-                  {[...Array(20)].map((_, i) => (
+                  {/* 게임 아래는 시트 느낌용 빈 행. 도움말·공지 목록은 규칙·공지사항 탭으로 옮겼다 (specs/excel-ui Dec-13) */}
+                  {Array.from({ length: SHEET_FILLER_ROWS }, (_, i) => (
                     <div key={i} className="excel-row bg-white">
-                      <div className="sheet-cell-header">{40 + i}</div>
+                      <div className="sheet-cell-header">{SHEET_FILLER_START + i}</div>
                       <div className="excel-cell h-6 border-b-0"></div>
                       <div className="excel-cell h-6 border-b-0"></div>
                       <div className="excel-cell h-6 border-b-0"></div>
                       <div className="excel-cell h-6 border-b-0"></div>
                     </div>
                   ))}
-                  <div className="w-full flex justify-center py-6">
-                    <ExcelGameDescription />
-                  </div>
                 </div>
               </div>
             </div>
           </main>
 
-          {/* Tab selector bar */}
-          <div className="bg-[#f3f2f1] border-t border-gray-300 px-4 flex items-center space-x-4 text-sm shrink-0 h-8">
-            <div className="flex bg-white px-5 h-full items-center border-t-2 border-[#217346] text-[#217346] font-bold shadow-[0_-2px_5px_rgba(0,0,0,0.05)]">
-              게임
-            </div>
-          </div>
+          <ExcelSheetTabs />
+          <ExcelFooter />
         </div>
       ) : (
         /* ──────────── 클래식 UI ──────────── */

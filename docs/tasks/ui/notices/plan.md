@@ -2,7 +2,7 @@
 
 메인 하단의 공지 전체 목록을 `/notices` 페이지로 옮기고, 메인에는 안 읽은 새 공지를 알리는 띠만 둔다. 내력은 `decision.md`.
 
-- 범위: classic. excel 테마는 그대로 (`docs/todo/excel.md`)
+- 범위: classic. excel 테마는 그대로 (`specs/excel-ui/plan.md`)
 - Amplitude 이벤트는 추가하지 않는다 (Amplitude 개편 때 함께)
 
 ## 1. `/notices` 페이지

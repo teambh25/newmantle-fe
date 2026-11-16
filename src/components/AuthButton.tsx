@@ -12,13 +12,24 @@ interface AuthButtonProps {
     tooltipAlign?: 'center' | 'end'
     /** 결과창이 열린 동안 로그인 버튼을 어두운 배경 위로 띄우고 저장 안내 말풍선 (docs/tasks/ui/result-box/plan.md 요구사항 8) */
     spotlight?: boolean
+    /** excel은 녹색 헤더 위라 옆 아이콘 버튼과 같은 밝은 버튼 + 녹색 글씨 (specs/excel-ui Dec-16) */
+    variant?: 'classic' | 'excel'
+}
+
+const LOGIN_STYLE = {
+    classic: 'rounded-md bg-blue-600 text-white hover:bg-blue-700',
+    excel: 'rounded-sm border border-gray-300 bg-[#f3f2f1] text-[#217346] hover:bg-[#e1dfdd]',
+}
+const NAME_STYLE = {
+    classic: 'text-gray-900',
+    excel: 'text-white',
 }
 
 const SPOTLIGHT_TOOLTIP_ID = 'login-spotlight-tooltip'
 /** 결과창이 이 표시가 붙은 요소를 누를 때는 바깥 클릭으로 닫히지 않는다 (GameResult.tsx) */
 export const SPOTLIGHT_ATTR = 'data-result-spotlight'
 
-export default function AuthButton({ hideTooltip = false, tooltipAlign = 'center', spotlight = false }: AuthButtonProps) {
+export default function AuthButton({ hideTooltip = false, tooltipAlign = 'center', spotlight = false, variant = 'classic' }: AuthButtonProps) {
     const { user, displayName, isLoading } = useAuthUser()
     const [showTooltip, setShowTooltip] = useState(false)
 
@@ -45,7 +56,7 @@ export default function AuthButton({ hideTooltip = false, tooltipAlign = 'center
     // 로그아웃은 설정 메뉴에 있다 (docs/tasks/ui/header/plan.md 1). 헤더에는 닉네임만, 길면 말줄임
     return user ? (
         <span
-            className="flex items-center text-sm text-gray-900 font-medium whitespace-nowrap min-w-0"
+            className={`flex items-center text-sm ${NAME_STYLE[variant]} font-medium whitespace-nowrap min-w-0`}
             title={`${displayName}님`}
         >
             <span className="truncate max-w-[7rem]">{displayName}</span>님
@@ -57,7 +68,7 @@ export default function AuthButton({ hideTooltip = false, tooltipAlign = 'center
                 href="/login"
                 aria-describedby={spotlightVisible ? SPOTLIGHT_TOOLTIP_ID : undefined}
                 {...(spotlightVisible ? { [SPOTLIGHT_ATTR]: '' } : {})}
-                className={`text-sm px-3 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition font-semibold whitespace-nowrap ${spotlightVisible ? 'relative z-[60] pointer-events-auto ring-2 ring-white shadow-[0_0_18px_6px_rgba(147,197,253,0.75)]' : ''}`}
+                className={`text-sm px-3 py-1.5 ${LOGIN_STYLE[variant]} transition font-semibold whitespace-nowrap ${spotlightVisible ? 'relative z-[60] pointer-events-auto ring-2 ring-white shadow-[0_0_18px_6px_rgba(147,197,253,0.75)]' : ''}`}
             >
                 로그인
             </a>

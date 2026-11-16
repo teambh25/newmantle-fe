@@ -5,6 +5,8 @@ import { getKSTDateString } from "@/utils/date";
 import { RULE_MODAL_SEEN_KEY } from "@/hooks/useRuleIntroModal";
 import { SCENARIOS, Scenario } from "./fixtures";
 import { TARGET_LABELS, writeFaults, type FaultTarget } from "./faults";
+import { markLatestNoticeSeen } from "@/hooks/useLastSeenNotice";
+import { LAST_SEEN_NOTICE_KEY } from "@/utils/notifications";
 
 const GAME_KEY = "newmantle_game_data";
 const FAULT_TARGETS = Object.keys(TARGET_LABELS) as FaultTarget[];
@@ -39,6 +41,14 @@ function seed(s: Scenario) {
       firstActionAt: Date.now(),
     }),
   );
+  localStorage.setItem(RULE_MODAL_SEEN_KEY, "1");
+  goHome();
+}
+
+/** 최신 공지를 안 읽음(마지막 본 id를 0으로) 또는 읽음으로 두고 메인으로. classic 띠, excel 상태 표시줄 알림 확인용 */
+function setNoticeUnread(unread: boolean) {
+  if (unread) localStorage.setItem(LAST_SEEN_NOTICE_KEY, "0");
+  else markLatestNoticeSeen();
   localStorage.setItem(RULE_MODAL_SEEN_KEY, "1");
   goHome();
 }
@@ -97,6 +107,15 @@ export default function DevPanel() {
         {/* 연속 2번 실패하면 서버 문제 토스트 (progress-card/plan.md 3) */}
         <button onClick={() => armFaults(["guess", "guess"])} className={ROW}>
           단어 제출 2번 연속 실패 (토스트)
+        </button>
+      </Section>
+
+      <Section title="새 공지" description="누르면 최신 공지를 안 읽음 / 읽음으로 두고 메인으로 이동합니다. 안 읽음이면 classic은 맨 위 띠, excel은 상태 표시줄 왼쪽에 알림이 뜹니다.">
+        <button onClick={() => setNoticeUnread(true)} className={ROW}>
+          최신 공지 안 읽음으로
+        </button>
+        <button onClick={() => setNoticeUnread(false)} className={ROW}>
+          최신 공지 읽음으로
         </button>
       </Section>
     </main>

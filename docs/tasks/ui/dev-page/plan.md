@@ -16,6 +16,9 @@
    - 한 번 실패하면 꺼짐
    - 연속 실패 버튼: 단어 제출이 다음 두 번 연속 실패. 연속 실패 토스트 확인용 (`progress-card/plan.md` 3, 2026-11-16)
    - 힌트·초성 힌트·포기 실패는 기록을 비우고 시작 (가짜 목록에 20위 안 단어가 있으면 힌트 버튼이 꺼져 있어서)
+3-1. 새 공지: 최신 공지를 안 읽음 / 읽음으로 두고 메인으로 (2026-11-17, `specs/excel-ui` Dec-28)
+   - 안 읽음은 마지막 본 공지 id를 `0`으로, 읽음은 최신 공지 id로 저장 (`newmantle_last_seen_notification_id`)
+   - classic 맨 위 공지 띠, excel 상태 표시줄 왼쪽 알림 확인용
 4. 개발 서버의 모든 화면 왼쪽 아래에 DEV 표시를 두고 눌러서 `/dev`로 돌아간다. 실패가 대기 중이면 무엇인지도 보여주고 바로 취소할 수 있다
 5. 개발 서버에서만 동작. 배포 빌드에는 페이지도, 응답을 바꾸는 코드도 들어가지 않는다
    - `next.config.mjs`가 개발 서버(phase `PHASE_DEVELOPMENT_SERVER`)일 때만 `*.dev.tsx`를 페이지로 인식. 빌드·배포에는 경로 자체가 없음 (`next build` 경로 목록에서 확인)
@@ -24,6 +27,6 @@
 
 ## 코드
 
-- `src/app/dev/page.dev.tsx`, `DevPanel.tsx`, `fixtures.ts`: 페이지, 시나리오 (1, 2)
+- `src/app/dev/page.dev.tsx`, `DevPanel.tsx`, `fixtures.ts`: 페이지, 시나리오, 새 공지 (1, 2, 3-1)
 - `src/app/dev/faults.ts`: 실패 주입 판별 (3)
 - `src/app/dev/DevTools.tsx`, `DevBadge.tsx`, `src/app/layout.tsx`: DEV 표시, 개발 전용 분기 (4, 5)

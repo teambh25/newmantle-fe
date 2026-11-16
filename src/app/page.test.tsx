@@ -130,12 +130,6 @@ describe("첫 방문 안내 모달", () => {
     expect(localStorage.getItem(MODAL_SEEN_KEY)).not.toBeNull();
   });
 
-  it("excel 테마에서는 모달이 열리지 않음", async () => {
-    localStorage.setItem("newmantle-ui-theme", "excel");
-    await renderHome();
-    expect(dialog()).not.toBeInTheDocument();
-  });
-
   it("비로그인 첫 방문 시 모달이 열려 있는 동안 로그인 말풍선이 없고, 닫은 뒤 보임", async () => {
     // 입력해 본 적 없으면 입력창 말풍선이 먼저라 로그인 말풍선이 뒤로 밀린다 (docs/tasks/ui/input/plan.md 2).
     // 모달 → 로그인 말풍선 순서(docs/tasks/rule/plan.md M-6)는 입력해 본 기존 유저 기준으로 확인한다
@@ -198,15 +192,6 @@ describe("로그아웃 위치", () => {
     await openSettings(user);
     expect(screen.getByRole("radiogroup")).toBeInTheDocument(); // 설정 메뉴가 열렸는지
     expect(logoutButton()).not.toBeInTheDocument();
-  });
-
-  it("excel 테마에서도 로그인하면 설정 메뉴에 로그아웃이 있음", async () => {
-    localStorage.setItem("newmantle-ui-theme", "excel");
-    logIn();
-    const { user } = await renderHome();
-    expect(logoutButton()).not.toBeInTheDocument();
-    await openSettings(user);
-    expect(await screen.findByRole("button", { name: "로그아웃" })).toBeInTheDocument();
   });
 });
 

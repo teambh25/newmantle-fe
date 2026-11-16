@@ -4,7 +4,7 @@ import { getKSTDateString } from "@/utils/date";
 
 /** 마지막으로 본 공지 id */
 export const LAST_SEEN_NOTICE_KEY = "newmantle_last_seen_notification_id";
-/** 이전 방식의 마지막 확인 시각 (ISO). excel 공지 목록이 아직 쓴다 */
+/** 이전 방식의 마지막 확인 시각 (ISO). 지금은 쓰지 않고, 이 값만 있는 기존 유저의 읽음 판단에만 읽는다 */
 export const LEGACY_NOTICE_CHECK_KEY = "newmantle_last_notification_check";
 
 const FIRST_VISIT_DAYS = 3;

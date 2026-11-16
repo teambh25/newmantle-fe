@@ -2,7 +2,7 @@
 
 공지 페이지 분리(`notices/`)와 같이 진행. 내력은 `decision.md`.
 
-- 범위: classic. excel 푸터·`GameDescription`은 그대로 (`docs/todo/excel.md`)
+- 범위: classic. excel 푸터·`GameDescription`은 그대로 (`specs/excel-ui/plan.md`)
 
 ## 1. 원작 출처: 푸터 맨 아래 한 줄
 
