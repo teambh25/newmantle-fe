@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useToast } from "@/components/ui/use-toast";
 import WordTable from "./WordTable";
 import { GameForm } from "./GameForm";
 import { GameResult } from "./GameResult";
@@ -11,57 +10,25 @@ import { useGameDate } from "@/hooks/useGameDate";
 import HintButton from "../HintButton";
 import GiveUpButton from "../GiveUpButton";
 import CompetitiveBar from "@/components/CompetitiveBar";
-import { fetchSharerStats } from "@/utils/api";
-import { createClient } from "@/utils/supabase/client";
+import { useShareLink } from "@/hooks/useShareLink";
 
 export default function NewMantleForm() {
   const gameDate = useGameDate();
   const [displayDate, setDisplayDate] = useState("");
   const [showAllWords, setShowAllWords] = useState(false);
-  const [sharedAttempts, setSharedAttempts] = useState<number | null>(null);
-  const [sharerHintCount, setSharerHintCount] = useState<number | null>(null);
-  const [isLoadingSharerStats, setIsLoadingSharerStats] = useState(false);
   const [pendingWord, setPendingWord] = useState<string | null>(null);
-  const { toast } = useToast();
   const gameLogic = useGameState(gameDate, "excel");
+  // 공유 링크 읽기·보내기는 classic과 같은 훅 (specs/excel-ui Dec-2)
+  const { sharedAttempts, sharerHintCount, isLoadingSharerStats, share: handleCopyLink } = useShareLink({
+    gameDate,
+    attempts: gameLogic.correctAttempts,
+    theme: "excel",
+  });
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && gameDate) {
-      const params = new URLSearchParams(window.location.search);
-      const sharedDate = params.get("game_date");
-      
-      // 공유된 링크의 날짜가 현재 게임 날짜와 다르면 무시 (이전 날짜 파라미터가 남는 엣지 케이스 방지)
-      if (sharedDate && sharedDate !== gameDate) {
-        return;
-      }
-
-      const shared = params.get("shared_attempts");
-      if (shared && !isNaN(parseInt(shared))) {
-        setSharedAttempts(parseInt(shared));
-      }
-
-      const sharerType = params.get("sharer_type") as "guest" | "user" | null;
-      const sharerId = params.get("sharer_id");
-      const fetchDate = sharedDate ?? gameDate;
-      if (sharerType && sharerId && fetchDate) {
-        setIsLoadingSharerStats(true);
-        fetchSharerStats(sharerType, sharerId, fetchDate)
-          .then((stats) => setSharerHintCount(stats.hint_count))
-          .catch(() => {})
-          .finally(() => setIsLoadingSharerStats(false));
-      }
-
-      // 파라미터를 읽은 후 URL을 클린하게 정리
-      if (params.has("shared_attempts") || params.has("sharer_id")) {
-        history.replaceState(null, "", window.location.pathname);
-      }
-    }
-  }, [gameDate]);
 
   useEffect(() => {
     if (gameDate) {
@@ -78,69 +45,6 @@ export default function NewMantleForm() {
       theme: "excel",
     });
     gameLogic.setAnswerSurveyVoted(isPositive);
-  };
-
-  const handleCopyLink = async () => {
-    const baseUrl = window.location.origin;
-
-    const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    let sharerId: string | null = null;
-    let sharerType: "guest" | "user" = "guest";
-    if (session?.user?.id) {
-      sharerId = session.user.id;
-      sharerType = "user";
-    } else {
-      sharerId = localStorage.getItem('newmantle_guest_id');
-    }
-
-    const utmParams = new URLSearchParams({
-      utm_source: "newmantle",
-      utm_medium: "share",
-      utm_campaign: "game_completion",
-      shared_attempts: gameLogic.correctAttempts.toString(),
-      game_date: gameDate,
-      ...(sharerId ? { sharer_type: sharerType, sharer_id: sharerId } : {}),
-    });
-    const link = `${baseUrl}?${utmParams.toString()}`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          url: link,
-        });
-        logEvent("Result Shared", {
-          method: "Native Share",
-          attempts: gameLogic.correctAttempts,
-          theme: "excel",
-        });
-        return;
-      } catch (err) {
-        if ((err as Error).name === "AbortError") return;
-      }
-    }
-
-    navigator.clipboard.writeText(link).then(
-      () => {
-        toast({
-          title: "링크가 복사되었습니다!",
-          description: "친구들에게 공유해보세요.",
-        });
-        logEvent("Result Shared", {
-          method: "Link Copy",
-          attempts: gameLogic.correctAttempts,
-          theme: "excel",
-        });
-      },
-      () => {
-        toast({ title: "링크 복사 실패", variant: "destructive" });
-        logEvent("Share Error", {
-          method: "Link Copy",
-          errorType: "Clipboard Write Failed",
-          theme: "excel",
-        });
-      }
-    );
   };
 
   const showGameResult = gameLogic.gameCompleted || gameLogic.givenUp;

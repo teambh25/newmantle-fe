@@ -79,7 +79,7 @@
 선택 — B
 근거 — 예외 상황이라 따로 디자인하지 않아도 된다. 지금 excel 동작과도 같다
 영향 — Phase 3
-상태 — active
+상태 — superseded by Dec-31
 
 ### Dec-7. 목록 임시 줄과 반복 표시
 영향도: local · 출처: user-suggested
@@ -362,4 +362,40 @@
 선택 — A
 근거 — 데스크톱에서는 툴팁으로 설명이 이미 보인다. B·C는 입력줄 레이아웃을 함께 바꿔야 해서 비용이 크다. 모바일에는 툴팁이 없다는 한계는 그대로 남는다
 영향 — Dec-17, Dec-21
+상태 — active
+
+### Dec-30. 공용 훅의 경계
+영향도: significant · 출처: ai-selected
+
+문제 — classic 컴포넌트의 로직 중 무엇을 공용 훅으로 옮기고, 무엇을 classic에 남기나?
+옵션
+  (A) 화면 로직 전부를 훅 하나로 옮긴다 (결과창 지연·입력 잠금·피드백 창 전환, 실패 안내와 연속 실패 토스트 포함)
+  (B) 두 테마가 실제로 같이 쓰는 것만 훅 두 개로 옮긴다. `useGameBoard`(제출 중 줄, 임시 줄, 반복 표시, `buildBoard`, 결과 정보)와 `useShareLink`(공유 링크 진입·생성). 결과창 모달 흐름과 실패 안내·연속 실패 토스트는 classic에 남긴다
+선택 — B
+근거 — excel은 결과창 모달이 없고(Dec-3) 실패는 기본 토스트를 쓴다(Dec-6). 그래서 그 로직을 훅에 넣으면 excel이 쓰지 않는 상태가 생긴다. classic만의 처리는 훅의 `onTopChange`(연속 실패 수 초기화)와 제출 결과를 받아서 붙인다. 공유는 게임판과 관심사가 달라 따로 둔다
+영향 — Phase 2, Phase 3 (`src/hooks/useGameBoard.ts`, `src/hooks/useShareLink.ts`)
+상태 — superseded by Dec-32
+
+### Dec-31. 실패 안내 방식 (변경)
+영향도: significant · 출처: user-suggested
+
+문제 — 힌트·포기·제출 실패를 excel에서도 classic처럼 화면 안에 표시하고, 연속으로 실패하면 토스트를 띄우나?
+옵션
+  (A) classic과 같게: 화면 안 안내 + 연속 2회 실패 시 서버 문제 토스트
+  (B) 기본 토스트 유지 (Dec-6)
+선택 — A
+근거 — 실패 안내도 게임 동작의 일부라 두 테마가 같게 동작하는 편이 낫다. 힌트·초성 힌트·포기 실패는 방금 입력 행에, 제출 실패는 임시 줄(Dec-7)에 표시한다
+영향 — Phase 2 (실패 처리도 공용 훅으로), Phase 3, Dec-6을 대체, Dec-30
+상태 — active
+
+### Dec-32. 공용 훅의 경계 (변경)
+영향도: significant · 출처: ai-suggested
+
+문제 — 실패 안내도 두 테마가 같게 동작하기로 하면서(Dec-31), 공용 훅의 경계를 어떻게 바꾸나?
+옵션
+  (A) Dec-30 구조를 유지하고, 실패 처리는 excel에 복사한다
+  (B) `useGameBoard`를 `useGameScreen(gameDate, theme)`으로 바꾼다. 이 훅이 `useGameState`를 직접 부르고, 실패 안내·연속 실패 토스트까지 맡는다. classic에는 결과창 모달 흐름(지연, 입력 잠금, 피드백 창 전환)만 남긴다
+선택 — B
+근거 — 실패 알림 콜백(`onRequestError`)은 `useGameState`를 부를 때 넘겨야 해서, 공용 훅이 `useGameState` 바깥에 있으면 연결이 테마마다 반복된다. A는 실패 처리가 두 벌이 된다. 공유(`useShareLink`)는 그대로 따로 둔다
+영향 — Phase 2, Phase 3 (`src/hooks/useGameScreen.ts`), Dec-30을 대체
 상태 — active

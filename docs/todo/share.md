@@ -22,7 +22,7 @@
 
 | 역할 | 위치 |
 | --- | --- |
-| 링크 생성 / 링크 진입 처리 | `src/components/classic/NewMantleForm/index.tsx`, `src/components/excel/NewMantleForm/index.tsx` |
+| 링크 생성 / 링크 진입 처리 | `src/hooks/useShareLink.ts` (classic·excel 공용) |
 | 친구 비교 바 | `src/components/CompetitiveBar.tsx` |
 | 공유자 기록 조회 | `fetchSharerStats` (`src/utils/api.ts`), `SharerStats` (`src/types/stats.ts`) |
 | 테스트 | `NewMantleForm.test.tsx` C-4-3, C-4-4 (classic만) |
