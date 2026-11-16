@@ -75,23 +75,27 @@ const LABEL_GAP = 2;
 const overlaps = (a: LabelBox, b: LabelBox) =>
   a.left < b.right + LABEL_GAP && b.left < a.right + LABEL_GAP && a.top < b.bottom && b.top < a.bottom;
 
+/** 기본 우선순위: 마지막(지금 최고) → 처음 → 나머지는 최근 것부터 */
+function defaultOrder(n: number): number[] {
+  if (n === 0) return [];
+  const order = [n - 1];
+  if (n > 1) order.push(0);
+  for (let i = n - 2; i >= 1; i--) order.push(i);
+  return order;
+}
+
 /**
- * 단어마다 보일지 (Dec-47). 마지막(지금 최고)은 늘, 처음 것은 마지막과 안 겹치면,
- * 나머지는 최근 것부터 이미 보이는 것과 안 겹치면 보인다. 높이가 달라 안 겹치면 둘 다 보인다
+ * 단어마다 보일지 (Dec-47, Dec-83). 우선순위대로 이미 보이는 것과 안 겹치면 보인다. 높이가 달라 안 겹치면 둘 다 보인다.
+ * order를 안 주면 마지막(지금 최고)은 늘, 처음 것은 마지막과 안 겹치면, 나머지는 최근 것부터
  */
-export function visibleLabels(boxes: LabelBox[]): boolean[] {
+export function visibleLabels(boxes: LabelBox[], order: number[] = defaultOrder(boxes.length)): boolean[] {
   const shown = boxes.map(() => false);
   const placed: LabelBox[] = [];
-  const tryShow = (i: number) => {
-    if (placed.some((p) => overlaps(p, boxes[i]))) return;
+  for (const i of order) {
+    if (placed.some((p) => overlaps(p, boxes[i]))) continue;
     shown[i] = true;
     placed.push(boxes[i]);
-  };
-  const n = boxes.length;
-  if (n === 0) return shown;
-  tryShow(n - 1);
-  if (n > 1) tryShow(0);
-  for (let i = n - 2; i >= 1; i--) tryShow(i);
+  }
   return shown;
 }
 
@@ -110,4 +114,29 @@ export function chartTicks(points: ChartPoint[]): typeof CHART_TICKS {
   if (points.length === 0) return CHART_TICKS.slice(0, 1);
   const top = chartTopLevel(points);
   return CHART_TICKS.filter((t) => t.level <= top);
+}
+
+/** 점이 몇 번째 구간인지: 1 = 999~301위 … 5 = 20~1위 (눈금선 기준) */
+const bandOf = (p: ChartPoint) => CHART_TICKS.filter((t) => t.level <= p.level).length;
+
+/**
+ * 좁은 화면용 점 줄이기 (Dec-84, Dec-85). 기록 점 중
+ * - 시작점: 지금 최고(끝점) 구간 바로 아래 구간에 처음 들어간 점. 맨 아래 구간이면 맨 처음 점,
+ *   아래 구간을 건너뛰고 올라왔으면 지금 구간에 들어오기 직전 점
+ * - 끝점(지금 최고)은 늘, 중간은 시작점과 끝점 사이에서 최근 것부터 maxMiddle개까지
+ * 정답·목표 점은 그대로 둔다
+ */
+export function limitPoints(points: ChartPoint[], maxMiddle: number): ChartPoint[] {
+  const records = points.filter((p) => p.kind === "record");
+  if (records.length === 0) return points;
+  const endBand = bandOf(records[records.length - 1]);
+  let start = 0;
+  if (endBand > 1) {
+    const first = records.findIndex((p) => bandOf(p) >= endBand - 1);
+    start = bandOf(records[first]) === endBand ? Math.max(first - 1, 0) : first;
+  }
+  const segment = records.slice(start);
+  const middle = segment.slice(1, -1).slice(-maxMiddle);
+  const kept = new Set([segment[0], ...middle, segment[segment.length - 1]]);
+  return points.filter((p) => p.kind !== "record" || kept.has(p));
 }

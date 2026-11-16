@@ -1,6 +1,5 @@
 "use client";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import AuthButton from "@/components/AuthButton";
 import { SettingsButton } from "@/components/SettingsButton";
 import ExcelSheetTabs from "@/components/excel/SheetTabs";
@@ -30,18 +29,18 @@ export default function ExcelHome({ theme, setTheme }: ExcelHomeProps) {
       {/* Excel Ribbon Top Bar */}
       <header className="w-full bg-[#217346] text-white px-4 py-2 flex items-center justify-between shrink-0 shadow-sm relative z-50">
          <div className="flex items-center space-x-4">
-           <Link href="/" className="font-bold text-base flex items-center hover:opacity-80 transition-opacity">
-             {fileName}
-           </Link>
-           <nav className="hidden md:flex space-x-4 text-sm opacity-90">
-             <span className="cursor-pointer hover:opacity-100">File</span>
+           {/* 파일 이름: 누르는 곳이 아니라 제목 (Dec-78) */}
+           <span className="font-bold text-base flex items-center">{fileName}</span>
+           {/* 장식 메뉴: 누를 수 있어 보이지 않게 hover·포인터 없음 (specs/excel-ui Dec-78) */}
+           <nav className="hidden md:flex space-x-4 text-sm opacity-90 cursor-default" aria-hidden="true">
+             <span>File</span>
              <span className="font-bold border-b-2 border-white opacity-100 pb-0.5">Home</span>
-             <span className="cursor-pointer hover:opacity-100">Insert</span>
-             <span className="cursor-pointer hover:opacity-100">Page Layout</span>
-             <span className="cursor-pointer hover:opacity-100">Formulas</span>
-             <span className="cursor-pointer hover:opacity-100">Data</span>
-             <span className="cursor-pointer hover:opacity-100">Review</span>
-             <span className="cursor-pointer hover:opacity-100">View</span>
+             <span>Insert</span>
+             <span>Page Layout</span>
+             <span>Formulas</span>
+             <span>Data</span>
+             <span>Review</span>
+             <span>View</span>
            </nav>
          </div>
          <div className="flex items-center space-x-4">

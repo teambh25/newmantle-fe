@@ -3,6 +3,7 @@ import {
   AlignCenter,
   AlignLeft,
   AlignRight,
+  ArrowRight,
   ArrowDownUp,
   Baseline,
   Bold,
@@ -10,6 +11,7 @@ import {
   ClipboardPaste,
   Copy,
   Grid3x3,
+  Hash,
   Italic,
   Merge,
   PaintBucket,
@@ -26,6 +28,7 @@ import {
 } from "lucide-react";
 
 // 엑셀 홈 탭 리본. 장식이고, 글꼴·크기 칸 자리에만 시도 횟수를 보여 준다 (specs/excel-ui Dec-59, Dec-67)
+// 장식은 누를 수 있어 보이지 않게 hover 음영·포인터를 두지 않는다 (Dec-78)
 // 좁은 화면에서는 오른쪽 그룹부터 숨긴다
 
 /** 그룹: 위에 버튼들, 아래 작은 회색 이름, 오른쪽 구분선 */
@@ -41,8 +44,20 @@ function Group({ label, className = "", children }: { label: string; className?:
 /** 작은 아이콘 버튼 (장식) */
 function Icon({ icon: I, className = "" }: { icon: React.ElementType; className?: string }) {
   return (
-    <span className={`w-6 h-6 flex items-center justify-center rounded-sm hover:bg-gray-200 text-gray-700 ${className}`} aria-hidden="true">
+    <span className={`w-6 h-6 flex items-center justify-center text-gray-700 ${className}`} aria-hidden="true">
       <I size={15} />
+    </span>
+  );
+}
+
+/** 글자로 그린 작은 아이콘 (₩ , .0→.00 등) */
+function Glyph({ wide = false, className = "", children }: { wide?: boolean; className?: string; children: React.ReactNode }) {
+  return (
+    <span
+      className={`${wide ? "px-1" : "w-6"} h-6 flex items-center justify-center text-[11px] text-gray-700 ${className}`}
+      aria-hidden="true"
+    >
+      {children}
     </span>
   );
 }
@@ -50,7 +65,7 @@ function Icon({ icon: I, className = "" }: { icon: React.ElementType; className?
 /** 큰 아이콘 + 아래 글자 (붙여넣기, 조건부 서식 등) */
 function BigButton({ icon: I, label, color = "text-gray-700" }: { icon: React.ElementType; label: string; color?: string }) {
   return (
-    <span className="flex flex-col items-center justify-start px-1 rounded-sm hover:bg-gray-200 min-w-[2.75rem]" aria-hidden="true">
+    <span className="flex flex-col items-center justify-start px-1 min-w-[2.75rem]" aria-hidden="true">
       <I size={24} className={color} />
       <span className="text-[10px] text-gray-700 mt-0.5 leading-tight text-center whitespace-nowrap">{label}</span>
     </span>
@@ -59,7 +74,7 @@ function BigButton({ icon: I, label, color = "text-gray-700" }: { icon: React.El
 
 export default function Ribbon() {
   return (
-    <div className="w-full bg-[#f3f2f1] border-b border-gray-300 px-2 py-1.5 flex items-stretch h-[76px] shrink-0 overflow-hidden select-none">
+    <div className="w-full bg-[#f3f2f1] border-b border-gray-300 px-2 py-1.5 flex items-stretch h-[76px] shrink-0 overflow-hidden select-none cursor-default">
       <Group label="Clipboard">
         <BigButton icon={ClipboardPaste} label="Paste" />
         <div className="flex flex-col">
@@ -73,15 +88,18 @@ export default function Ribbon() {
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-1">
             {/* 글꼴·크기 칸 자리에 시도 횟수. 숫자는 게임 화면이 채우고, 채우기 전(로딩 중)에는 0 */}
-            <div className="w-24 h-6 bg-white border border-gray-300 px-2 text-[13px] flex items-center justify-between shadow-sm">
+            <div className="w-[5.5rem] h-6 bg-white border border-gray-300 pl-2 pr-1 text-[13px] flex items-center justify-between gap-1 shadow-sm whitespace-nowrap">
               <span>시도 횟수</span>
-              <ChevronDown size={12} className="text-gray-500" aria-hidden="true" />
+              <ChevronDown size={12} className="shrink-0 text-gray-500" aria-hidden="true" />
             </div>
-            <div
-              id="excel-attempts-count"
-              aria-label="제출 횟수"
-              className="w-10 h-6 bg-white border border-gray-300 px-1 text-[13px] flex items-center justify-center shadow-sm tabular-nums empty:before:content-['0']"
-            />
+            <div className="w-12 h-6 bg-white border border-gray-300 pl-1 pr-1 text-[13px] flex items-center justify-between shadow-sm">
+              <span
+                id="excel-attempts-count"
+                aria-label="제출 횟수"
+                className="flex-1 text-center font-bold text-black tabular-nums empty:before:content-['0']"
+              />
+              <ChevronDown size={12} className="shrink-0 text-gray-500" aria-hidden="true" />
+            </div>
           </div>
           <div className="flex items-center">
             <Icon icon={Bold} />
@@ -110,15 +128,25 @@ export default function Ribbon() {
       </Group>
 
       <Group label="Number" className="hidden md:flex">
+        {/* 입력칸처럼 생긴 상자는 시도 횟수만 두려고 서식 상자(General) 대신 엑셀 표시 형식 아이콘 두 줄 (Dec-79) */}
         <div className="flex flex-col gap-1">
-          <div className="w-24 h-6 bg-white border border-gray-300 px-2 text-[13px] flex items-center justify-between shadow-sm">
-            <span>General</span>
-            <ChevronDown size={12} className="text-gray-500" aria-hidden="true" />
+          <div className="flex items-center">
+            <Glyph>₩</Glyph>
+            <Icon icon={Percent} />
+            <Glyph className="font-bold">,</Glyph>
+            <Icon icon={Hash} />
           </div>
           <div className="flex items-center">
-            <Icon icon={Percent} />
-            <span className="w-6 h-6 flex items-center justify-center text-[13px] font-bold text-gray-700" aria-hidden="true">,</span>
-            <span className="w-8 h-6 flex items-center justify-center text-[10px] text-gray-700" aria-hidden="true">.00</span>
+            <Glyph wide>
+              <span className="leading-none">.0</span>
+              <ArrowRight size={9} className="mx-px" />
+              <span className="leading-none">.00</span>
+            </Glyph>
+            <Glyph wide>
+              <span className="leading-none">.00</span>
+              <ArrowRight size={9} className="mx-px" />
+              <span className="leading-none">.0</span>
+            </Glyph>
           </div>
         </div>
       </Group>

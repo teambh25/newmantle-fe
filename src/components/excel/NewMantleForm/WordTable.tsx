@@ -34,7 +34,7 @@ const WordTable: React.FC<WordTableProps> = ({ history, startIndex, selectedInde
           <div className={`sheet-cell-header ${selected ? SELECTED_HEADER : ""}`}>{index + startIndex}</div>
           <div className="excel-cell justify-center text-center">
             {/* 힌트로 받은 단어는 시도 번호 대신 "힌트" (specs/excel-ui Dec-77) */}
-            {word.attempt === -1 ? <span className="text-[13px] text-gray-500">힌트</span> : word.attempt}
+            {word.attempt === -1 ? "힌트" : word.attempt}
           </div>
           {/* 선택된 셀: 녹색 테두리 + 오른쪽 아래 채우기 핸들 (Dec-69) */}
           <div

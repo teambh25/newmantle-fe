@@ -1,7 +1,7 @@
 // 로직 레벨: excel 순위 그래프의 점과 단어 표시 (specs/excel-ui)
 import { describe, expect, it } from "vitest";
 import type { SubmittedWord } from "@/utils/api";
-import { CHART_TICKS, chartPoints, chartTicks, chartTopLevel, visibleLabels, type LabelBox } from "@/utils/rankChart";
+import { CHART_TICKS, chartPoints, chartTicks, chartTopLevel, limitPoints, visibleLabels, type LabelBox } from "@/utils/rankChart";
 
 /** 시간 순(먼저 한 것이 앞)으로 받아 저장 형태(최근 것이 앞)로 바꾼다 */
 type Step = number | "out" | "answer" | { hint: number };
@@ -139,7 +139,44 @@ describe("점 위 단어 표시", () => {
     expect(visibleLabels([box(0, 50), box(20, 0)])).toEqual([true, true]);
   });
 
+  it("우선순위를 주면 그 순서대로 자리를 잡는다", () => {
+    // 0·1·2가 모두 겹침. 1 → 2 → 0 순서면 1만 보인다
+    expect(visibleLabels([box(0), box(10), box(20)], [1, 2, 0])).toEqual([false, true, false]);
+  });
+
   it("단어가 없으면 빈 목록", () => {
     expect(visibleLabels([])).toEqual([]);
+  });
+});
+
+describe("모바일 점 개수 제한", () => {
+  const records = (points: ReturnType<typeof chartPoints>) => points.filter((p) => p.kind === "record").map((p) => p.word);
+
+  it("시작점은 지금 최고 구간 바로 아래 구간에 처음 들어간 점, 중간은 최근 것부터 정한 개수까지, 목표 점은 그대로", () => {
+    // 900·500(999~301) → 250·200·150(300~101) → 90·80·70(100~51) → 40(50~21). 아래 구간 첫 점 = 90
+    const points = limitPoints(chartPoints(history([900, 500, 250, 200, 150, 90, 80, 70, 40]), "playing"), 3);
+    expect(records(points)).toEqual(["단어5", "단어6", "단어7", "단어8"]);
+  });
+
+  it("중간 점이 많으면 최근 것부터 정한 개수까지", () => {
+    // 지금 최고 70(100~51) → 아래 구간(300~101) 첫 점 280부터
+    const points = limitPoints(chartPoints(history([900, 280, 260, 240, 220, 200, 70]), "playing"), 3);
+    expect(records(points)).toEqual(["단어1", "단어3", "단어4", "단어5", "단어6"]);
+  });
+
+  it("맨 아래 구간이면 맨 처음 점부터", () => {
+    const points = limitPoints(chartPoints(history([900, 800, 700]), "playing"), 3);
+    expect(records(points)).toEqual(["단어0", "단어1", "단어2"]);
+  });
+
+  it("아래 구간을 건너뛰고 올라왔으면 지금 구간에 들어오기 직전 점부터", () => {
+    // 900·500(999~301) → 80(100~51): 300~101 구간이 없음 → 직전 점 500부터
+    const points = limitPoints(chartPoints(history([900, 500, 80]), "playing"), 3);
+    expect(records(points)).toEqual(["단어1", "단어2"]);
+  });
+
+  it("목표 점·정답 점은 그대로", () => {
+    const points = limitPoints(chartPoints(history([900, 500, 250, 90, 15]), "playing"), 3);
+    expect(points[points.length - 1].kind).toBe("target");
   });
 });

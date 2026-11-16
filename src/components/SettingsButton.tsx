@@ -135,6 +135,15 @@ export function SettingsButton({ theme, onThemeChange, variant }: SettingsButton
             </Link>
           </div>
 
+          {/* excel 모바일: 상태 표시줄에서 뺀 약관·문의 링크. 주소는 푸터와 같게 (specs/excel-ui Dec-82) */}
+          {isExcel && (
+            <div className="sm:hidden mt-2 pt-2 border-t border-gray-100 flex flex-wrap gap-x-3 gap-y-1 px-2 text-xs text-gray-500">
+              <a href="#" className="hover:underline">이용약관</a>
+              <a href="#" className="hover:underline">개인정보처리방침</a>
+              <a href="#" className="hover:underline">문의하기</a>
+            </div>
+          )}
+
           {/* 계정: 로그인했을 때만. 회원 탈퇴 진입점도 여기에 붙인다 (docs/tasks/ui/header/plan.md 1) */}
           {user && (
             <div className="mt-2 pt-2 border-t border-gray-100">

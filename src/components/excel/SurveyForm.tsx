@@ -24,12 +24,14 @@ const SurveyForm: React.FC<SurveyFormProps> = ({ entry, startRow = 21 }) => {
       </div>
 
       {sent ? (
-        <div className="excel-row bg-white !flex">
-          <div className="sheet-cell-header flex-shrink-0">{startRow + 1}</div>
-          <div
-            role="status"
-            className="excel-cell border-r-0 justify-start font-normal text-[13px] text-[#217346] flex-grow bg-[#e6f2eb]"
-          >
+        // 보낸 뒤: 안내·입력·보내기 세 행(2~4행)을 셀 병합처럼 합쳐 감사 인사. 바탕·글자색은 평소 셀 그대로 (specs/excel-ui Dec-81)
+        <div className="flex bg-white border-b border-[#e1e1e1]">
+          <div className="flex flex-col flex-shrink-0">
+            <div className="sheet-cell-header min-h-[40px]">{startRow + 1}</div>
+            <div className="sheet-cell-header min-h-[88px] border-t border-[#e1e1e1]">{startRow + 2}</div>
+            <div className="sheet-cell-header min-h-[40px] border-t border-[#e1e1e1]">{startRow + 3}</div>
+          </div>
+          <div role="status" className="flex-grow flex items-center justify-center px-3 text-[13px] text-gray-800 text-center break-keep">
             의견 고마워요! 더 나은 게임을 만드는 데 활용할게요.
           </div>
         </div>

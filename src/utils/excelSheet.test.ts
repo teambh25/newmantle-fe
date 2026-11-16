@@ -1,8 +1,8 @@
-// 로직 레벨: excel 시트 표시 계산 (상태 표시줄 통계, 선택된 셀) (specs/excel-ui)
+// 로직 레벨: excel 시트 표시 계산 (선택된 셀) (specs/excel-ui)
 import { describe, expect, it } from "vitest";
 import type { SubmittedWord } from "@/utils/api";
 import type { LatestRow } from "@/utils/board";
-import { latestHistoryIndex, sheetStats } from "@/utils/excelSheet";
+import { bestSimilarity, latestHistoryIndex } from "@/utils/excelSheet";
 
 const w = (word: string, rank: number, attempt: number): SubmittedWord => ({
   word,
@@ -10,17 +10,6 @@ const w = (word: string, rank: number, attempt: number): SubmittedWord => ({
   rank,
   attempt,
   correct: false,
-});
-
-describe("상태 표시줄 통계", () => {
-  it("개수는 제출 횟수, 최고와 평균은 순위권 단어만 (평균은 반올림)", () => {
-    const history = [w("가", 10, 2), w("나", 101, 1), w("다", -1, 3), w("힌트", 50, -1)];
-    expect(sheetStats(history, 3)).toEqual({ count: 3, best: 10, average: 54 });
-  });
-
-  it("순위권 단어가 없으면 최고·평균 없음", () => {
-    expect(sheetStats([w("가", -1, 1)], 1)).toEqual({ count: 1, best: null, average: null });
-  });
 });
 
 describe("선택된 셀: 방금 입력한 단어의 기록 표 줄", () => {
@@ -35,5 +24,26 @@ describe("선택된 셀: 방금 입력한 단어의 기록 표 줄", () => {
     const latest: LatestRow = { kind: "notice", word: "뭐", tone: "unknown" };
     expect(latestHistoryIndex(history, latest)).toBe(-1);
     expect(latestHistoryIndex(history, null)).toBe(-1);
+  });
+});
+
+describe("상태 표시줄 최고 유사도", () => {
+  const sim = (word: string, similarity: number | null, extra: Partial<SubmittedWord> = {}): SubmittedWord => ({
+    word,
+    similarity,
+    rank: 100,
+    attempt: 1,
+    correct: false,
+    ...extra,
+  });
+
+  it("낸 단어(힌트·정답 포함) 중 가장 높은 유사도", () => {
+    expect(bestSimilarity([sim("가", 12.5), sim("나", 40.25, { attempt: -1 }), sim("다", -3)])).toBe(40.25);
+    expect(bestSimilarity([sim("가", 12.5), sim("정답", 100, { correct: true })])).toBe(100);
+  });
+
+  it("유사도가 있는 단어가 없으면 없음 (초성 힌트만 등)", () => {
+    expect(bestSimilarity([])).toBeNull();
+    expect(bestSimilarity([sim("ㅅㄹ", null, { rank: 0, attempt: -1 })])).toBeNull();
   });
 });

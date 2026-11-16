@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import WordTable, { SELECTED_HEADER } from "./WordTable";
-import { latestHistoryIndex, sheetStats } from "@/utils/excelSheet";
+import { bestSimilarity, latestHistoryIndex } from "@/utils/excelSheet";
 import { GameForm } from "./GameForm";
 import { GameResult, resultRowCount } from "./GameResult";
 import { FeedbackRow } from "./FeedbackRow";
@@ -71,7 +71,7 @@ export default function NewMantleForm() {
   const latestIndex = latestHistoryIndex(board.history, board.latest);
   const selectedIndex = latestIndex;
   const cellAddress = selectedIndex >= 0 ? `B${historyStart + selectedIndex}` : "A1";
-  const stats = sheetStats(board.history, gameLogic.attempts);
+  const bestSim = bestSimilarity(gameLogic.submittedWords);
 
   return (
     <>
@@ -84,20 +84,14 @@ export default function NewMantleForm() {
         <div className="excel-col-header border-b border-[#d4d4d4] border-r-0">D</div>
       </div>
 
-      {/* 상태 표시줄 상태 메시지: 끝나면 다음 퀴즈 안내 (Dec-75) */}
-      {mounted && result.over && document.getElementById("excel-status-message") &&
-        createPortal("다음 퀴즈: 오늘 밤 12시", document.getElementById("excel-status-message")!)}
+      {/* 상태 표시줄 최고 유사도 (Dec-80) */}
+      {mounted && bestSim !== null && document.getElementById("excel-best-similarity") &&
+        createPortal(`최고 유사도 ${bestSim.toFixed(2)}`, document.getElementById("excel-best-similarity")!)}
 
-      {/* 상태 표시줄 통계 (Dec-68) */}
-      {mounted && stats.count > 0 && document.getElementById("excel-status-stats") &&
-        createPortal(
-          <>
-            <span>개수: {stats.count}</span>
-            {stats.best !== null && <span>최고: {stats.best}위</span>}
-            {stats.average !== null && <span>평균: {stats.average}위</span>}
-          </>,
-          document.getElementById("excel-status-stats")!,
-        )}
+      {/* 상태 표시줄 정보 칸: 끝나면 다음 퀴즈 안내 (Dec-75, Dec-79) */}
+      {mounted && result.over && document.getElementById("excel-status-message") &&
+        createPortal("새로운 퀴즈는 매일 밤 12시에 열려요", document.getElementById("excel-status-message")!)}
+
       {tabsRow !== null && <ResultTabs rowNumber={tabsRow} view={view} onChange={changeView} />}
 
       {resultRow !== null && (

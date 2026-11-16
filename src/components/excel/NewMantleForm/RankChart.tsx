@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { CircleAlert, Lightbulb, Loader2, Repeat } from "lucide-react";
 import type { SubmittedWord } from "@/utils/api";
 import type { GameEnd, LatestRow } from "@/utils/board";
-import { chartPoints, chartTicks, chartTopLevel, visibleLabels, type LabelBox } from "@/utils/rankChart";
+import { chartPoints, chartTicks, chartTopLevel, limitPoints, visibleLabels, type LabelBox } from "@/utils/rankChart";
 import { rankStyle } from "./WordTable";
 
 // classic 진행 상황 카드의 excel 버전: 엑셀 꺾은선 차트 (specs/excel-ui Dec-46~Dec-52)
@@ -15,13 +15,16 @@ const GRID = "#d9d9d9";
 /** 그래프 높이 (px) */
 const HEIGHT = 150;
 /** 그림 영역 여백 (px): 왼쪽은 눈금 숫자, 위는 점 위 단어, 아래는 시도 번호 */
-const PAD = { left: 38, right: 14, top: 20, bottom: 20 };
+const PAD = { left: 38, right: 14, top: 22, bottom: 20 };
 /** 첫·마지막 점이 눈금 숫자·가장자리에 붙지 않게 안쪽 여백 (px) */
 const INSET = 18;
 const POINT_R = 4;
+/** 이 폭보다 좁으면 중간 점 개수를 제한한다 (px) */
+const NARROW_WIDTH = 500;
+const NARROW_MAX_MIDDLE = 3;
 const ANSWER_R = 6;
 /** 점 위 단어 글자 크기와 폭 어림 (px) */
-const LABEL_FONT = 11;
+const LABEL_FONT = 13;
 const labelWidth = (word: string) => word.length * LABEL_FONT + 4;
 /** 폭을 모를 때(첫 렌더, 테스트) 쓰는 폭 (px) */
 const FALLBACK_WIDTH = 300;
@@ -133,7 +136,9 @@ export function RankChart({ rowNumber, latest, error, words, end }: RankChartPro
   }, []);
   const w = width || FALLBACK_WIDTH;
 
-  const points = chartPoints(words, end);
+  // 좁은 화면(모바일)은 중간 점을 최근 것부터 정한 개수까지만. 단어가 다른 점·선에 얹히지 않게 (Dec-84)
+  const allPoints = chartPoints(words, end);
+  const points = w < NARROW_WIDTH ? limitPoints(allPoints, NARROW_MAX_MIDDLE) : allPoints;
   const plotLeft = PAD.left + INSET;
   const plotRight = w - PAD.right - INSET;
   const plotH = HEIGHT - PAD.top - PAD.bottom;
@@ -153,13 +158,29 @@ export function RankChart({ rowNumber, latest, error, words, end }: RankChartPro
     const bottom = p.y - p.r - 3;
     return { cx, box: { left: cx - lw / 2, right: cx + lw / 2, top: bottom - LABEL_FONT - 2, bottom } as LabelBox };
   });
-  // 목표 점(?)은 늘 보이고, 단어 겹침은 나머지 점끼리만 따진다. 그래야 지금 최고 단어가 먼저 자리를 잡는다
+  // 단어 겹침 우선순위: 지금 최고(마지막 단어 점) → 목표 점 글자 → 처음 → 나머지는 최근 것부터 (Dec-83)
   const wordIndexes = placed.flatMap((p, i) => (p.kind === "target" ? [] : [i]));
-  const wordShown = visibleLabels(wordIndexes.map((i) => labels[i].box));
-  const shown = placed.map((p) => p.kind === "target");
-  wordIndexes.forEach((i, k) => (shown[i] = wordShown[k]));
-  // 속을 채우는 점: 지금 최고(진행 중) 또는 정답(끝)
+  const targetIndex = placed.findIndex((p) => p.kind === "target");
   const lastIndex = wordIndexes.length > 0 ? wordIndexes[wordIndexes.length - 1] : -1;
+  const order = [
+    ...(lastIndex >= 0 ? [lastIndex] : []),
+    ...(targetIndex >= 0 ? [targetIndex] : []),
+    ...(wordIndexes.length > 1 ? [wordIndexes[0]] : []),
+    ...wordIndexes.slice(1, -1).reverse(),
+  ];
+  const shown = visibleLabels(labels.map((l) => l.box), order);
+  const labelBox = (i: number) => labels[i].box;
+  // 아래 시도 번호: 단어가 보이는 점만, 같은 줄이라 서로 겹치면 같은 우선순위로 숨긴다 (Dec-83)
+  const axisBox = (i: number): LabelBox => {
+    const p = placed[i];
+    const aw = String(p.attempt === -1 ? "힌트" : p.attempt).length * 7 + 4;
+    return { left: p.x - aw / 2, right: p.x + aw / 2, top: HEIGHT - 16, bottom: HEIGHT - 4 };
+  };
+  const axisCandidates = order.filter((i) => shown[i] && placed[i].kind !== "target" && placed[i].attempt !== null);
+  // 후보는 이미 우선순위 순서라 그대로 자리를 잡는다
+  const axisShownList = visibleLabels(axisCandidates.map(axisBox), axisCandidates.map((_, k) => k));
+  const axisShown = placed.map(() => false);
+  axisCandidates.forEach((i, k) => (axisShown[i] = axisShownList[k]));
   const givenUp = end === "givenUp";
 
 
@@ -253,9 +274,14 @@ export function RankChart({ rowNumber, latest, error, words, end }: RankChartPro
                   <text
                     key={`t${i}`}
                     x={labels[i].cx}
-                    y={labels[i].box.bottom}
+                    y={labelBox(i).bottom - 2}
                     textAnchor="middle"
                     fontSize={LABEL_FONT}
+                    // 선이 글자 뒤로 지나가도 읽히게 흰 테두리 (Dec-84)
+                    stroke="#fff"
+                    strokeWidth={3}
+                    strokeLinejoin="round"
+                    paintOrder="stroke"
                     fill={p.kind === "givenUp" || givenUp ? "#4b5563" : "#1f2937"}
                     fontWeight={i === lastIndex ? 700 : 400}
                   >
@@ -264,9 +290,9 @@ export function RankChart({ rowNumber, latest, error, words, end }: RankChartPro
                 ) : null,
               )}
 
-              {/* 가로축 값: 단어가 보이는 점만 아래에 시도 번호. 목표 점 아래는 비운다. 축 선은 그리지 않는다 (Dec-56) */}
+              {/* 가로축 값: 단어가 보이는 점만 아래에 시도 번호, 서로 겹치면 숨김. 목표 점 아래는 비운다. 축 선은 그리지 않는다 (Dec-56, Dec-83) */}
               {placed.map((p, i) =>
-                shown[i] && p.kind !== "target" && p.attempt !== null ? (
+                axisShown[i] ? (
                   <text
                     key={`a${i}`}
                     x={p.x}

@@ -27,7 +27,7 @@ export function FeedbackRow({ rowNumber }: { rowNumber: number }) {
       <div className="sheet-cell-header">{rowNumber}</div>
       <div className="excel-cell max-sm:hidden" />
       {sent ? (
-        <div role="status" className="excel-cell max-sm:col-span-4 min-w-0 text-[13px] text-[#217346] bg-[#e6f2eb] whitespace-normal break-keep">
+        <div role="status" className="excel-cell max-sm:col-span-4 min-w-0 text-[13px] text-gray-800 whitespace-normal break-keep">
           의견 고마워요! 더 나은 게임을 만드는 데 활용할게요.
         </div>
       ) : (
