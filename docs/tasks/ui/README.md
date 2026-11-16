@@ -10,7 +10,7 @@
 | --- | --- |
 | `plan.md` | **지금 규칙**. 이것만 읽으면 현재 동작을 안다. 테스트 케이스의 기준 |
 | `decision.md` | 결정 기록: 왜 이렇게 됐나, 해 보고 버린 것. 같은 고민을 반복하지 않게 남김 |
-| `verification.md` | 케이스 표, 수동 확인 표, 수동 확인 현재 상태, 결과 기록(날짜순) |
+| `verification.md` | 케이스 표, 결과 기록(날짜순) |
 
 | 폴더 | 기능 | 케이스 ID |
 | --- | --- | --- |
@@ -25,7 +25,7 @@
 | `giveup-dialog/` | 포기 확인 창 | (힌트·포기 작업 B-2) |
 | `dev-page/` | 개발용 `/dev` 페이지 (가짜 단어 목록, 실패 주입) | DV |
 
-실제 폰에서만 볼 수 있는 확인(키보드, 실제 보이는 높이)은 한 번에 몰아서 보도록 `phone-checks.md` 한 곳에 둔다.
+수동 확인(모양·색·크기, 실제 폰에서만 볼 수 있는 키보드·보이는 높이)은 기능 구분 없이 `docs/manual-checks.md` 한 곳에 둔다.
 
 케이스 ID는 테스트 이름 앞에 붙어 있어 폴더를 나눠도 바꾸지 않는다. 수동 확인 V 번호도 그대로 둔다 (빈 번호는 다른 곳으로 옮겼거나 합친 것).
 
@@ -40,8 +40,8 @@
 | --- | --- | --- |
 | **로직** | vitest | 순수 함수, 훅 반환값 |
 | **화면** | vitest + React Testing Library + user-event | 보이는 요소, 보내는 요청, 저장값 |
-| **수동** | 브라우저 개발자 도구(좁은 기기) + 사용자 개발 서버(localhost:3000) | 모양·색·크기 |
-| **실제 폰** | iOS Safari, Android Chrome | `phone-checks.md` |
+| **수동** | 브라우저 개발자 도구(좁은 기기) + 사용자 개발 서버(localhost:3000) | 모양·색·크기 (`docs/manual-checks.md`) |
+| **실제 폰** | iOS Safari, Android Chrome | `docs/manual-checks.md` 실제 폰 |
 
 mock 정책은 `src/test/README.md`와 같다. Supabase는 가짜 클라이언트 (기본 비로그인, `L-*`는 로그인 세션). `signOut`은 spy로 호출만 확인한다.
 
@@ -49,9 +49,9 @@ mock 정책은 `src/test/README.md`와 같다. Supabase는 가짜 클라이언�
 
 | 파일 | 케이스 |
 | --- | --- |
-| `src/app/page.test.tsx` | L, T, H, I, R, NT-5 ~ 8·10, 푸터 |
+| `src/app/page.test.tsx` | L, T, H, I, R, NT-5 ~ 8 |
 | `src/app/feedback.test.tsx` | F |
-| `src/app/stats/page.test.tsx` | L-3, T-2 |
+| `src/app/stats/page.test.tsx` | T-2 |
 | `src/app/notices/page.test.tsx` | NT-9 |
 | `src/hooks/useGameState.test.ts` | R-3 |
 | `src/components/classic/NewMantleForm/NewMantleForm.test.tsx` | E, Y, W-5, W-6 |
