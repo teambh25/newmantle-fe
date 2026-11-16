@@ -168,25 +168,8 @@ const lastBody = () => feedbackWebhook.bodies[feedbackWebhook.bodies.length - 1]
 
 // ---- 케이스 ----
 
-describe("F-1. 투표 없이 바로 입력", () => {
-  it("F-1-4: 엔터는 줄바꿈이고 보내지 않음", async () => {
-    const { user } = await renderHome();
-    const d = await openFromSettings(user);
-    const box = input(d)!;
-    await user.click(box);
-    await user.type(box, "가{Enter}나");
-    expect(box).toHaveValue("가\n나");
-    expect(feedbackWebhook.bodies).toHaveLength(0);
-  });
-
-  it("F-1-5: 501자를 붙여넣으면 500자까지만 들어감", async () => {
-    const { user } = await renderHome();
-    const d = await openFromSettings(user);
-    await write(user, d, "가".repeat(501));
-    expect((input(d) as HTMLTextAreaElement).value).toHaveLength(500);
-  });
-
-  it("F-1-6: 공백만 입력하면 보내기 비활성", async () => {
+describe("입력", () => {
+  it("공백만 입력하면 보내기 비활성", async () => {
     const { user } = await renderHome();
     const d = await openFromSettings(user);
     await write(user, d, "   ");

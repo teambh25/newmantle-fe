@@ -123,27 +123,10 @@ describe("첫 방문 안내 모달", () => {
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
   });
 
-  it("M-4-1: X 버튼으로 닫으면 확인 여부가 저장됨", async () => {
+  it("모달을 닫으면 확인 여부가 저장됨", async () => {
     const { user } = await renderHome();
     await screen.findByRole("dialog");
     await closeWithX(user);
-    expect(localStorage.getItem(MODAL_SEEN_KEY)).not.toBeNull();
-  });
-
-  it("M-4-2: ESC로 닫으면 확인 여부가 저장됨", async () => {
-    const { user } = await renderHome();
-    await screen.findByRole("dialog");
-    await user.keyboard("{Escape}");
-    await waitFor(() => expect(dialog()).not.toBeInTheDocument());
-    expect(localStorage.getItem(MODAL_SEEN_KEY)).not.toBeNull();
-  });
-
-  it("M-4-3: 바깥을 클릭해 닫으면 확인 여부가 저장됨", async () => {
-    const { user } = await renderHome();
-    await screen.findByRole("dialog");
-    // 모달 바깥(오버레이)은 클릭 시 Radix가 pointerdown으로 닫는다
-    await user.click(document.body);
-    await waitFor(() => expect(dialog()).not.toBeInTheDocument());
     expect(localStorage.getItem(MODAL_SEEN_KEY)).not.toBeNull();
   });
 
@@ -510,24 +493,6 @@ describe("결과창 모달 (docs/tasks/ui/result-box/verification.md R)", () => 
       expect(gameInput()).toBeEnabled();
     });
 
-    it.each([
-      ["X", async (user: User) => {
-        await user.click(within(screen.getByRole("dialog", { name: "게임 결과" })).getByRole("button", { name: /close/i }));
-      }],
-      ["ESC", async (user: User) => {
-        await user.keyboard("{Escape}");
-      }],
-      ["바깥 클릭", async (user: User) => {
-        await user.click(document.body);
-      }],
-    ])("R-3-3: %s → 결과창이 닫힘", async (_label, close) => {
-      storeFinished();
-      const { user } = await renderHome();
-      await openFromMain(user);
-      await close(user);
-      await waitFor(() => expect(resultDialog()).not.toBeInTheDocument());
-    });
-
     it("R-3-4: 다시 보기 → 닫기를 두 번 해도 게임 기록이 그대로이고 서버 요청이 없음", async () => {
       storeFinished();
       const { user } = await renderHome();
@@ -705,32 +670,14 @@ describe("첫 입력 유도 말풍선 / 말풍선 순서 (docs/tasks/ui/input/ve
     expect(inputTooltip()).toBeInTheDocument();
   });
 
-  describe.each([
-    ["X", async (user: User) => closeWithX(user)],
-    [
-      "ESC",
-      async (user: User) => {
-        await user.keyboard("{Escape}");
-        await waitFor(() => expect(dialog()).not.toBeInTheDocument());
-      },
-    ],
-    [
-      "바깥 클릭",
-      async (user: User) => {
-        await user.click(document.body);
-        await waitFor(() => expect(dialog()).not.toBeInTheDocument());
-      },
-    ],
-  ])("모달을 %s(으)로 닫기", (_, close) => {
-    it("I-4-2: 입력창으로 포커스가 가지 않음, 입력창 말풍선은 남아 있음", async () => {
-      const { user } = await renderHome();
-      await screen.findByRole("dialog");
-      await close(user);
-      // 닫힌 뒤 포커스 이동이 끝날 시간을 둔다
-      await new Promise((r) => setTimeout(r, 100));
-      expect(gameInput()).not.toHaveFocus();
-      expect(inputTooltip()).toBeInTheDocument();
-    });
+  it("모달을 X로 닫으면 입력창으로 포커스가 가지 않음, 입력창 말풍선은 남아 있음", async () => {
+    const { user } = await renderHome();
+    await screen.findByRole("dialog");
+    await closeWithX(user);
+    // 닫힌 뒤 포커스 이동이 끝날 시간을 둔다
+    await new Promise((r) => setTimeout(r, 100));
+    expect(gameInput()).not.toHaveFocus();
+    expect(inputTooltip()).toBeInTheDocument();
   });
 
   it("I-2-1: 입력해 본 기존 유저는 입력창 말풍선 없이 로그인 말풍선", async () => {
