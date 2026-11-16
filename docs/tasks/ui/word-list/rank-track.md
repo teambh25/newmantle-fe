@@ -4,7 +4,7 @@
 
 단어 목록(`plan.md`)의 다음 단계. 범위는 classic 테마 메인의 단어 목록. 문구는 규칙만 적고 정확한 글자는 코드에서 정한다.
 
-- 구현 2026-11-13. 검증은 `verification.md` RT, V-25 ~ V-27
+- 구현 2026-11-13. 위치 계산 검증은 `src/utils/rankTrack.test.ts`
 - 코드
   - `src/components/classic/NewMantleForm/WordTable.tsx`: 꼬리표, 글씨 색, 아이콘 색
   - `src/components/classic/NewMantleForm/RankTrack.tsx`: 트랙 그리기. 높이를 받아 그림. 지금은 어디에도 안 붙음 (결과창에서 다시 씀)

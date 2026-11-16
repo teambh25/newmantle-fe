@@ -1,4 +1,4 @@
-// 화면 레벨: 피드백 창 (docs/tasks/ui/feedback/verification.md F)
+// 화면 레벨: 피드백 창
 // 문구는 검증하지 않는다. 요소는 역할과 접근 가능한 이름으로 찾는다.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
@@ -177,8 +177,8 @@ describe("입력", () => {
   });
 });
 
-describe("F-2. 웹훅 요청", () => {
-  it("F-2-1: 설정에서 보내기 → 웹훅 본문에 맥락 필드가 있고 식별자가 없음", async () => {
+describe("웹훅 요청", () => {
+  it("설정에서 보내기 → 웹훅 본문에 맥락 필드가 있고 식별자가 없음", async () => {
     const { user } = await renderHome();
     const d = await openFromSettings(user);
     await write(user, d, "힌트가 더 있으면 좋겠어요");
@@ -198,7 +198,7 @@ describe("F-2. 웹훅 요청", () => {
     });
   });
 
-  it("F-2-2: 정답 맞힌 날 결과창에서 보내기 → entry=result, gameStatus=solved", async () => {
+  it("정답 맞힌 날 결과창에서 보내기 → entry=result, gameStatus=solved", async () => {
     storeFinished();
     const { user } = await renderHome();
     const d = await openFromResult(user);
@@ -207,7 +207,7 @@ describe("F-2. 웹훅 요청", () => {
     expect(lastBody()).toMatchObject({ entry: "result", gameStatus: "solved" });
   });
 
-  it("F-2-3: 포기한 날 설정에서 보내기 → entry=settings, gameStatus=given_up", async () => {
+  it("포기한 날 설정에서 보내기 → entry=settings, gameStatus=given_up", async () => {
     storeFinished({ givenUp: true });
     const { user } = await renderHome();
     const d = await openFromSettings(user);
@@ -216,7 +216,7 @@ describe("F-2. 웹훅 요청", () => {
     expect(lastBody()).toMatchObject({ entry: "settings", gameStatus: "given_up" });
   });
 
-  it("F-2-4: excel에서 보내기 → theme=excel", async () => {
+  it("excel에서 보내기 → theme=excel", async () => {
     useExcel();
     const { user } = await renderHome();
     const d = await openFromSettings(user);
@@ -225,7 +225,7 @@ describe("F-2. 웹훅 요청", () => {
     expect(lastBody()).toMatchObject({ theme: "excel", entry: "settings" });
   });
 
-  it("F-2-5: 응답 전에는 보내기 비활성, 다시 눌러도 요청 1회", async () => {
+  it("응답 전에는 보내기 비활성, 다시 눌러도 요청 1회", async () => {
     const { user } = await renderHome();
     const d = await openFromSettings(user);
     await write(user, d, "의견");
@@ -238,8 +238,8 @@ describe("F-2. 웹훅 요청", () => {
   });
 });
 
-describe("F-3. 퀴즈 날짜(KST)당 1회", () => {
-  it("F-3-1: 보내기 성공 → 창은 열린 채 보낸 상태, 토스트 없음, 저장값이 오늘, alert 없음", async () => {
+describe("퀴즈 날짜(KST)당 1회", () => {
+  it("보내기 성공 → 창은 열린 채 보낸 상태, 토스트 없음, 저장값이 오늘, alert 없음", async () => {
     const { user } = await renderHome();
     const d = await openFromSettings(user);
     await write(user, d, "의견");
@@ -251,7 +251,7 @@ describe("F-3. 퀴즈 날짜(KST)당 1회", () => {
     expect(window.alert).not.toHaveBeenCalled();
   });
 
-  it("F-3-2: 보낸 뒤 닫고 설정에서 다시 열면 보낸 상태, 진입 버튼은 활성", async () => {
+  it("보낸 뒤 닫고 설정에서 다시 열면 보낸 상태, 진입 버튼은 활성", async () => {
     const { user } = await renderHome();
     let d = await openFromSettings(user);
     await write(user, d, "의견");
@@ -266,7 +266,7 @@ describe("F-3. 퀴즈 날짜(KST)당 1회", () => {
     await expectSentState(d);
   });
 
-  it("F-3-3: 오늘 보냄 + 정답 맞힘 → 결과창 피드백 버튼은 활성, 열면 보낸 상태", async () => {
+  it("오늘 보냄 + 정답 맞힘 → 결과창 피드백 버튼은 활성, 열면 보낸 상태", async () => {
     localStorage.setItem(SENT_KEY, getKSTDateString());
     storeFinished();
     const { user } = await renderHome();
@@ -274,7 +274,7 @@ describe("F-3. 퀴즈 날짜(KST)당 1회", () => {
     await expectSentState(d);
   });
 
-  it("F-3-4: 보낸 뒤 새로고침해도 보낸 상태", async () => {
+  it("보낸 뒤 새로고침해도 보낸 상태", async () => {
     const first = await renderHome();
     const d = await openFromSettings(first.user);
     await write(first.user, d, "의견");
@@ -286,14 +286,14 @@ describe("F-3. 퀴즈 날짜(KST)당 1회", () => {
     await expectSentState(await openFromSettings(user));
   });
 
-  it("F-3-5: 오늘 보냄 → excel로 바꿔 열어도 보낸 상태", async () => {
+  it("오늘 보냄 → excel로 바꿔 열어도 보낸 상태", async () => {
     localStorage.setItem(SENT_KEY, getKSTDateString());
     useExcel();
     const { user } = await renderHome();
     await expectSentState(await openFromSettings(user));
   });
 
-  it("F-3-6: 어제 보냄 → 오늘은 입력 가능", async () => {
+  it("어제 보냄 → 오늘은 입력 가능", async () => {
     localStorage.setItem(SENT_KEY, kstYesterday());
     const { user } = await renderHome();
     expectInputState(await openFromSettings(user));
@@ -302,7 +302,7 @@ describe("F-3. 퀴즈 날짜(KST)당 1회", () => {
   it.each([
     ["2026-11-10", "sent"],
     ["2026-11-09", "input"],
-  ])("F-3-7: 기기 LA, KST 11/10(LA 11/9) 오후, 저장값 %s → %s", async (stored, expected) => {
+  ])("기기 LA, KST 11/10(LA 11/9) 오후, 저장값 %s → %s", async (stored, expected) => {
     setClock("America/Los_Angeles", KST_AFTERNOON);
     localStorage.setItem(SENT_KEY, stored);
     const { user } = await renderHome();
@@ -311,7 +311,7 @@ describe("F-3. 퀴즈 날짜(KST)당 1회", () => {
     else expectInputState(d);
   });
 
-  it("F-3-8: 23:59:59에 열고 00:00에 보내면 보내는 시점 날짜로 기록", async () => {
+  it("23:59:59에 열고 00:00에 보내면 보내는 시점 날짜로 기록", async () => {
     setClock("Asia/Seoul", KST_BEFORE_MIDNIGHT);
     const { user } = await renderHome();
     const d = await openFromSettings(user);
@@ -323,10 +323,10 @@ describe("F-3. 퀴즈 날짜(KST)당 1회", () => {
   });
 });
 
-describe("F-6. 닫으면 연 곳으로", () => {
+describe("닫으면 연 곳으로", () => {
   const closeX = (user: User, d: HTMLElement) => user.click(within(d).getByRole("button", { name: /close/i }));
 
-  it("F-6-1: 결과창에서 연 피드백 창을 보내지 않고 닫으면 결과창이 다시 열림", async () => {
+  it("결과창에서 연 피드백 창을 보내지 않고 닫으면 결과창이 다시 열림", async () => {
     storeFinished();
     const { user } = await renderHome();
     const d = await openFromResult(user);
@@ -336,7 +336,7 @@ describe("F-6. 닫으면 연 곳으로", () => {
     expect(screen.getAllByRole("dialog")).toHaveLength(1);
   });
 
-  it("F-6-2: 결과창에서 연 창으로 보낸 뒤에도 창은 열려 있고, 닫으면 결과창이 다시 열림", async () => {
+  it("결과창에서 연 창으로 보낸 뒤에도 창은 열려 있고, 닫으면 결과창이 다시 열림", async () => {
     storeFinished();
     const { user } = await renderHome();
     const d = await openFromResult(user);
@@ -349,7 +349,7 @@ describe("F-6. 닫으면 연 곳으로", () => {
     expect(await screen.findByRole("dialog", { name: "게임 결과" })).toBeInTheDocument();
   });
 
-  it("F-6-3: 설정에서 연 창을 닫으면 메인으로 (결과창을 열지 않음)", async () => {
+  it("설정에서 연 창을 닫으면 메인으로 (결과창을 열지 않음)", async () => {
     storeFinished();
     const { user } = await renderHome();
     const d = await openFromSettings(user);
@@ -358,11 +358,11 @@ describe("F-6. 닫으면 연 곳으로", () => {
   });
 });
 
-describe("F-4. 전송 실패", () => {
+describe("전송 실패", () => {
   it.each([
     ["500", () => feedbackWebhook.failNext()],
     ["네트워크 오류", () => feedbackWebhook.networkErrorNext()],
-  ])("F-4-1, F-4-2: 웹훅 %s → 실패 토스트, 입력 유지, 저장 안 함, alert 없음", async (_label, failNext) => {
+  ])("웹훅 %s → 실패 토스트, 입력 유지, 저장 안 함, alert 없음", async (_label, failNext) => {
     const { user } = await renderHome();
     const d = await openFromSettings(user);
     await write(user, d, "의견");
@@ -376,7 +376,7 @@ describe("F-4. 전송 실패", () => {
     expect(window.alert).not.toHaveBeenCalled();
   });
 
-  it("F-4-3: 실패 뒤 다시 보내 성공하면 보낸 상태", async () => {
+  it("실패 뒤 다시 보내 성공하면 보낸 상태", async () => {
     const { user } = await renderHome();
     const d = await openFromSettings(user);
     await write(user, d, "의견");
@@ -391,7 +391,7 @@ describe("F-4. 전송 실패", () => {
     expect(localStorage.getItem(SENT_KEY)).toBe(getKSTDateString());
   });
 
-  it("F-4-4: excel에서 웹훅 500 → 실패 토스트, 입력 유지, 저장 안 함", async () => {
+  it("excel에서 웹훅 500 → 실패 토스트, 입력 유지, 저장 안 함", async () => {
     useExcel();
     const { user } = await renderHome();
     const d = await openFromSettings(user);
@@ -405,8 +405,8 @@ describe("F-4. 전송 실패", () => {
   });
 });
 
-describe("F-5. Amplitude", () => {
-  it("F-5-1: 열 때마다 Feedback Opened (진입점·테마)", async () => {
+describe("Amplitude", () => {
+  it("열 때마다 Feedback Opened (진입점·테마)", async () => {
     storeFinished();
     const { user } = await renderHome();
     const d = await openFromSettings(user);
@@ -419,7 +419,7 @@ describe("F-5. Amplitude", () => {
     ]);
   });
 
-  it("F-5-2: 보내기 성공 → Feedback Submitted에 글자 수만, 본문은 어디에도 없음", async () => {
+  it("보내기 성공 → Feedback Submitted에 글자 수만, 본문은 어디에도 없음", async () => {
     const { user } = await renderHome();
     const d = await openFromSettings(user);
     await write(user, d, "좋아요 굿");
@@ -433,7 +433,7 @@ describe("F-5. Amplitude", () => {
     expect(amplitudeEvents("Survey Vote")).toHaveLength(0);
   });
 
-  it("F-5-3: 보내기 실패 → Feedback Submitted 없음", async () => {
+  it("보내기 실패 → Feedback Submitted 없음", async () => {
     const { user } = await renderHome();
     const d = await openFromSettings(user);
     await write(user, d, "의견");

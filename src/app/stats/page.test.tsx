@@ -1,4 +1,4 @@
-// 화면 레벨: 통계 화면의 조회 범위가 KST 오늘 기준인지 (docs/tasks/kst-date-fix/verification.md P-3)
+// 화면 레벨: 통계 화면의 조회 범위가 KST 오늘 기준인지 (docs/tasks/kst-date-fix/problem.md)
 import { describe, expect, it, vi } from "vitest";
 import { render, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -43,7 +43,7 @@ const OVERVIEW: StatOverviewResp = {
 };
 
 describe("통계 화면", () => {
-  it("S-2: 기기 로컬 날짜가 KST보다 하루 늦어도(LA 11/9) 조회 범위는 2026-08-12 ~ 2026-11-10", async () => {
+  it("기기 로컬 날짜가 KST보다 하루 늦어도(LA 11/9) 조회 범위는 2026-08-12 ~ 2026-11-10", async () => {
     setClock("America/Los_Angeles", KST_AFTERNOON);
     const statsUrls: string[] = [];
     vi.stubGlobal(
@@ -68,8 +68,8 @@ describe("통계 화면", () => {
   });
 });
 
-describe("통계 유도 말풍선 (docs/tasks/ui/header/verification.md T-2)", () => {
-  it("T-2-1: 통계 페이지에 들어가면 stats-tooltip-dismissed 저장", async () => {
+describe("통계 유도 말풍선", () => {
+  it("통계 페이지에 들어가면 stats-tooltip-dismissed 저장", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => ({ ok: true, status: 200, json: async () => OVERVIEW }) as Response)

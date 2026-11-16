@@ -16,7 +16,7 @@ function renderWithDate(initialDate: string) {
 }
 
 describe("Game Started", () => {
-  it("G-1: 빈 날짜로 마운트 후 날짜가 채워짐 → 1회, 채워진 날짜로 기록", () => {
+  it("빈 날짜로 마운트 후 날짜가 채워짐 → 1회, 채워진 날짜로 기록", () => {
     const h = renderWithDate("");
     h.rerender({ date: GAME_DATE });
     expect(amplitudeEvents("Game Started")).toEqual([
@@ -24,7 +24,7 @@ describe("Game Started", () => {
     ]);
   });
 
-  it("G-2: 날짜가 빈 상태로만 렌더 → 기록하지 않음", () => {
+  it("날짜가 빈 상태로만 렌더 → 기록하지 않음", () => {
     renderWithDate("");
     expect(amplitudeEvents("Game Started")).toEqual([]);
   });
@@ -57,7 +57,7 @@ describe("Game Completed 플레이 시간", () => {
     freezeClock();
   });
 
-  it("T-1: 제출 → 60초 → 새로고침 → 30초 → 정답 → 첫 행동부터 90초, 연속 플레이 30초", async () => {
+  it("제출 → 60초 → 새로고침 → 30초 → 정답 → 첫 행동부터 90초, 연속 플레이 30초", async () => {
     const h = renderGame();
     await h.submit("사과", 120);
     passSeconds(60);
@@ -69,7 +69,7 @@ describe("Game Completed 플레이 시간", () => {
     expect(completedTimes()).toEqual([{ timeSpent: 30, timeSinceFirstAction: 90 }]);
   });
 
-  it("T-2: 일반 힌트로 시작 → 10초 → 정답 → 10초", async () => {
+  it("일반 힌트로 시작 → 10초 → 정답 → 10초", async () => {
     const h = renderGame();
     await h.hint();
     passSeconds(10);
@@ -77,7 +77,7 @@ describe("Game Completed 플레이 시간", () => {
     expect(completedTimes()[0].timeSinceFirstAction).toBe(10);
   });
 
-  it("T-3: 초성 힌트로 시작 → 10초 → 정답 → 10초", async () => {
+  it("초성 힌트로 시작 → 10초 → 정답 → 10초", async () => {
     const h = renderGame();
     await h.consonant();
     passSeconds(10);
@@ -85,14 +85,14 @@ describe("Game Completed 플레이 시간", () => {
     expect(completedTimes()[0].timeSinceFirstAction).toBe(10);
   });
 
-  it("T-4: 첫 행동이 정답 → 0초", async () => {
+  it("첫 행동이 정답 → 0초", async () => {
     const h = renderGame();
     passSeconds(5);
     await h.submitAnswer();
     expect(completedTimes()).toEqual([{ timeSpent: 5, timeSinceFirstAction: 0 }]);
   });
 
-  it("T-5: 제출 실패 → 20초 → 제출 성공 → 10초 → 정답 → 10초 (실패는 첫 행동이 아님)", async () => {
+  it("제출 실패 → 20초 → 제출 성공 → 10초 → 정답 → 10초 (실패는 첫 행동이 아님)", async () => {
     const h = renderGame();
     gameServer.failNext("guess");
     expect(await h.submit("사과", 120)).toHaveProperty("error");
@@ -103,7 +103,7 @@ describe("Game Completed 플레이 시간", () => {
     expect(completedTimes()[0].timeSinceFirstAction).toBe(10);
   });
 
-  it("T-6: 힌트 실패 → 20초 → 제출 → 10초 → 정답 → 10초", async () => {
+  it("힌트 실패 → 20초 → 제출 → 10초 → 정답 → 10초", async () => {
     const h = renderGame();
     gameServer.failNext("hint");
     await h.hint();
@@ -115,7 +115,7 @@ describe("Game Completed 플레이 시간", () => {
     expect(completedTimes()[0].timeSinceFirstAction).toBe(10);
   });
 
-  it("T-7: 두 번째 이후 행동은 첫 행동 시각을 바꾸지 않음 (저장값 확인)", async () => {
+  it("두 번째 이후 행동은 첫 행동 시각을 바꾸지 않음 (저장값 확인)", async () => {
     const h = renderGame();
     await h.submit("사과", 120);
     const first = storedFirstActionAt();
@@ -150,7 +150,7 @@ describe("Game Completed 플레이 시간", () => {
     );
   }
 
-  it("T-8: 첫 행동 시각이 없는 오늘 기록(배포 당일) → 배포 후 첫 행동부터 잼", async () => {
+  it("첫 행동 시각이 없는 오늘 기록(배포 당일) → 배포 후 첫 행동부터 잼", async () => {
     storeTodayWithoutFirstActionAt();
     const h = renderGame();
     passSeconds(30);
@@ -160,7 +160,7 @@ describe("Game Completed 플레이 시간", () => {
     expect(completedTimes()[0].timeSinceFirstAction).toBe(10);
   });
 
-  it("T-9: 첫 행동 시각이 없는 기록에서 이미 있는 단어 재제출 → 20초 → 새 단어 → 10초 → 정답 → 10초 (재제출은 첫 행동이 아님)", async () => {
+  it("첫 행동 시각이 없는 기록에서 이미 있는 단어 재제출 → 20초 → 새 단어 → 10초 → 정답 → 10초 (재제출은 첫 행동이 아님)", async () => {
     storeTodayWithoutFirstActionAt();
     const h = renderGame();
     expect(await h.submit("사과")).toHaveProperty("error");
@@ -172,7 +172,7 @@ describe("Game Completed 플레이 시간", () => {
     expect(completedTimes()[0].timeSinceFirstAction).toBe(10);
   });
 
-  it("T-10: 초성 힌트 실패 → 20초 → 제출 → 10초 → 정답 → 10초 (실패는 첫 행동이 아님)", async () => {
+  it("초성 힌트 실패 → 20초 → 제출 → 10초 → 정답 → 10초 (실패는 첫 행동이 아님)", async () => {
     const h = renderGame();
     gameServer.failNext("hint");
     await h.consonant();

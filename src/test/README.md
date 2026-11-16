@@ -32,14 +32,14 @@ Vitest + React Testing Library + user-event. 실행 명령은 루트 `README.md`
 
 ### 3. 테스트 케이스를 먼저 문서로 정한다
 
-- 작업마다 `docs/tasks/<작업>/verification.md`에 케이스 표를 둔다 (레벨 / 사전 상태 / 행동 / 기대 결과)
-- 케이스는 spec·problem의 결정 사항을 기준으로 만든다. 구현 기록을 보고 케이스를 바꾸지 않는다
-- 테스트 이름은 확인하는 동작으로 짓는다: `it("힌트를 받을 수 없을 때까지 반복 → 999부터 20까지 15회", ...)`. 케이스 ID는 테스트 이름·주석에 적지 않는다. 일부만 실행할 때는 이름으로 고른다: `npx vitest run -t "힌트"`
-- 케이스를 추가·변경하면 문서를 먼저 고친 뒤 테스트를 고친다. 실행 결과는 문서의 "결과 기록"에 남긴다
+- 작업마다 `specs/<작업>/plan.md`의 Verification 섹션에 케이스를 적는다 (사전 상태 / 행동 / 기대 결과). ID는 붙이지 않고 동작 문장으로 적는다
+- 케이스는 `plan.md`와 `decisions.md`의 결정 사항을 기준으로 만든다. 구현 기록을 보고 케이스를 바꾸지 않는다
+- 테스트 이름은 케이스 문장과 맞춰 확인하는 동작으로 짓는다: `it("힌트를 받을 수 없을 때까지 반복 → 999부터 20까지 15회", ...)`. 케이스 ID는 테스트 이름·주석에 적지 않는다. 일부만 실행할 때는 이름으로 고른다: `npx vitest run -t "힌트"`
+- 케이스를 추가·변경하면 문서를 먼저 고친 뒤 테스트를 고친다. 통과하면 `plan.md`의 Phase 진행상황을 갱신한다
 
 ### 4. TDD: 테스트 먼저, 실패 확인, 그다음 구현
 
-1. verification 문서에 케이스를 적는다
+1. `plan.md`의 Verification에 케이스를 적는다
 2. 테스트를 작성한다
 3. 실행해서 **실패하는지 확인한다**. 실패 이유가 "아직 구현되지 않은 동작" 때문이어야 한다 (오타·mock 누락으로 인한 실패가 아니어야 함). 처음부터 통과하면 케이스가 버그를 구분하지 못하는 것이므로 케이스를 다시 본다
 4. 구현해서 통과시킨다
@@ -102,7 +102,7 @@ expect(h.game.attempts).toBe(1); // 훅 반환값
 - `h.start(action)` + `h.settle(p)`: 응답을 기다리지 않고 요청만 시작 (`holdNext`와 함께 요청 중 상태 재현)
 - `h.failureToastShown()` / `h.dismissToasts()`: 실패 안내 여부
 - `h.unmount()` 후 다시 `renderGame()` = 새로고침 (`localStorage`는 유지됨)
-- 사전 상태 프리셋 (`presets`): `OUT_ONLY`, `TOP(n)`, `CONSONANT_USED`, `SOLVED(k)`, `GIVEN_UP(n)` — 정의는 `docs/tasks/hint-giveup-fix/verification.md`. 겹치지 않는 단어가 필요하면 `presets.nextWord()`
+- 사전 상태 프리셋 (`presets`): `OUT_ONLY`, `TOP(n)`, `CONSONANT_USED`, `SOLVED(k)`, `GIVEN_UP(n)` — 정의는 `gameHarness.ts`의 주석. 겹치지 않는 단어가 필요하면 `presets.nextWord()`
 - 저장된 기록에서 시작해야 하면 마운트 전에 `localStorage.setItem("newmantle_game_data", ...)`
 - `amplitudeEvents(name)`: 그 이벤트의 속성 목록. `confettiFired()`: 축하 효과 실행 여부
 
@@ -124,7 +124,7 @@ expect(h.game.attempts).toBe(1); // 훅 반환값
 setClock("America/Los_Angeles", KST_AFTERNOON); // 기기 타임존 + 현재 시각 고정
 ```
 
-- 기준 시각: `KST_AFTERNOON`, `SAME_DAY`, `KST_BEFORE_MIDNIGHT`, `KST_MIDNIGHT` (UTC·KST·LA 값은 상수 주석과 `docs/tasks/kst-date-fix/verification.md`)
+- 기준 시각: `KST_AFTERNOON`, `SAME_DAY`, `KST_BEFORE_MIDNIGHT`, `KST_MIDNIGHT` (UTC·KST·LA 값은 상수 주석)
 - `setup.ts`가 이미 `setInterval`만 가짜로 설치해 두므로, `Date`까지 고정하려면 `vi.useRealTimers()` 후 `Date`를 포함해 다시 설치해야 한다. `setClock`이 이걸 한다. 그냥 `vi.useFakeTimers()`를 다시 부르면 `Date`가 고정되지 않는다
 - 시각만 멈추고 흘려보내는 경우(경과 시간 측정)는 `src/hooks/useGameState.events.test.ts`의 `freezeClock` / `passSeconds` 참고
 - `setTimeout`은 가짜로 만들지 않는다 (user-event와 가짜 서버가 실제 `setTimeout`을 쓴다)

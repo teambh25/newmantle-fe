@@ -1,4 +1,4 @@
-// 로직 레벨: 저장된 기록의 날짜 판단 (docs/tasks/kst-date-fix/verification.md)
+// 로직 레벨: 저장된 기록의 날짜 판단 (docs/tasks/kst-date-fix/problem.md)
 import { describe, expect, it } from "vitest";
 import { renderGame } from "@/test/gameHarness";
 import { KST_AFTERNOON, SAME_DAY, setClock as setEnvironment } from "@/test/clock";
@@ -50,55 +50,55 @@ describe("저장된 기록의 날짜 판단", () => {
     expect(new Date().toDateString()).toBe("Tue Nov 10 2026");
   });
 
-  it("L-1: 새 형식, KST 오늘 → 그대로 유지", () => {
+  it("새 형식, KST 오늘 → 그대로 유지", () => {
     setEnvironment("Asia/Seoul", KST_AFTERNOON);
     storeGame("2026-11-10");
     expectKept(renderGame());
   });
 
-  it("L-2: 새 형식, KST 어제 → 초기화", () => {
+  it("새 형식, KST 어제 → 초기화", () => {
     setEnvironment("Asia/Seoul", KST_AFTERNOON);
     storeGame("2026-11-09");
     expectReset(renderGame());
   });
 
-  it("L-3: 한국, 이전 형식 오늘 → 이어받음", () => {
+  it("한국, 이전 형식 오늘 → 이어받음", () => {
     setEnvironment("Asia/Seoul", KST_AFTERNOON);
     storeGame("Tue Nov 10 2026");
     expectKept(renderGame());
   });
 
-  it("L-4: 한국, 이전 형식 어제 → 초기화", () => {
+  it("한국, 이전 형식 어제 → 초기화", () => {
     setEnvironment("Asia/Seoul", KST_AFTERNOON);
     storeGame("Mon Nov 09 2026");
     expectReset(renderGame());
   });
 
-  it("L-5: LA, 이전 형식 로컬 오늘(= KST 어제) → 초기화 (다른 날짜 퀴즈 기록)", () => {
+  it("LA, 이전 형식 로컬 오늘(= KST 어제) → 초기화 (다른 날짜 퀴즈 기록)", () => {
     setEnvironment("America/Los_Angeles", KST_AFTERNOON);
     storeGame("Mon Nov 09 2026");
     expectReset(renderGame());
   });
 
-  it("L-6: LA, 로컬과 KST 모두 같은 날 이전 형식 → 이어받음", () => {
+  it("LA, 로컬과 KST 모두 같은 날 이전 형식 → 이어받음", () => {
     setEnvironment("America/Los_Angeles", SAME_DAY);
     storeGame("Tue Nov 10 2026");
     expectKept(renderGame());
   });
 
-  it("L-7: LA, 이전 형식 KST 오늘(= 로컬 내일) → 이어받음 (기준은 KST 날짜)", () => {
+  it("LA, 이전 형식 KST 오늘(= 로컬 내일) → 이어받음 (기준은 KST 날짜)", () => {
     setEnvironment("America/Los_Angeles", KST_AFTERNOON);
     storeGame("Tue Nov 10 2026");
     expectKept(renderGame());
   });
 
-  it("L-8: LA, 새 형식 KST 오늘(= 로컬 내일) → 그대로 유지", () => {
+  it("LA, 새 형식 KST 오늘(= 로컬 내일) → 그대로 유지", () => {
     setEnvironment("America/Los_Angeles", KST_AFTERNOON);
     storeGame("2026-11-10");
     expectKept(renderGame());
   });
 
-  it("L-9: LA, 새 형식 KST 어제(= 로컬 오늘) → 초기화", () => {
+  it("LA, 새 형식 KST 어제(= 로컬 오늘) → 초기화", () => {
     setEnvironment("America/Los_Angeles", KST_AFTERNOON);
     storeGame("2026-11-09");
     expectReset(renderGame());

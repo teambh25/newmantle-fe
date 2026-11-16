@@ -40,18 +40,18 @@ function failStorageFor(method: "getItem" | "setItem") {
 }
 
 describe("저장된 기록 읽기", () => {
-  it("S-1: 깨진 JSON → 예외 없이 빈 게임", () => {
+  it("깨진 JSON → 예외 없이 빈 게임", () => {
     localStorage.setItem(STORAGE_KEY, "{abc");
     expectEmptyGame(renderGame());
   });
 
   // 숫자·문자열·배열은 lastPlayedDate가 없어 수정 전에도 빈 게임이 됐다. null만 크래시했다
-  it("S-2: JSON null → 빈 게임", () => {
+  it("JSON null → 빈 게임", () => {
     localStorage.setItem(STORAGE_KEY, "null");
     expectEmptyGame(renderGame());
   });
 
-  it("S-3: 오늘 날짜지만 submittedWords가 배열이 아님 → 빈 게임", () => {
+  it("오늘 날짜지만 submittedWords가 배열이 아님 → 빈 게임", () => {
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({ submittedWords: {}, attempts: 3, lastPlayedDate: GAME_DATE })
@@ -59,7 +59,7 @@ describe("저장된 기록 읽기", () => {
     expectEmptyGame(renderGame());
   });
 
-  it("S-4: 오늘 날짜의 구버전 기록 → 기존 단어·시도 횟수 유지, 빠진 필드는 기본값", async () => {
+  it("오늘 날짜의 구버전 기록 → 기존 단어·시도 횟수 유지, 빠진 필드는 기본값", async () => {
     storeOldVersionGame(GAME_DATE);
     const h = renderGame();
     expect(h.game.attempts).toBe(1);
@@ -70,7 +70,7 @@ describe("저장된 기록 읽기", () => {
     expect(h.game.hintUsed).toBe(1);
   });
 
-  it("S-5: 이전 날짜 형식(이어받기 대상)의 구버전 기록 → S-4와 같음", async () => {
+  it("이전 날짜 형식(이어받기 대상)의 구버전 기록 → 오늘 날짜 구버전 기록과 같음", async () => {
     storeOldVersionGame(toLegacyDateString(GAME_DATE));
     const h = renderGame();
     expect(h.game.attempts).toBe(1);
@@ -80,7 +80,7 @@ describe("저장된 기록 읽기", () => {
     expect(h.game.hintUsed).toBe(1);
   });
 
-  it("S-6: 저장소 읽기가 예외를 던짐 → 빈 게임으로 시작", () => {
+  it("저장소 읽기가 예외를 던짐 → 빈 게임으로 시작", () => {
     storeOldVersionGame(GAME_DATE);
     const spy = failStorageFor("getItem");
     try {
@@ -92,7 +92,7 @@ describe("저장된 기록 읽기", () => {
 });
 
 describe("기록 저장", () => {
-  it("S-7: 저장소 쓰기가 예외를 던짐 → 마운트·단어 제출 정상", async () => {
+  it("저장소 쓰기가 예외를 던짐 → 마운트·단어 제출 정상", async () => {
     const spy = failStorageFor("setItem");
     try {
       const h = renderGame();
@@ -105,7 +105,7 @@ describe("기록 저장", () => {
     }
   });
 
-  it("S-8: 깨진 JSON에서 시작 → 단어 제출 → 정상 JSON으로 덮어써지고, 다시 마운트해도 단어 유지", async () => {
+  it("깨진 JSON에서 시작 → 단어 제출 → 정상 JSON으로 덮어써지고, 다시 마운트해도 단어 유지", async () => {
     localStorage.setItem(STORAGE_KEY, "{abc");
     const h = renderGame();
     await h.submit("사과", 120);

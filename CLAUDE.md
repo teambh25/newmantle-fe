@@ -31,10 +31,11 @@ npx vitest run -t "힌트"    # run tests whose name matches
 Harness guide: `src/test/README.md` (fake game server, `renderGame`, presets, clock/timezone helpers, mock setup). Read it before writing tests.
 
 ### Workflow: TDD
-1. Write the test cases in the task's `docs/tasks/<task>/verification.md` first (level / precondition / action / expected), based on the spec or problem decisions, not on the implementation
-2. Write the tests. Name each test by the behavior it checks (precondition → action → expected). Do not put case IDs in test names or comments
+1. Write the test cases first in the Verification section of the task's `specs/<task>/plan.md` (precondition / action / expected), as behavior sentences without IDs, based on the plan and `decisions.md`, not on the implementation
+2. Write the tests. Name each test by the behavior it checks, matching the case sentence (precondition → action → expected). Do not put case IDs in test names or comments
 3. Run them and confirm they **fail for the right reason** (missing behavior, not a typo or missing mock). A test that passes before implementation does not distinguish the bug, so revisit the case
-4. Implement until they pass, then record the result in the verification doc's result log
+4. Implement until they pass, then update the Phase progress in `plan.md`
+- Things checked by eye on screen (layout, color, timing, real-phone behavior) are not tested in code; add them to `docs/manual-checks.md` instead
 - When adding tests to code that already exists, do not edit implementation files to see them fail. Check that in an isolated copy (git worktree) and only after asking
 
 ### What to test

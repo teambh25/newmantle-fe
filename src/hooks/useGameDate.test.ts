@@ -1,4 +1,4 @@
-// 로직 레벨: 퀴즈 날짜가 KST 기준으로 정해지고 모든 게임 요청에 그대로 쓰이는지 (docs/tasks/kst-date-fix/verification.md P-1)
+// 로직 레벨: 퀴즈 날짜가 KST 기준으로 정해지고 모든 게임 요청에 그대로 쓰이는지 (docs/tasks/kst-date-fix/problem.md)
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { useGameDate } from "@/hooks/useGameDate";
@@ -15,13 +15,13 @@ function renderGameWithDate() {
 }
 
 describe("퀴즈 날짜", () => {
-  it("Q-1: LA(로컬 11/9) → 게임 날짜는 KST 오늘 2026-11-10", async () => {
+  it("LA(로컬 11/9) → 게임 날짜는 KST 오늘 2026-11-10", async () => {
     setClock("America/Los_Angeles", KST_AFTERNOON);
     const h = renderGameWithDate();
     await waitFor(() => expect(h.result.current.gameDate).toBe("2026-11-10"));
   });
 
-  it("Q-2: LA(로컬 11/9) → 제출·힌트·초성·포기 요청 경로의 날짜가 모두 2026-11-10", async () => {
+  it("LA(로컬 11/9) → 제출·힌트·초성·포기 요청 경로의 날짜가 모두 2026-11-10", async () => {
     setClock("America/Los_Angeles", KST_AFTERNOON);
     const h = renderGameWithDate();
     await waitFor(() => expect(h.result.current.gameDate).toBe("2026-11-10"));
