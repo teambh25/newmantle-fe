@@ -53,18 +53,21 @@ function wordRows() {
 }
 const moreButton = () => screen.queryByRole("button", { name: "더보기" });
 
+/** 기록 표 줄 (방금 단어도 들어 있음, word-list/plan.md 1) */
+const tableRows = () => rowsOf(historyTable());
+
 describe("W-2: 보이는 개수", () => {
-  it("W-2-1: 8개면 7줄 + 더보기", async () => {
+  it("W-2-1: 8개면 표 7줄 + 더보기", async () => {
     storeWords(nWords(8));
     await renderForm();
-    expect(wordRows()).toHaveLength(7);
+    expect(tableRows()).toHaveLength(7);
     expect(moreButton()).toBeInTheDocument();
   });
 
-  it("W-2-2: 7개면 7줄, 더보기 없음", async () => {
+  it("W-2-2: 7개면 표 7줄, 더보기 없음", async () => {
     storeWords(nWords(7));
     await renderForm();
-    expect(wordRows()).toHaveLength(7);
+    expect(tableRows()).toHaveLength(7);
     expect(moreButton()).not.toBeInTheDocument();
   });
 
@@ -72,25 +75,25 @@ describe("W-2: 보이는 개수", () => {
     storeWords(nWords(8));
     await renderForm();
     await userEvent.setup({ pointerEventsCheck: 0 }).click(moreButton()!);
-    expect(wordRows()).toHaveLength(8);
+    expect(tableRows()).toHaveLength(8);
   });
 });
 
 describe("W-2: 보이는 개수 (초성)", () => {
-  it("W-2-4: 7개 + 초성(가장 최근)이면 초성 줄 포함 7줄 + 더보기", async () => {
+  it("W-2-4: 7개 + 초성(가장 최근)이면 표 7줄, 더보기 없음", async () => {
     storeWords([consonant(), ...nWords(7)], { initialConsonantHintUsed: true });
     await renderForm();
-    expect(wordRows()).toHaveLength(7);
-    expect(moreButton()).toBeInTheDocument();
+    expect(tableRows()).toHaveLength(7);
+    expect(moreButton()).not.toBeInTheDocument();
   });
 
-  it("W-2-5: 초성 뒤에 단어를 내서 7개면 7줄, 더보기 없음, 초성 줄 없음", async () => {
+  it("W-2-5: 초성 뒤에 단어를 내서 7개면 표 7줄, 더보기 없음, 표에 초성 없음", async () => {
     const [latest, ...rest] = nWords(7);
     storeWords([latest, consonant(), ...rest], { initialConsonantHintUsed: true });
     await renderForm();
-    expect(wordRows()).toHaveLength(7);
+    expect(tableRows()).toHaveLength(7);
     expect(moreButton()).not.toBeInTheDocument();
-    expect(wordRows().some((r) => r.textContent?.includes(CONSONANT))).toBe(false);
+    expect(tableRows().some((r) => r.textContent?.includes(CONSONANT))).toBe(false);
   });
 });
 

@@ -375,7 +375,8 @@ describe("D. 공통 / 예외", () => {
     await waitFor(() => expect(hintButton()).toBeDisabled());
     await held.release();
 
-    await waitFor(() => expect(screen.getByText("힌트20")).toBeInTheDocument());
+    // 힌트 단어는 카드 배너와 기록 표 두 곳에 보인다
+    await waitFor(() => expect(screen.getAllByText("힌트20").length).toBeGreaterThan(0));
     expect(gameServer.normalHintRanks()).toEqual([20]);
     expect(hintButton()).toBeDisabled();
   });
@@ -567,7 +568,7 @@ describe("Y. 없는 단어", () => {
     expect(rowsWith("없는말")).toHaveLength(1);
   });
 
-  it("Y-2-6: 단어 8개 저장 상태에서 없는 단어 → 보이는 줄은 임시 줄 포함 7줄", async () => {
+  it("Y-2-6: 단어 8개 저장 상태에서 없는 단어 → 배너에 없는 단어, 기록 표 7줄 + 더보기", async () => {
     const words = Array.from({ length: 8 }, (_, k) => ({
       word: `단어${8 - k}`, similarity: 10, rank: 108 - k, attempt: 8 - k, correct: false,
     }));
@@ -579,7 +580,8 @@ describe("Y. 없는 단어", () => {
     gameServer.setUnknown("없는말");
     await submitWord(user, "없는말");
     expect(firstRowText()).toContain("없는말");
-    expect(bodyRows()).toHaveLength(7);
+    expect(rowsOf(historyTable())).toHaveLength(7);
+    expect(screen.getByRole("button", { name: "더보기" })).toBeInTheDocument();
   });
 
   it("Y-2-7: 10위·500위 순으로 낸 뒤 없는 단어 → 줄 순서는 없는 단어, 10위, 500위", async () => {
@@ -595,7 +597,7 @@ describe("Y. 없는 단어", () => {
     expect(texts[2]).toContain("바나나");
   });
 
-  it("Y-2-8: 단어 7개 저장 상태에서 없는 단어 → 임시 줄 포함 7줄 + 더보기, 누르면 7개 모두", async () => {
+  it("Y-2-8: 단어 7개 저장 상태에서 없는 단어 → 기록 표에 7개 모두, 더보기 없음", async () => {
     const words = Array.from({ length: 7 }, (_, k) => ({
       word: `단어${7 - k}`, similarity: 10, rank: 107 - k, attempt: 7 - k, correct: false,
     }));
@@ -607,9 +609,10 @@ describe("Y. 없는 단어", () => {
     gameServer.setUnknown("없는말");
     await submitWord(user, "없는말");
     expect(firstRowText()).toContain("없는말");
-    expect(bodyRows()).toHaveLength(7);
-    await user.click(screen.getByRole("button", { name: "더보기" }));
-    for (const w of words) expect(rowsWith(w.word)).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "더보기" })).not.toBeInTheDocument();
+    const table = rowsOf(historyTable());
+    expect(table).toHaveLength(7);
+    for (const w of words) expect(table.filter((r) => r.textContent?.includes(w.word))).toHaveLength(1);
   });
 
   it("Y-2-11: 없는 단어 뒤 다른 없는 단어 제출 중 → 방금 입력 칸·기록이 그대로, 응답 뒤 새 없는 단어", async () => {
@@ -736,16 +739,17 @@ describe("Y-4. 이미 제출한 단어", () => {
 
 // 방금 입력 칸과 기록 표 (docs/tasks/ui/word-list/verification.md W-6, word-list/plan.md 1)
 describe("W-6. 방금 입력 칸과 기록 표", () => {
-  it("W-6-1: 100위·500위 → 방금 입력에 500위, 기록에 100위", async () => {
+  it("W-6-1: 100위·500위 → 방금 입력에 500위, 기록에 100위·500위", async () => {
     const { user } = await setup();
     await submitWord(user, "사과", 100);
     await submitWord(user, "바나나", 500);
     const latest = latestItems();
-    const history = rowsOf(historyTable());
+    const history = rowsOf(historyTable()).map((r) => r.textContent ?? "");
     expect(latest).toHaveLength(1);
     expect(latest[0].textContent).toContain("바나나");
-    expect(history).toHaveLength(1);
-    expect(history[0].textContent).toContain("사과");
+    expect(history).toHaveLength(2);
+    expect(history[0]).toContain("사과");
+    expect(history[1]).toContain("바나나");
   });
 
   it("W-6-2: 그 뒤 없는 단어 → 방금 입력에 없는 단어, 기록에 100위·500위", async () => {
@@ -763,18 +767,44 @@ describe("W-6. 방금 입력 칸과 기록 표", () => {
     expect(history[1]).toContain("바나나");
   });
 
-  it("W-6-3: 단어 1개 → 방금 입력에 그 단어, 기록 줄 없음", async () => {
+  it("W-6-3: 단어 1개 → 방금 입력과 기록 모두 그 단어", async () => {
     const { user } = await setup();
     await submitWord(user, "사과", 100);
     expect(latestItems()).toHaveLength(1);
     expect(latestItems()[0].textContent).toContain("사과");
-    expect(rowsOf(historyTable())).toHaveLength(0);
+    const history = rowsOf(historyTable());
+    expect(history).toHaveLength(1);
+    expect(history[0].textContent).toContain("사과");
   });
 
   it("W-6-4: 제출한 단어 없음 → 방금 입력 영역이 바로 보이고 단어 없음", async () => {
     await setup();
     expect(latestCard()).toBeInTheDocument();
     expect(latestItems()).toHaveLength(0);
+  });
+
+  it("W-6-5: 100위 단어를 다시 내도 기록에 100위·500위 그대로", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 100);
+    await submitWord(user, "바나나", 500);
+    // 이미 낸 단어는 서버에 다시 묻지 않는다
+    await user.type(input(), "사과");
+    await user.click(submitButton());
+    await waitFor(() => expect(within(latestItems()[0]).getByRole("img", { name: "이미 입력한 단어" })).toBeInTheDocument());
+    const history = rowsOf(historyTable()).map((r) => r.textContent ?? "");
+    expect(history).toHaveLength(2);
+    expect(history[0]).toContain("사과");
+    expect(history[1]).toContain("바나나");
+  });
+
+  it("W-6-6: 500위 뒤 힌트 → 기록에 힌트 단어 줄이 바로 있음", async () => {
+    const { user } = await setup();
+    await submitWord(user, "사과", 500);
+    await user.click(hintButton());
+    await waitFor(() => expect(gameServer.count("hint")).toBe(1));
+    await waitFor(() =>
+      expect(rowsOf(historyTable()).some((r) => within(r).queryByRole("img", { name: "힌트로 받은 단어" }))).toBe(true),
+    );
   });
 });
 
@@ -876,7 +906,8 @@ describe("Y-3. 요청 실패는 카드 배너 알림", () => {
     expect(gameServer.requests.filter((r) => r.kind === "guess").map((r) => r.word)).toEqual(["사과", "사과"]);
     await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
     await waitFor(() => expect(storedWords()).toContain("사과"));
-    expect(rowsWith("사과")).toHaveLength(1);
+    // 기록 표에 결과 줄 하나 (배너에도 같은 단어)
+    expect(rowsOf(historyTable()).filter((r) => r.textContent?.includes("사과"))).toHaveLength(1);
   });
 
   it("Y-3-3: 힌트 실패 → 카드 안 알림, 토스트 없음", async () => {
@@ -978,7 +1009,7 @@ describe("PC. 진행 상황 카드", () => {
     expect(endIcon(END_PLAYING)).toBeInTheDocument();
   });
 
-  it("PC-1-2: 500위 제출 → 배너에 단어·500위, 제출 횟수 1, 미터 > 0, 기록 표 없음", async () => {
+  it("PC-1-2: 500위 제출 → 배너에 단어·500위, 제출 횟수 1, 미터 > 0, 기록 표에도 그 단어", async () => {
     const { user } = await setup();
     await submitWord(user, "사과", 500);
     expect(bubble().textContent).toContain("사과");
@@ -987,7 +1018,7 @@ describe("PC. 진행 상황 카드", () => {
     expect(within(bubble()).queryByRole("img")).not.toBeInTheDocument();
     expect(attemptCount()).toBe("1");
     expect(meterValue()).toBeGreaterThan(0);
-    expect(historyTable()).not.toBeInTheDocument();
+    expect(rowsOf(historyTable())).toHaveLength(1);
   });
 
   it("PC-1-3: 단어 2개 → 카드에 머리줄 없음, 기록 표에 머리줄 4칸", async () => {

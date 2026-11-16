@@ -4,8 +4,8 @@ import Link from "next/link";
 // 배경은 전체 폭, 내용은 게임 화면과 같은 폭(max-w-2xl)으로 가운데 정렬 (docs/tasks/ui/footer/plan.md)
 const Footer: React.FC = () => {
   return (
-    <footer className="w-full mt-6 py-6 bg-gray-100">
-      <div className="w-full max-w-2xl mx-auto px-4 flex flex-col items-center gap-4">
+    <footer className="w-full mt-6 py-4 bg-gray-100">
+      <div className="w-full max-w-2xl mx-auto px-4 flex flex-col items-center gap-2">
         <div className="flex space-x-4">
           <Link href="/rule" className="text-sm text-blue-600 hover:underline">
             규칙

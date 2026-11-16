@@ -130,8 +130,9 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
       : latestItem?.correct
         ? { word: latestItem.word, tone: gameLogic.givenUp ? "givenUp" : "answer", attempt: latestItem.attempt }
         : null;
-  const rankedWords = [...listedWords].sort(compareByRank);
-  // 방금 칸에 단어가 있으면(입력·힌트) 기록 표에서는 뺀다. 제출 중이면 방금 칸은 제출 중 줄, 그 전 단어는 기록으로
+  // 기록 표는 순위를 아는 모든 단어(방금 단어·다시 낸 단어 포함)를 순위순으로 (word-list/plan.md 1)
+  const historyWords = [...listedWords].sort(compareByRank);
+  // 방금 칸에 올 단어(입력·힌트). 제출 중이거나 임시 줄·초성·정답이면 없음
   const latestListed = !pendingWord && !topRow && latestItem && !inHeading(latestItem) ? latestItem : null;
   const latestRow: LatestRow | null = pendingWord
     ? { kind: "pending", word: pendingWord, attempt: gameLogic.attempts + 1 }
@@ -140,7 +141,6 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
       : latestListed
         ? { kind: "word", word: latestListed, isRepeat: repeatedWord !== null && latestListed.word === repeatedWord }
         : null;
-  const historyWords = latestListed ? rankedWords.filter((w) => w !== latestListed) : rankedWords;
   // 진행 상황 카드 게이지: 최고 순위 = 순위 있는 단어(입력·힌트, 끝난 뒤 단어 포함) 중 가장 작은 순위 (progress-card/plan.md 2)
   const ranks = gameLogic.submittedWords.filter((w) => !w.correct && w.rank >= 1).map((w) => w.rank);
   const bestRank = ranks.length > 0 ? Math.min(...ranks) : null;
@@ -307,9 +307,8 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
           }
         />
 
-        {/* 표 자리 확보: 단어가 적어도 7줄 + "더보기" 높이만큼 차지해서, 입력할 때마다 아래 내용이 밀리지 않게 (docs/tasks/ui/word-list/plan.md 5).
-            값 = 진행 상황 카드 + 기록 표 소제목 + 머리줄 + 기록 6줄 + "더보기"를 헤드리스로 잰 497px (375·1024 같음, 눈금·말풍선 줄 포함) */}
-        <div className="w-full min-h-[497px]">
+        {/* 표 자리를 미리 잡지 않는다: 푸터는 화면 맨 아래에 있다가 목록이 거기까지 자라면 밀려 내려간다 (docs/tasks/ui/word-list/plan.md 5) */}
+        <div className="w-full">
           {/* 방금 입력 칸 = 진행 상황 카드. 시작할 때도 바로 보여 준다 (docs/tasks/ui/progress-card/plan.md) */}
           <ProgressCard
             latest={latestRow}
