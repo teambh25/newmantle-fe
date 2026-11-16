@@ -139,7 +139,7 @@ export function FeedbackDialog({ open, onOpenChange }: { open: boolean; onOpenCh
         </DialogHeader>
         <div className="w-full p-2">
           <div className="bg-gray-50/50 p-6 rounded-lg border border-gray-100">
-            <SurveyForm />
+            <SurveyForm entry="result" />
           </div>
         </div>
       </DialogContent>

@@ -2,6 +2,7 @@ import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, vi } from "vitest";
 import { cleanup } from "@testing-library/react";
 import { gameServer } from "./fakeGameServer";
+import { feedbackWebhook } from "./fakeFeedbackWebhook";
 
 // ---- 외부 의존성 mock ----
 
@@ -62,7 +63,15 @@ beforeEach(() => {
   // 축하 효과는 setInterval로 3초간 그려진다. 다른 테스트로 새지 않도록 interval만 가짜로 돌린다
   vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
   gameServer.reset();
-  vi.stubGlobal("fetch", vi.fn(gameServer.fetch));
+  feedbackWebhook.reset();
+  // 피드백 웹훅은 가짜 웹훅으로, 나머지는 가짜 게임 서버로
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === "string" ? input : input.toString();
+      return feedbackWebhook.matches(url) ? feedbackWebhook.fetch(url, init) : gameServer.fetch(input);
+    })
+  );
   // 요청 실패 케이스의 console.error 출력 억제
   vi.spyOn(console, "error").mockImplementation(() => {});
 });

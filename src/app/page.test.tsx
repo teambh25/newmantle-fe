@@ -616,7 +616,7 @@ describe("결과창 모달 (docs/tasks/ui/verification.md R)", () => {
   });
 
   describe("R-4. 피드백", () => {
-    it("R-4-1, R-4-2: 피드백 → 결과창은 닫히고 피드백 창만 열림, 피드백 창을 닫으면 열린 창이 없음", async () => {
+    it("R-4-1, R-4-2: 피드백 → 결과창은 닫히고 피드백 창만 열림, 피드백 창을 닫으면 결과창이 다시 열림", async () => {
       storeFinished();
       const { user } = await renderHome();
       const d = await openFromMain(user);
@@ -627,11 +627,10 @@ describe("결과창 모달 (docs/tasks/ui/verification.md R)", () => {
       const dialogs = await screen.findAllByRole("dialog");
       expect(dialogs).toHaveLength(1);
 
-      // R-4-2
+      // R-4-2 (feedback/decisions.md Dec-18)
       await user.click(within(dialogs[0]).getByRole("button", { name: /close/i }));
-      await waitFor(() => expect(screen.queryAllByRole("dialog")).toHaveLength(0));
-      await wait(1500);
-      expect(screen.queryAllByRole("dialog")).toHaveLength(0);
+      expect(await findResultDialog()).toBeInTheDocument();
+      expect(screen.getAllByRole("dialog")).toHaveLength(1);
     });
   });
 

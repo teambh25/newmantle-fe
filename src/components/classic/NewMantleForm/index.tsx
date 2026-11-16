@@ -65,6 +65,11 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
     handleResultOpenChange(false);
     setFeedbackOpen(true);
   };
+  // 이 피드백 창은 결과창에서만 열린다. 닫으면(보냈든 안 보냈든) 결과창으로 돌아간다 (docs/tasks/ui/feedback/decisions.md Dec-18)
+  const handleFeedbackOpenChange = (open: boolean) => {
+    setFeedbackOpen(open);
+    if (!open) setResultOpen(true);
+  };
 
   useEffect(() => {
     // Read shared_attempts from URL search params on mount
@@ -204,7 +209,7 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
             onFeedback={openFeedback}
           />
         )}
-        <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+        <FeedbackDialog open={feedbackOpen} onOpenChange={handleFeedbackOpenChange} />
 
         {sharedAttempts !== null && (
           <CompetitiveBar

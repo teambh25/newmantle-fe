@@ -155,7 +155,12 @@ export function SettingsButton({ theme, onThemeChange, variant }: SettingsButton
 
       {/* 피드백 팝업 */}
       <Dialog open={showSurvey} onOpenChange={setShowSurvey}>
-        <DialogContent className={`max-w-md ${isExcel ? "p-0 overflow-hidden" : "sm:rounded-xl"}`}>
+        <DialogContent
+          className={`max-w-md ${isExcel ? "p-0 overflow-hidden" : "sm:rounded-xl"}`}
+          aria-describedby={undefined}
+        >
+          {/* excel은 시트 첫 행이 제목 역할. 스크린리더용 이름만 둔다 */}
+          {isExcel && <DialogTitle className="sr-only">피드백</DialogTitle>}
           {!isExcel && (
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
@@ -169,10 +174,10 @@ export function SettingsButton({ theme, onThemeChange, variant }: SettingsButton
             <div className={theme === "excel" ? "" : "bg-gray-50/50 p-6 rounded-lg border border-gray-100"}>
               {theme === "excel" ? (
                 <div className="border-y border-[#d4d4d4]">
-                  <ExcelSurveyContent startRow={1} />
+                  <ExcelSurveyContent entry="settings" startRow={1} />
                 </div>
               ) : (
-                <ClassicSurveyForm />
+                <ClassicSurveyForm entry="settings" />
               )}
             </div>
           </div>
