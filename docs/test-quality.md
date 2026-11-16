@@ -19,7 +19,9 @@
 
 | 파일 | 개수 | 내용 |
 | --- | --- | --- |
-| `src/components/classic/NewMantleForm/NewMantleForm.test.tsx` | 50 | 힌트·포기 버튼 활성, 포기 확인 창 선택지와 포커스, 요청 중 잠금, 새로고침 후 상태, 없는 단어 임시 줄, 실패 알림·토스트, 진행 상황 카드 |
+| `src/components/classic/NewMantleForm/HintGiveUp.test.tsx` | 26 | 힌트·포기 버튼 활성, 포기 확인 창 선택지와 포커스, 요청 중 잠금, 새로고침 후 상태 |
+| `src/components/classic/NewMantleForm/SubmitInput.test.tsx` | 17 | 엔터 제출, 없는 단어 임시 줄, 이미 낸 단어, 실패 알림·토스트 |
+| `src/components/classic/NewMantleForm/ProgressCard.test.tsx` | 7 | 진행 상황 카드 |
 | `src/app/page.test.tsx` | 55 | 첫 방문 모달, 로그아웃 위치, 헤더 말풍선(로그인·통계·5초 자동 닫힘), 결과창 자동 표시·닫기·다시 보기, 입력창 말풍선 순서, 공지 배너 |
 | `src/hooks/useGameState.test.ts` | 34 | 힌트 순위·막힘, 초성 힌트, 포기, 이미 낸 단어, 정답 후, 요청 중 잠금, 요청 실패, Amplitude |
 | `src/utils/board.test.ts` | 31 | 게임판 계산 |
@@ -62,8 +64,8 @@
 
 | 규칙 | 확인하는 곳 | 판단 |
 | --- | --- | --- |
-| 최고 순위 20 이내면 일반 힌트 막힘 | `gameRules.test.ts`(판단 함수), `useGameState.test.ts`(요청 안 감), `NewMantleForm.test.tsx`(버튼 비활성) | 화면은 "버튼에 반영"이라 규칙상 유지. 겹치는 건 utils와 훅인데, 훅은 "요청이 안 간다"는 다른 결과를 확인하므로 둘 다 둬도 됨 |
-| 힌트 응답 전 다시 눌러도 요청 1회 | `useGameState.test.ts`, `NewMantleForm.test.tsx`(버튼 비활성 + 요청 횟수) | 화면 테스트에서 요청 횟수 확인은 빼고 버튼 비활성·재활성만 보면 됨 |
+| 최고 순위 20 이내면 일반 힌트 막힘 | `gameRules.test.ts`(판단 함수), `useGameState.test.ts`(요청 안 감), `HintGiveUp.test.tsx`(버튼 비활성) | 화면은 "버튼에 반영"이라 규칙상 유지. 겹치는 건 utils와 훅인데, 훅은 "요청이 안 간다"는 다른 결과를 확인하므로 둘 다 둬도 됨 |
+| 힌트 응답 전 다시 눌러도 요청 1회 | `useGameState.test.ts`, `HintGiveUp.test.tsx`(버튼 비활성 + 요청 횟수) | 화면 테스트에서 요청 횟수 확인은 빼고 버튼 비활성·재활성만 보면 됨 |
 | 최신 공지 안 읽음이면 배너 | `notifications.test.ts`(판단 4개), `page.test.tsx`(배너 있음/없음 2개) | 화면은 연결 확인 1개면 충분. "들어오기만 해서는 읽음 저장 안 함", "X로 닫으면 저장"은 화면에만 있으므로 유지 |
 | 기기가 LA여도 KST 오늘 기준 | `date.test.ts`(`getKSTToday`), `stats/page.test.tsx`(조회 범위), `StatsCalendar.test.tsx`(오늘 칸) | 유지하기로 함. 화면 두 곳은 컴포넌트가 `getKSTToday`를 쓰는지 확인하는 역할 (지우면 다른 날짜 함수로 바꿔도 못 잡음) |
 
@@ -77,7 +79,7 @@
 ### 5. 구조 메모
 
 - `src/utils/rankTrack.ts` 머리 주석은 "끝점 계산은 뺐다"고 하지만 `TRACK_END_POSITION`(끝점 위치)은 남아 있고 `ProgressCard`가 정답 자리에 씀. 주석을 "끝점 표시"로 고쳐야 함. 테스트 제목은 현재 코드와 맞음
-- `NewMantleForm.test.tsx`(50개)는 버튼·확인 창·임시 줄·실패 알림·진행 상황 카드가 한 파일에 섞여 있음. 나누면 중복을 찾기 쉬움
+- 게임 화면 테스트(50개)를 `HintGiveUp`·`SubmitInput`·`ProgressCard` 세 파일로 나누고 공통 도구는 `src/test/formHarness.tsx`로 뺌 (정리함). 전체 실행 시간은 `page.test.tsx`(약 18초)가 좌우해서 나눠도 빨라지지 않음
 
 ## 처음 점검에서 사실과 달랐던 것
 

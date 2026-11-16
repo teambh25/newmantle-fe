@@ -23,7 +23,7 @@ npm run lint
 
 # Run tests (Vitest)
 npm test
-npx vitest run -t "A-5-1"   # run by case ID
+npx vitest run -t "힌트"    # run tests whose name matches
 ```
 
 ## Testing
@@ -31,8 +31,8 @@ npx vitest run -t "A-5-1"   # run by case ID
 Harness guide: `src/test/README.md` (fake game server, `renderGame`, presets, clock/timezone helpers, mock setup). Read it before writing tests.
 
 ### Workflow: TDD
-1. Write the test cases in the task's `docs/tasks/<task>/verification.md` first (ID / level / precondition / action / expected), based on the spec or problem decisions, not on the implementation
-2. Write the tests, prefixing each test name with its case ID
+1. Write the test cases in the task's `docs/tasks/<task>/verification.md` first (level / precondition / action / expected), based on the spec or problem decisions, not on the implementation
+2. Write the tests. Name each test by the behavior it checks (precondition → action → expected). Do not put case IDs in test names or comments
 3. Run them and confirm they **fail for the right reason** (missing behavior, not a typo or missing mock). A test that passes before implementation does not distinguish the bug, so revisit the case
 4. Implement until they pass, then record the result in the verification doc's result log
 - When adding tests to code that already exists, do not edit implementation files to see them fail. Check that in an isolated copy (git worktree) and only after asking

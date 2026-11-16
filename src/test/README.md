@@ -32,9 +32,9 @@ Vitest + React Testing Library + user-event. 실행 명령은 루트 `README.md`
 
 ### 3. 테스트 케이스를 먼저 문서로 정한다
 
-- 작업마다 `docs/tasks/<작업>/verification.md`에 케이스 표를 둔다 (ID / 레벨 / 사전 상태 / 행동 / 기대 결과)
+- 작업마다 `docs/tasks/<작업>/verification.md`에 케이스 표를 둔다 (레벨 / 사전 상태 / 행동 / 기대 결과)
 - 케이스는 spec·problem의 결정 사항을 기준으로 만든다. 구현 기록을 보고 케이스를 바꾸지 않는다
-- 테스트 이름 앞에 케이스 ID를 붙인다: `it("A-5-1: 999부터 15회 만에 20위에 도달", ...)` → `npx vitest run -t "A-5-1"`로 바로 실행 가능
+- 테스트 이름은 확인하는 동작으로 짓는다: `it("힌트를 받을 수 없을 때까지 반복 → 999부터 20까지 15회", ...)`. 케이스 ID는 테스트 이름·주석에 적지 않는다. 일부만 실행할 때는 이름으로 고른다: `npx vitest run -t "힌트"`
 - 케이스를 추가·변경하면 문서를 먼저 고친 뒤 테스트를 고친다. 실행 결과는 문서의 "결과 기록"에 남긴다
 
 ### 4. TDD: 테스트 먼저, 실패 확인, 그다음 구현
@@ -52,6 +52,7 @@ Vitest + React Testing Library + user-event. 실행 명령은 루트 `README.md`
 | `setup.ts` | 모든 테스트 전에 실행 (`vitest.config.ts`의 `setupFiles`). 외부 mock, jsdom에 없는 브라우저 API, 테스트마다 초기화 |
 | `fakeGameServer.ts` | 가짜 게임 서버 (`gameServer`), 정답 상수 `ANSWER` |
 | `fakeFeedbackWebhook.ts` | 가짜 피드백 웹훅 (`feedbackWebhook`): `bodies`, `failNext()`, `networkErrorNext()`, `holdNext()` → `release()`. 예: `src/app/feedback.test.tsx` |
+| `formHarness.tsx` | 화면 레벨 도구: 게임 화면 렌더링·조작 (NewMantleForm 폴더의 화면 테스트가 같이 씀) |
 | `gameHarness.ts` | 로직 레벨 도구: `renderGame`, `presets`, `amplitudeEvents`, `confettiFired`, `GAME_DATE` |
 | `clock.ts` | 기기 타임존·현재 시각 고정: `setClock`, 기준 시각 상수 |
 
@@ -107,7 +108,9 @@ expect(h.game.attempts).toBe(1); // 훅 반환값
 
 ## 화면 레벨
 
-실제 컴포넌트를 렌더링하고 user-event로 조작한다. 예: `src/components/classic/NewMantleForm/NewMantleForm.test.tsx`
+실제 컴포넌트를 렌더링하고 user-event로 조작한다. 예: `src/components/classic/NewMantleForm/HintGiveUp.test.tsx`
+
+- 게임 화면(NewMantleForm) 테스트는 `formHarness.tsx`의 도구를 같이 쓴다: `setup()`(렌더링 + 날짜 기다림), 버튼·입력창 찾기, `submitWord`, `submitAnswer`, `takeConsonantHint`, `giveUpViaDialog`, 방금 입력 칸·기록 표 읽기
 
 - `userEvent.setup({ pointerEventsCheck: 0 })`: Radix 확인 창이 `body`에 `pointer-events: none`을 거는 것 때문에 필요
 - 마운트 직후 게임 날짜가 정해질 때까지 기다린 뒤 조작한다 (`await waitFor(() => expect(textbox).toBeEnabled())`)

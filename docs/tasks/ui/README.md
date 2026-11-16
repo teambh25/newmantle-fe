@@ -54,7 +54,9 @@ mock 정책은 `src/test/README.md`와 같다. Supabase는 가짜 클라이언�
 | `src/app/stats/page.test.tsx` | T-2 |
 | `src/app/notices/page.test.tsx` | NT-9 |
 | `src/hooks/useGameState.test.ts` | R-3 |
-| `src/components/classic/NewMantleForm/NewMantleForm.test.tsx` | E, Y, W-5, W-6 |
+| `src/components/classic/NewMantleForm/SubmitInput.test.tsx` | 엔터 제출, 없는 단어, 이미 낸 단어, 요청 실패 알림 |
+| `src/components/classic/NewMantleForm/ProgressCard.test.tsx` | 진행 상황 카드 |
+| `src/utils/board.test.ts` | 방금 입력 칸과 기록 표, 날짜 제목, 게이지 최고 순위 |
 | `src/components/classic/NewMantleForm/WordList.test.tsx` | W-2 ~ W-4 |
 | `src/utils/rankTier.test.ts` | W-1 |
 | `src/utils/date.test.ts` | G |
