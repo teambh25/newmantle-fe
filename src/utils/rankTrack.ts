@@ -1,11 +1,6 @@
-// 순위 트랙: 무엇을 막대 어디에 찍는지 (docs/tasks/ui/word-list/rank-track.md 4).
-// 메인에서는 뺐고, 결과창의 플레이 기록(타임랩스)에서 다시 쓸 예정 (rank-track.md 5)
-import type { SubmittedWord } from "@/utils/api";
+// 순위 → 위치 계산 (docs/tasks/ui/word-list/rank-track.md 4-1). 진행 상황 카드 게이지·말풍선이 쓴다.
+// 세로 순위 트랙 컴포넌트와 갱신 표시·끝점·글자 숨김 계산은 코드에서 뺐다 (2026-11-16, 커밋 616c490에 있음)
 import { getRankTier, getTierRange, type RankTier } from "@/utils/rankTier";
-
-/** 최고 순위 갱신 표시. label은 표 #(시도 번호), 힌트는 "hint". rank -1은 순위 밖 */
-export type TrackMark = { rank: number; label: number | "hint" };
-export type TrackEnd = { kind: "playing" } | { kind: "solved"; attempts: number } | { kind: "givenUp" };
 
 /** 칸 크기 비율. 정답 쪽 칸일수록 크게, 순위 밖은 맨 아래 작은 칸 (4-1) */
 const CELL_SIZE: Record<RankTier, number> = { 0: 0.5, 5: 1, 4: 1.25, 3: 1.5, 2: 1.75, 1: 2 };
@@ -43,51 +38,3 @@ export function trackPosition(rank: number): number {
   return bottom + (size * (hi - rank + 0.5)) / (hi - lo + 1);
 }
 
-const isConsonant = (w: SubmittedWord) => w.attempt === -1 && w.rank === 0;
-/** 순위 밖은 999위보다 먼 것으로 친다 */
-const distance = (rank: number) => (rank < 1 ? Infinity : rank);
-
-/**
- * 최고 순위 갱신 표시 (4-2). 첫 제출은 순위 밖이어도 남기고, 그 뒤로는 최고 순위가 나아질 때만.
- * 초성은 순위를 안 바꾸고, 정답·포기는 끝점이 맡는다. 게임이 끝난 뒤 기록은 보지 않는다
- */
-export function buildTrackMarks(words: SubmittedWord[]): TrackMark[] {
-  const marks: TrackMark[] = [];
-  let best = Infinity;
-  for (const w of [...words].reverse()) {
-    if (w.correct) break;
-    if (isConsonant(w)) continue;
-    const d = distance(w.rank);
-    if (marks.length > 0 && d >= best) continue;
-    best = Math.min(best, d);
-    marks.push({ rank: w.rank, label: w.attempt === -1 ? "hint" : w.attempt });
-  }
-  return marks;
-}
-
-export function trackEnd(words: SubmittedWord[], { givenUp }: { givenUp: boolean }): TrackEnd {
-  const answer = words.find((w) => w.correct);
-  if (!answer) return { kind: "playing" };
-  return givenUp ? { kind: "givenUp" } : { kind: "solved", attempts: answer.attempt };
-}
-
-/**
- * 표시마다 글자를 보일지. 겹치면 오래된 쪽을 숨기고 눈금만 남긴다.
- * 시작·처음 순위권 진입·마지막 갱신·끝점(맞힘)은 늘 보임 (4-2). gap은 겹친다고 볼 간격 (트랙 높이에 대한 비율)
- */
-export function visibleLabels(marks: TrackMark[], end: TrackEnd, gap: number): boolean[] {
-  const firstRanked = marks.findIndex((m) => m.rank >= 1);
-  const fixed = new Set([0, firstRanked, marks.length - 1].filter((i) => i >= 0));
-  const shown = marks.map((_, i) => fixed.has(i));
-  const taken = marks.filter((_, i) => shown[i]).map((m) => trackPosition(m.rank));
-  if (end.kind === "solved") taken.push(TRACK_END_POSITION);
-  for (let i = marks.length - 1; i >= 0; i--) {
-    if (shown[i]) continue;
-    const pos = trackPosition(marks[i].rank);
-    if (taken.every((p) => Math.abs(p - pos) >= gap)) {
-      shown[i] = true;
-      taken.push(pos);
-    }
-  }
-  return shown;
-}
