@@ -82,7 +82,7 @@ export function SettingsButton({ theme, onThemeChange, variant }: SettingsButton
                     : "text-gray-600"
                   }`}
               >
-                심플
+                기본
               </label>
             </div>
 
@@ -102,7 +102,7 @@ export function SettingsButton({ theme, onThemeChange, variant }: SettingsButton
                     : "text-gray-600"
                   }`}
               >
-                엑셀 스타일
+                엑셀
               </label>
             </div>
           </RadioGroup>

@@ -28,7 +28,8 @@ const Footer: React.FC = () => {
             </Link>
           ) : (
             <div className="hidden md:flex items-center space-x-1.5 px-2 h-full">
-              <span>READY</span>
+              {/* 상태 메시지: 평소 READY, 게임이 끝나면 게임 화면이 다음 퀴즈 안내를 채운다 (Dec-75) */}
+              <span id="excel-status-message" className="empty:before:content-['READY']" />
               <div className="w-1.5 h-1.5 rounded-full bg-white opacity-80" />
             </div>
           )}
@@ -48,6 +49,8 @@ const Footer: React.FC = () => {
         </div>
 
         <div className="flex items-center h-full ml-auto">
+          {/* 엑셀의 "평균 · 개수 · 합계" 자리에 게임 통계. 숫자는 게임 화면이 채운다 (Dec-68) */}
+          <div id="excel-status-stats" className="hidden md:flex items-center gap-3 mr-4 whitespace-nowrap tabular-nums" />
           <div className="flex space-x-3 whitespace-nowrap">
             <a href="#" className="hover:underline opacity-80 hover:opacity-100">이용약관</a>
             <a href="#" className="hover:underline opacity-80 hover:opacity-100">개인정보처리방침</a>

@@ -29,7 +29,11 @@ export function useGameForm(
       clearTimeout(focusTimeoutRef.current);
     }
     focusTimeoutRef.current = window.setTimeout(() => {
-      if (inputRef.current) {
+      // 그 사이 사용자가 다른 입력칸(예: 결과 아래 피드백 칸)으로 옮겨 갔으면 뺏지 않는다
+      const active = document.activeElement;
+      const movedAway =
+        active !== null && active !== document.body && active !== dummyInputRef.current && active !== inputRef.current;
+      if (inputRef.current && !movedAway) {
         inputRef.current.focus({ preventScroll: true });
       }
     }, 50);
@@ -98,6 +102,13 @@ export function useGameForm(
     setErrorMessage(null);
   }, []);
 
+  /** 입력을 비운다 (excel 수식 입력줄 ✕) */
+  const clearInput = useCallback(() => {
+    setInputWord("");
+    setIsError(false);
+    setErrorMessage(null);
+  }, []);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputWord(e.target.value);
     if (keepInputOnFailure && isError) clearError();
@@ -114,5 +125,6 @@ export function useGameForm(
     handleInputChange,
     handleSubmit,
     clearError,
+    clearInput,
   };
 }

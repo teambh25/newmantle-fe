@@ -37,7 +37,6 @@ function seed(s: Scenario) {
       hintUsed: s.words.filter((x) => x.attempt === -1 && x.rank > 0).length,
       givenUp: !!s.givenUp,
       initialConsonantHintUsed: s.words.some((x) => x.attempt === -1 && x.rank === 0),
-      answerSurveyVoted: null,
       firstActionAt: Date.now(),
     }),
   );
@@ -118,6 +117,7 @@ export default function DevPanel() {
           최신 공지 읽음으로
         </button>
       </Section>
+
     </main>
   );
 }

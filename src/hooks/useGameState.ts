@@ -31,7 +31,6 @@ export interface GameData {
   hintUsed: number;
   givenUp: boolean;
   initialConsonantHintUsed: boolean;
-  answerSurveyVoted: boolean | null;
   // 그날 첫 행동(단어 제출·일반 힌트·초성 힌트 성공) 시각, ms. 새로고침해도 유지된다.
   firstActionAt: number | null;
 }
@@ -47,7 +46,6 @@ function createEmptyGameState(): GameData {
     hintUsed: 0,
     givenUp: false,
     initialConsonantHintUsed: false,
-    answerSurveyVoted: null,
     firstActionAt: null,
   };
 }
@@ -366,13 +364,6 @@ export function useGameState(gameDate: string, theme?: string, { onRequestError 
     }
   };
 
-  const setAnswerSurveyVoted = (voted: boolean | null) => {
-    setGameState((prev) => ({
-      ...prev,
-      answerSurveyVoted: voted,
-    }));
-  };
-
   return {
     submittedWords: gameState.submittedWords,
     attempts: gameState.attempts,
@@ -390,7 +381,5 @@ export function useGameState(gameDate: string, theme?: string, { onRequestError 
     giveUpPending,
     initialConsonantHintUsed: gameState.initialConsonantHintUsed,
     requestInitialConsonantHint,
-    answerSurveyVoted: gameState.answerSurveyVoted,
-    setAnswerSurveyVoted,
   };
 }
