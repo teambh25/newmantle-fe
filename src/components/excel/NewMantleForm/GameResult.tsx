@@ -1,81 +1,75 @@
 import React from "react";
-import { ThumbsUp, ThumbsDown } from "lucide-react";
+import { MessageSquare, Share2 } from "lucide-react";
+import type { AnswerData } from "@/utils/api";
+
+// 결과 블록: 엑셀 레코드처럼 "항목 | 값" 행. 항목은 시도 칸, 값은 단어 칸 (specs/excel-ui Dec-74)
+// 순서: 정답 → 설명([분류] 설명) → 시도 횟수 → 공유 → 피드백. 정답 글자는 맞힘 녹색, 포기 회색 + (포기)
 
 interface GameResultProps {
+  /** 첫 행 번호 */
+  startRow: number;
   givenUp: boolean;
-  gameCompleted: boolean;
   attempts: number;
-  solvedAttempts: number | null;
-  correctAttempts: number;
-  answerSurveyVoted: boolean | null;
-  onAnswerSurveyVote: (isPositive: boolean) => void;
+  answer: AnswerData | null;
+  onShare: () => void;
+  feedbackOpen: boolean;
+  onFeedbackToggle: () => void;
 }
 
-export function GameResult({
-  givenUp,
-  gameCompleted,
-  attempts,
-  solvedAttempts,
-  correctAttempts,
-  answerSurveyVoted,
-  onAnswerSurveyVote,
-}: GameResultProps) {
-  if (!gameCompleted && !givenUp) return null;
+/** 결과 블록이 차지하는 행 수 */
+export function resultRowCount(answer: AnswerData | null) {
+  return 4 + (answer?.tag || answer?.description ? 1 : 0);
+}
 
-  const displaySolvedAttempts = solvedAttempts ?? correctAttempts;
+/** 항목 | 값 한 행. 모바일은 값 칸이 좁아서 순위·유사도 칸까지 넓힌다 (Dec-44) */
+function Row({ row, label, children, valueClass = "" }: { row: number; label: string; children: React.ReactNode; valueClass?: string }) {
+  return (
+    <div className="excel-row">
+      <div className="sheet-cell-header">{row}</div>
+      <div className="excel-cell justify-center text-center text-[13px] text-gray-500 bg-[#f8f9fa] whitespace-nowrap">{label}</div>
+      <div className={`excel-cell max-sm:col-span-3 !h-auto min-w-0 text-sm ${valueClass}`}>{children}</div>
+      <div className="excel-cell max-sm:hidden" />
+      <div className="excel-cell max-sm:hidden" />
+    </div>
+  );
+}
+
+/** 엑셀 하이퍼링크처럼 파란 밑줄. 칸 전체가 누르는 영역 */
+const LINK_CELL = "!p-0";
+const LINK =
+  "w-full h-full min-h-[40px] flex items-center gap-1.5 px-3 text-left text-[13px] text-[#0563c1] underline underline-offset-2 hover:bg-[#e5f1fb]";
+
+export function GameResult({ startRow, givenUp, attempts, answer, onShare, feedbackOpen, onFeedbackToggle }: GameResultProps) {
+  let row = startRow;
+  const explanation = [answer?.tag ? `[${answer.tag}]` : null, answer?.description].filter(Boolean).join(" ");
 
   return (
-    <div className="w-full bg-[#f3f9f5] flex flex-col items-center text-center p-6">
-      <div className="bg-[#217346] text-white px-2 py-0.5 text-xs font-bold uppercase mb-4">
-        GAME_RESULT: {givenUp ? "GIVEN_UP" : "COMPLETED"}
-      </div>
-
-      <p className="text-2xl font-bold text-[#217346] mb-2 text-center w-full">
-        {givenUp ? "게임을 포기하셨습니다." : "정답을 맞혔습니다!"}
-      </p>
-      <p className="text-base text-gray-700 mb-1 text-center w-full">
-        {givenUp
-          ? `${displaySolvedAttempts}번 시도 후 포기하셨습니다.`
-          : `${displaySolvedAttempts}번째 만에 맞히셨네요.`}
-      </p>
-      <p className="text-sm text-gray-500 italic mb-4 text-center w-full">
-        (내일은 새로운 단어로 도전할 수 있어요!)
-      </p>
-
-      {gameCompleted && !givenUp && (
-        <div className="w-full max-w-md pt-4 border-t border-gray-200 mt-4">
-          <p className="text-base font-bold text-gray-700 mb-3 text-center w-full">
-            오늘 정답은 어땠나요?
-          </p>
-          <div className="flex justify-center space-x-3">
-            <button
-              onClick={() => onAnswerSurveyVote(true)}
-              disabled={answerSurveyVoted !== null}
-              className={`flex items-center space-x-2 px-4 py-2 border text-sm font-bold transition-colors ${answerSurveyVoted === true
-                ? "bg-[#217346] text-white border-[#217346]"
-                : "bg-white text-gray-700 border-gray-300 hover:bg-[#f3f2f1] disabled:opacity-50"
-                }`}
-            >
-              <ThumbsUp size={16} /> <span>좋았다</span>
-            </button>
-            <button
-              onClick={() => onAnswerSurveyVote(false)}
-              disabled={answerSurveyVoted !== null}
-              className={`flex items-center space-x-2 px-4 py-2 border text-sm font-bold transition-colors ${answerSurveyVoted === false
-                ? "bg-red-600 text-white border-red-600"
-                : "bg-white text-gray-700 border-gray-300 hover:bg-[#f3f2f1] disabled:opacity-50"
-                }`}
-            >
-              <ThumbsDown size={16} /> <span>별로였다</span>
-            </button>
-          </div>
-          {answerSurveyVoted !== null && (
-            <p className="text-sm mt-3 text-[#217346] font-bold">
-              투표해 주셔서 감사합니다!
-            </p>
-          )}
-        </div>
+    <>
+      <Row row={row++} label="정답">
+        <span className={`font-bold ${givenUp ? "text-gray-600" : "text-[#217346]"}`}>{answer?.word ?? ""}</span>
+        {/* 맞힘/포기 구분: 포기했을 때만 작은 회색 (포기) */}
+        {givenUp && <span className="ml-1.5 text-xs text-gray-400">(포기)</span>}
+      </Row>
+      {explanation && (
+        <Row row={row++} label="설명" valueClass="py-2 text-[13px] text-gray-700 break-keep whitespace-normal">
+          {explanation}
+        </Row>
       )}
-    </div>
+      <Row row={row++} label="시도 횟수">
+        {attempts}회
+      </Row>
+      <Row row={row++} label="공유" valueClass={LINK_CELL}>
+        <button type="button" onClick={onShare} className={LINK}>
+          <Share2 size={12} className="shrink-0" aria-hidden="true" />
+          링크 복사
+        </button>
+      </Row>
+      <Row row={row++} label="피드백" valueClass={LINK_CELL}>
+        <button type="button" onClick={onFeedbackToggle} aria-expanded={feedbackOpen} className={LINK}>
+          <MessageSquare size={12} className="shrink-0" aria-hidden="true" />
+          의견 보내기
+        </button>
+      </Row>
+    </>
   );
 }

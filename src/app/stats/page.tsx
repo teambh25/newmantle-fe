@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { format, subDays } from "date-fns";
 import { fetchStatsOverview } from "@/utils/api";
 import { getKSTToday } from "@/utils/date";
@@ -14,12 +14,18 @@ import { ChevronLeft, BarChart3 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import AuthButton from "@/components/AuthButton";
+import { markStatsTooltipDismissed } from "@/components/StatsLink";
 import { SettingsButton } from "@/components/SettingsButton";
 import { useUITheme } from "@/hooks/useUITheme";
 
 export default function StatsPage() {
   const router = useRouter();
   const { theme, setTheme } = useUITheme();
+
+  // 통계 페이지를 한 번 봤으면 메인의 통계 안내 말풍선은 더 띄우지 않는다 (docs/tasks/ui/header/plan.md 4)
+  useEffect(() => {
+    markStatsTooltipDismissed();
+  }, []);
 
   // 1. Fetch Session
   const { data: session, isLoading: sessionLoading } = useQuery({
@@ -73,7 +79,7 @@ export default function StatsPage() {
               </h1>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center shrink-0 space-x-2 sm:space-x-4">
             <AuthButton />
             <SettingsButton theme={theme} onThemeChange={setTheme} variant="classic" />
           </div>

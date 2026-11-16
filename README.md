@@ -34,11 +34,11 @@ npm run test:watch
 # Run a single test file
 npx vitest run src/utils/gameRules.test.ts
 
-# Run tests whose name matches a pattern (e.g. a case ID)
-npx vitest run -t "A-5-1"
+# Run tests whose name matches a pattern
+npx vitest run -t "힌트"
 ```
 
-Test files live next to the code they test (`*.test.ts`, `*.test.tsx`). Test case IDs follow each task's `docs/tasks/<task>/verification.md`. The test harness (fake game server, helpers, mocking rules, TDD workflow) is documented in `src/test/README.md`.
+Test files live next to the code they test (`*.test.ts`, `*.test.tsx`). Test cases are written first in each task's `specs/<task>/plan.md` (Verification section). The test harness (fake game server, helpers, mocking rules, TDD workflow) is documented in `src/test/README.md`.
 
 ## Learn More
 

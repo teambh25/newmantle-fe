@@ -83,8 +83,8 @@ X-Guest-Id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
 | 필드          | 타입     | 설명        |
 |--------------|----------|-------------|
 | `word`        | `string` | 정답 단어    |
-| `tag`         | `string` | 품사 태그    |
-| `description` | `string` | 단어 설명    |
+| `tag`         | `string` | 카테고리    |
+| `description` | `string` | 단어 설명 (정답 선정 이유) |
 
 ### 에러
 
@@ -202,8 +202,8 @@ X-Guest-Id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
 | 필드          | 타입     | 설명        |
 |--------------|----------|-------------|
 | `word`        | `string` | 정답 단어    |
-| `tag`         | `string` | 품사 태그    |
-| `description` | `string` | 단어 설명    |
+| `tag`         | `string` | 카테고리    |
+| `description` | `string` | 단어 설명 (정답 선정 이유) |
 
 ### 에러
 

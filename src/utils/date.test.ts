@@ -1,21 +1,21 @@
-// 날짜 유틸: 기기 타임존과 무관하게 KST 달력 날짜를 다루는지 (docs/tasks/kst-date-fix/verification.md)
+// 날짜 유틸: 기기 타임존과 무관하게 KST 달력 날짜를 다루는지 (docs/tasks/kst-date-fix/problem.md)
 import { describe, expect, it } from "vitest";
 import { format, subDays } from "date-fns";
 import { KST_AFTERNOON, KST_BEFORE_MIDNIGHT, KST_MIDNIGHT, setClock } from "@/test/clock";
-import { getKSTDateString, getKSTToday, toLegacyDateString } from "@/utils/date";
+import { formatGameDate, getKSTDateString, getKSTToday, toLegacyDateString } from "@/utils/date";
 
 describe.each(["Asia/Seoul", "America/Los_Angeles"])("기기 타임존 %s, KST 11/10 14:00", (tz) => {
-  it("D-1: getKSTDateString → KST 오늘", () => {
+  it("getKSTDateString → KST 오늘", () => {
     setClock(tz, KST_AFTERNOON);
     expect(getKSTDateString()).toBe("2026-11-10");
   });
 
-  it("D-2: toLegacyDateString → 같은 달력 날짜의 이전 형식", () => {
+  it("toLegacyDateString → 같은 달력 날짜의 이전 형식", () => {
     setClock(tz, KST_AFTERNOON);
     expect(toLegacyDateString("2026-11-10")).toBe("Tue Nov 10 2026");
   });
 
-  it("D-3: getKSTToday를 로컬 기준으로 포맷·계산해도 KST 달력 날짜 (통계 조회 범위)", () => {
+  it("getKSTToday를 로컬 기준으로 포맷·계산해도 KST 달력 날짜 (통계 조회 범위)", () => {
     setClock(tz, KST_AFTERNOON);
     const today = getKSTToday();
     expect(format(today, "yyyy-MM-dd")).toBe("2026-11-10");
@@ -24,15 +24,28 @@ describe.each(["Asia/Seoul", "America/Los_Angeles"])("기기 타임존 %s, KST 1
 });
 
 describe.each(["Asia/Seoul", "America/Los_Angeles"])("기기 타임존 %s, KST 자정 경계", (tz) => {
-  it("D-4: KST 11/10 23:59:59 → 아직 11/10", () => {
+  it("KST 11/10 23:59:59 → 아직 11/10", () => {
     setClock(tz, KST_BEFORE_MIDNIGHT);
     expect(getKSTDateString()).toBe("2026-11-10");
     expect(format(getKSTToday(), "yyyy-MM-dd")).toBe("2026-11-10");
   });
 
-  it("D-5: KST 11/11 00:00 → 11/11", () => {
+  it("KST 11/11 00:00 → 11/11", () => {
     setClock(tz, KST_MIDNIGHT);
     expect(getKSTDateString()).toBe("2026-11-11");
     expect(format(getKSTToday(), "yyyy-MM-dd")).toBe("2026-11-11");
+  });
+});
+
+// 입력창 위 게임 날짜 표시
+describe.each(["Asia/Seoul", "America/Los_Angeles"])("게임 날짜 표시, 기기 타임존 %s", (tz) => {
+  it("2026-11-11 → 11월 11일 수요일", () => {
+    setClock(tz, KST_AFTERNOON);
+    expect(formatGameDate("2026-11-11")).toBe("11월 11일 수요일");
+  });
+
+  it("2026-03-01 → 3월 1일 일요일", () => {
+    setClock(tz, KST_AFTERNOON);
+    expect(formatGameDate("2026-03-01")).toBe("3월 1일 일요일");
   });
 });

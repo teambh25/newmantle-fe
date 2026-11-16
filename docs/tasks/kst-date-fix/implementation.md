@@ -3,7 +3,7 @@
 ## Context
 
 - 문제와 결정: `docs/tasks/kst-date-fix/problem.md` (P-1 ~ P-4)
-- 검증: `docs/tasks/kst-date-fix/verification.md`
+- 검증: 테스트 코드 (verification.md는 2026-11-16 삭제, 테스트 코드가 기준)
 - 원칙: "오늘"은 항상 KST 달력 날짜로 만든다. 기기 로컬 날짜는 쓰지 않는다
 
 ## `src/utils/date.ts`

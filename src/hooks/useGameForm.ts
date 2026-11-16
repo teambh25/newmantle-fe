@@ -1,10 +1,23 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
-export function useGameForm(submitAction: (word: string) => Promise<{ error?: string }>) {
+interface GameFormOptions {
+  /** 요청 실패(tone "error")면 입력한 단어를 남겨 엔터만 다시 누르면 되게 하고, 글자를 치기 시작하면 오류를 푼다.
+   *  없는 단어(tone "warning")는 비운다 (classic, docs/tasks/ui/input/plan.md 3) */
+  keepInputOnFailure?: boolean;
+}
+
+/** warning: 내 입력이 잘못됨(없는 단어), error: 요청 실패 (docs/tasks/ui/input/plan.md 3) */
+export type GameFormErrorTone = "warning" | "error";
+
+export function useGameForm(
+  submitAction: (word: string) => Promise<{ error?: string; tone?: GameFormErrorTone }>,
+  { keepInputOnFailure = false }: GameFormOptions = {}
+) {
   const [inputWord, setInputWord] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorTone, setErrorTone] = useState<GameFormErrorTone>("warning");
 
   const inputRef = useRef<HTMLInputElement>(null);
   const dummyInputRef = useRef<HTMLInputElement>(null);
@@ -16,7 +29,11 @@ export function useGameForm(submitAction: (word: string) => Promise<{ error?: st
       clearTimeout(focusTimeoutRef.current);
     }
     focusTimeoutRef.current = window.setTimeout(() => {
-      if (inputRef.current) {
+      // 그 사이 사용자가 다른 입력칸(예: 결과 아래 피드백 칸)으로 옮겨 갔으면 뺏지 않는다
+      const active = document.activeElement;
+      const movedAway =
+        active !== null && active !== document.body && active !== dummyInputRef.current && active !== inputRef.current;
+      if (inputRef.current && !movedAway) {
         inputRef.current.focus({ preventScroll: true });
       }
     }, 50);
@@ -55,14 +72,18 @@ export function useGameForm(submitAction: (word: string) => Promise<{ error?: st
 
     const result = await submitAction(trimmedWord);
 
+    let keepInput = false;
     if (result && result.error) {
       if (result.error !== "이미 제출한 단어입니다") {
         setIsError(true);
         setErrorMessage(result.error);
+        const tone = result.tone ?? "warning";
+        setErrorTone(tone);
+        keepInput = keepInputOnFailure && tone === "error";
       }
     }
-    
-    setInputWord("");
+
+    if (!keepInput) setInputWord("");
     setIsLoading(false);
 
     // 결과를 받은 후(isLoading false) 다시 input으로 포커스
@@ -75,8 +96,22 @@ export function useGameForm(submitAction: (word: string) => Promise<{ error?: st
     }
   };
 
+  /** 다른 안내(힌트 실패 등)가 대신 뜰 때도 오류를 푼다 */
+  const clearError = useCallback(() => {
+    setIsError(false);
+    setErrorMessage(null);
+  }, []);
+
+  /** 입력을 비운다 (excel 수식 입력줄 ✕) */
+  const clearInput = useCallback(() => {
+    setInputWord("");
+    setIsError(false);
+    setErrorMessage(null);
+  }, []);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputWord(e.target.value);
+    if (keepInputOnFailure && isError) clearError();
   };
 
   return {
@@ -84,9 +119,12 @@ export function useGameForm(submitAction: (word: string) => Promise<{ error?: st
     isLoading,
     isError,
     errorMessage,
+    errorTone,
     inputRef,
     dummyInputRef,
     handleInputChange,
     handleSubmit,
+    clearError,
+    clearInput,
   };
 }

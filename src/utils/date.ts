@@ -21,3 +21,18 @@ export function toLegacyDateString(dateString: string): string {
 export function getKSTToday(date: Date = new Date()): Date {
   return new Date(`${getKSTDateString(date)}T00:00:00`);
 }
+
+const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+
+// "2026-11-11" → "11월 11일 수요일" (입력창 위 게임 날짜 제목)
+// UTC로 계산해 기기 타임존과 무관하게 같은 달력 날짜·요일이 나온다.
+export function formatGameDate(dateString: string): string {
+  const [year, month, day] = dateString.split("-").map(Number);
+  const weekday = WEEKDAYS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()];
+  return `${month}월 ${day}일 ${weekday}요일`;
+}
+
+/** excel 테마의 엑셀 파일 이름 (예: newmantle_2026_11_17.xlsx). 날짜를 모르면 newmantle.xlsx (specs/excel-ui Dec-38) */
+export function excelFileName(gameDate: string): string {
+  return gameDate ? `newmantle_${gameDate.replaceAll("-", "_")}.xlsx` : "newmantle.xlsx";
+}
