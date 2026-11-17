@@ -7,7 +7,7 @@ const Footer: React.FC = () => {
     <footer className="w-full mt-6 py-4 bg-gray-100">
       <div className="w-full max-w-2xl mx-auto px-4 flex flex-col items-center gap-2">
         <div className="flex space-x-4">
-          <a href="#" className="text-sm text-blue-600 hover:underline">
+          <a href="/terms" className="text-sm text-blue-600 hover:underline">
             이용약관
           </a>
           <a href="#" className="text-sm text-blue-600 hover:underline">

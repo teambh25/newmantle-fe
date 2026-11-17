@@ -59,7 +59,7 @@ const Footer: React.FC = () => {
         <div className="flex items-center h-full ml-auto">
           {/* 모바일은 정보 칸에 자리를 주고 약관 링크는 설정 메뉴로 (Dec-82) */}
           <div className="hidden sm:flex space-x-3 whitespace-nowrap">
-            <a href="#" className="hover:underline opacity-80 hover:opacity-100">이용약관</a>
+            <a href="/terms" className="hover:underline opacity-80 hover:opacity-100">이용약관</a>
             <a href="#" className="hover:underline opacity-80 hover:opacity-100">개인정보처리방침</a>
             <a href="mailto:teambh25@gmail.com" className="hover:underline opacity-80 hover:opacity-100">문의하기</a>
           </div>
