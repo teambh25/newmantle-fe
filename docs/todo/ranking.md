@@ -17,11 +17,11 @@
 
 - 힌트 사용 횟수는 초성 힌트 포함
 - 확인 필요: 현재 초성 힌트가 카운트되지 않는 것으로 보임
-  - 프론트 `hintUsed`는 일반 힌트만 셈 (Amplitude 분석용, `docs/spec/hint-giveup.md` B-4)
+  - 프론트 `hintUsed`는 일반 힌트만 셈 (Amplitude 분석용, `docs/rules/hint-giveup.md` B-4)
   - 횟수 기준인 서버 `hint_count`가 초성 힌트(`hint/0`) 요청도 세는지 확인 필요
 - 포기 시 시도 횟수는 입력 횟수 그대로 N (C-4)
 
-## 같이 볼 항목 (`docs/spec/hint-giveup.md`)
+## 같이 볼 항목 (`docs/rules/hint-giveup.md`)
 
 - B-4: 초성 힌트를 힌트 사용 횟수에 포함하는지
 - C-4: 포기 시 기록할 시도 횟수

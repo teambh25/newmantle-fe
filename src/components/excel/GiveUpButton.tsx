@@ -88,13 +88,13 @@ const GiveUpButton: React.FC<GiveUpButtonProps> = ({
                 <DialogTitle className="text-[15px] font-normal text-black break-all">
                   {fileName}을 포기하시겠습니까?
                 </DialogTitle>
-                {/* 포기 결과를 창에 명시 (docs/spec/hint-giveup.md C-2) */}
+                {/* 포기 결과를 창에 명시 (docs/rules/hint-giveup.md C-2) */}
                 <DialogDescription className="mt-1 text-[13px] text-gray-600 leading-relaxed">
                   포기하면 정답이 공개되고, 이후 입력하는 단어는 오늘 기록에 반영되지 않아요.
                 </DialogDescription>
               </div>
             </div>
-            {/* 엑셀처럼 [계속 플레이 쪽] [포기하기] [취소] 순서, 취소는 맨 오른쪽 (specs/excel-ui Dec-66) */}
+            {/* 엑셀처럼 [계속 플레이 쪽] [포기하기] [취소] 순서, 취소는 맨 오른쪽 (docs/specs/excel-ui Dec-66) */}
             <div className="mt-5 flex flex-wrap justify-end gap-2">
               {!initialConsonantHintUsed && (
                 <button ref={continueButtonRef} onClick={handleInitialConsonantHint} className={defaultButton}>

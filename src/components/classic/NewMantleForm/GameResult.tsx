@@ -82,7 +82,7 @@ export function ResultDialog({ open, onOpenChange, givenUp, attempts, answer, on
           </Button>
         </div>
 
-        {/* 4. 맨 아래 가운데: 다음 퀴즈 시각 안내(정답 교체 매일 00시 KST, docs/spec/rules.md R-3) + 계속 플레이.
+        {/* 4. 맨 아래 가운데: 다음 퀴즈 시각 안내(정답 교체 매일 00시 KST, docs/rules/user-guide.md R-3) + 계속 플레이.
             계속 플레이는 밑줄 친 작은 글자 버튼이고 누르면 닫힘. 하루 한 번 게임이라 "다시 플레이"로 읽히지 않는 문구 (요구사항 2-4).
             로그인 안내는 결과창 안이 아니라 헤더 로그인 강조로 (요구사항 2-5, 8) */}
         <div className="-mb-1 flex flex-col items-center gap-1">

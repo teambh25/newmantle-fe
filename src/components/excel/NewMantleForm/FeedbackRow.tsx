@@ -3,7 +3,7 @@ import React, { useEffect, useRef } from "react";
 import { Loader2, SendHorizontal } from "lucide-react";
 import { useFeedback } from "@/hooks/useFeedback";
 
-// 결과 블록 아래 피드백 행: 단어 칸이 피드백 입력칸이 되고 나머지 칸은 비운다 (specs/excel-ui Dec-5, Dec-42). 엔터나 오른쪽 버튼으로 보낸다
+// 결과 블록 아래 피드백 행: 단어 칸이 피드백 입력칸이 되고 나머지 칸은 비운다 (docs/specs/excel-ui Dec-5, Dec-42). 엔터나 오른쪽 버튼으로 보낸다
 // 설정 메뉴의 excel 피드백 창(SurveyForm)과 동작은 같다
 export function FeedbackRow({ rowNumber }: { rowNumber: number }) {
   const { text, setText, sending, sent, canSend, submit, maxLength } = useFeedback({

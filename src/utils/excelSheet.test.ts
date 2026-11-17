@@ -1,4 +1,4 @@
-// 로직 레벨: excel 시트 표시 계산 (선택된 셀) (specs/excel-ui)
+// 로직 레벨: excel 시트 표시 계산 (선택된 셀) (docs/specs/excel-ui)
 import { describe, expect, it } from "vitest";
 import type { SubmittedWord } from "@/utils/api";
 import type { LatestRow } from "@/utils/board";

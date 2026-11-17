@@ -18,9 +18,9 @@ interface ExcelHomeProps {
   setTheme: (theme: UITheme) => void;
 }
 
-/** excel 테마 메인 화면 (specs/excel-ui Dec-22) */
+/** excel 테마 메인 화면 (docs/specs/excel-ui Dec-22) */
 export default function ExcelHome({ theme, setTheme }: ExcelHomeProps) {
-  // 게임 날짜는 엑셀 파일 이름에 (예: newmantle_2026_11_17.xlsx, specs/excel-ui Dec-38)
+  // 게임 날짜는 엑셀 파일 이름에 (예: newmantle_2026_11_17.xlsx, docs/specs/excel-ui Dec-38)
   const gameDate = useGameDate();
   const fileName = excelFileName(gameDate);
 
@@ -31,7 +31,7 @@ export default function ExcelHome({ theme, setTheme }: ExcelHomeProps) {
          <div className="flex items-center space-x-4">
            {/* 파일 이름: 누르는 곳이 아니라 제목 (Dec-78) */}
            <span className="font-bold text-base flex items-center">{fileName}</span>
-           {/* 장식 메뉴: 누를 수 있어 보이지 않게 hover·포인터 없음 (specs/excel-ui Dec-78) */}
+           {/* 장식 메뉴: 누를 수 있어 보이지 않게 hover·포인터 없음 (docs/specs/excel-ui Dec-78) */}
            <nav className="hidden md:flex space-x-4 text-sm opacity-90 cursor-default" aria-hidden="true">
              <span>File</span>
              <span className="font-bold border-b-2 border-white opacity-100 pb-0.5">Home</span>

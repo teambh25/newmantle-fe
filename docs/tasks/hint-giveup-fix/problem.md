@@ -4,7 +4,7 @@
 
 상태 표기: ✅ 수정됨(미커밋) / 🔧 수정 예정 / ❓ 설계 검토 중 / ⏸ 미착수
 
-- 정책: `docs/spec/hint-giveup.md` (이하 spec). 정책을 확정한 뒤 그에 맞춰 구현함
+- 정책: `docs/rules/hint-giveup.md` (이하 spec). 정책을 확정한 뒤 그에 맞춰 구현함
 - 구현: `implementation.md`
 - 검증: 테스트 코드 (verification.md는 2026-11-16 삭제, 테스트 코드가 기준)
 

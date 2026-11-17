@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-// 왼쪽 아래 엑셀 시트 탭. 규칙·통계는 classic 페이지로 이동한다 (specs/excel-ui Dec-11, Dec-27)
+// 왼쪽 아래 엑셀 시트 탭. 규칙·통계는 classic 페이지로 이동한다 (docs/specs/excel-ui Dec-11, Dec-27)
 // 공지사항은 설정 메뉴에서 들어간다
 const TAB = "flex items-center h-full px-4 sm:px-5 border-r border-gray-300 whitespace-nowrap";
 

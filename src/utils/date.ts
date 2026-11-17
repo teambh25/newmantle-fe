@@ -32,7 +32,7 @@ export function formatGameDate(dateString: string): string {
   return `${month}월 ${day}일 ${weekday}요일`;
 }
 
-/** excel 테마의 엑셀 파일 이름 (예: newmantle_2026_11_17.xlsx). 날짜를 모르면 newmantle.xlsx (specs/excel-ui Dec-38) */
+/** excel 테마의 엑셀 파일 이름 (예: newmantle_2026_11_17.xlsx). 날짜를 모르면 newmantle.xlsx (docs/specs/excel-ui Dec-38) */
 export function excelFileName(gameDate: string): string {
   return gameDate ? `newmantle_${gameDate.replaceAll("-", "_")}.xlsx` : "newmantle.xlsx";
 }

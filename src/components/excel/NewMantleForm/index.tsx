@@ -19,7 +19,7 @@ import CompetitiveBar from "@/components/CompetitiveBar";
 /** 기록 아래 빈 행 수 */
 const SHEET_FILLER_ROWS = 30;
 
-// excel 게임 화면. 게임 동작은 classic과 같은 훅(useGameScreen)을 쓰고, 시트 행으로 그린다 (specs/excel-ui)
+// excel 게임 화면. 게임 동작은 classic과 같은 훅(useGameScreen)을 쓰고, 시트 행으로 그린다 (docs/specs/excel-ui)
 export default function NewMantleForm() {
   const gameDate = useGameDate();
   // 결과 블록 아래 피드백 행. 보낸 뒤에도 접지 않는다 (Dec-5)

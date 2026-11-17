@@ -1,4 +1,4 @@
-// excel 순위 그래프 계산: 점 목록, 눈금, 점 위 단어 표시 (specs/excel-ui Dec-47~Dec-51)
+// excel 순위 그래프 계산: 점 목록, 눈금, 점 위 단어 표시 (docs/specs/excel-ui Dec-47~Dec-51)
 import type { SubmittedWord } from "@/utils/api";
 import type { GameEnd } from "@/utils/board";
 import { getTopRank } from "@/utils/gameRules";

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { HINT_LIMIT_RANK } from "@/utils/gameRules";
 
-// 유저용 게임 규칙. 내용 기준: docs/spec/rules.md (R-1 ~ R-9)
+// 유저용 게임 규칙. 내용 기준: docs/rules/user-guide.md (R-1 ~ R-9)
 
 export const metadata: Metadata = {
   title: "게임 규칙 - 뉴맨틀",

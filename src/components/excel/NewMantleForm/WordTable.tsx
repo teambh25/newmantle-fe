@@ -22,7 +22,7 @@ interface WordTableProps {
 export const SELECTED_HEADER = "!bg-[#d3f0e0] !text-[#217346] font-bold";
 
 const WordTable: React.FC<WordTableProps> = ({ history, startIndex, selectedIndex }) => {
-  // 접지 않고 전부 보여 준다. 시트 안에서 스크롤한다 (specs/excel-ui Dec-72)
+  // 접지 않고 전부 보여 준다. 시트 안에서 스크롤한다 (docs/specs/excel-ui Dec-72)
   const displayed = history;
 
   return (
@@ -33,7 +33,7 @@ const WordTable: React.FC<WordTableProps> = ({ history, startIndex, selectedInde
         <div key={`${word.attempt}:${word.word}`} className="excel-row text-sm sm:text-base hover:bg-[#f3f2f1] transition-colors">
           <div className={`sheet-cell-header ${selected ? SELECTED_HEADER : ""}`}>{index + startIndex}</div>
           <div className="excel-cell justify-center text-center">
-            {/* 힌트로 받은 단어는 시도 번호 대신 "힌트" (specs/excel-ui Dec-77) */}
+            {/* 힌트로 받은 단어는 시도 번호 대신 "힌트" (docs/specs/excel-ui Dec-77) */}
             {word.attempt === -1 ? "힌트" : word.attempt}
           </div>
           {/* 선택된 셀: 녹색 테두리 + 오른쪽 아래 채우기 핸들 (Dec-69) */}

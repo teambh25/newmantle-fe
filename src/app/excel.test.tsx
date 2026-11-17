@@ -1,4 +1,4 @@
-// 화면 레벨: excel 테마 메인 화면 (specs/excel-ui)
+// 화면 레벨: excel 테마 메인 화면 (docs/specs/excel-ui)
 // 문구는 검증하지 않는다. 요소는 역할과 접근 가능한 이름으로 찾는다.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";

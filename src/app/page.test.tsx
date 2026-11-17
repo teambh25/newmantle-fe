@@ -705,7 +705,7 @@ describe("첫 입력 유도 말풍선 / 말풍선 순서", () => {
 describe("공지 배너 / 공지사항 진입점", () => {
   const LAST_SEEN_KEY = "newmantle_last_seen_notification_id";
   const LEGACY_CHECK_KEY = "newmantle_last_notification_check";
-  // 최신 공지 = 정렬 1순위 (날짜순). 지난 일을 기록한 공지는 id가 더 커도 최신이 아님 (docs/spec/notices.md)
+  // 최신 공지 = 정렬 1순위 (날짜순). 지난 일을 기록한 공지는 id가 더 커도 최신이 아님 (docs/rules/notices.md)
   const latestId = getLatestNotification(notifications)!.id;
   const olderId = String(Number(latestId) - 1);
 

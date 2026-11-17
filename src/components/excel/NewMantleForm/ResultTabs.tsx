@@ -1,6 +1,6 @@
 import React from "react";
 
-// 끝난 뒤 결과 자리 위 오른쪽의 결과·그래프 전환 탭. 엑셀 시트 탭처럼 선택된 쪽은 흰 바탕에 녹색 윗줄 (specs/excel-ui Dec-53)
+// 끝난 뒤 결과 자리 위 오른쪽의 결과·그래프 전환 탭. 엑셀 시트 탭처럼 선택된 쪽은 흰 바탕에 녹색 윗줄 (docs/specs/excel-ui Dec-53)
 
 export type SlotView = "result" | "chart";
 

@@ -1,4 +1,4 @@
-// excel 시트 표시 계산: 선택된 셀, 상태 표시줄 최고 유사도 (specs/excel-ui Dec-69, Dec-80)
+// excel 시트 표시 계산: 선택된 셀, 상태 표시줄 최고 유사도 (docs/specs/excel-ui Dec-69, Dec-80)
 import type { SubmittedWord } from "@/utils/api";
 import type { LatestRow } from "@/utils/board";
 

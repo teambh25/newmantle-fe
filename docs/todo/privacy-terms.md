@@ -2,7 +2,7 @@
 
 개인정보처리방침을 `/privacy`에 **전문**으로 만든다. 이용약관(`/terms`)은 범위 미정.
 
-**선행 작업: 회원 탈퇴 구현.** 처리방침에 보유 기간·파기·삭제 요청 방법을 써야 하므로 탈퇴가 생긴 뒤 진행한다. 게임 규칙 페이지는 `docs/spec/rules.md`로 분리했다.
+**선행 작업: 회원 탈퇴 구현.** 처리방침에 보유 기간·파기·삭제 요청 방법을 써야 하므로 탈퇴가 생긴 뒤 진행한다. 게임 규칙 페이지는 `docs/rules/user-guide.md`로 분리했다.
 
 ---
 
@@ -22,7 +22,7 @@
 ## 1. 현재 상태
 
 - 이용약관, 개인정보처리방침 페이지 **없음**
-- classic 푸터(`src/components/classic/Footer.tsx`): "이용약관 / 개인정보처리방침 / 문의하기" 링크가 전부 `href="#"`
+- classic 푸터(`src/components/classic/Footer.tsx`): "이용약관 / 개인정보처리방침" 링크는 `href="#"`. "문의하기"는 메일 링크로 연결됨 (2026-11-17)
 - excel 푸터(`src/components/excel/Footer.tsx`): 링크(`#`)가 있지만 메인에서 렌더링하지 않음
 - 로그인 화면(`src/app/login/page.tsx`)과 닉네임 설정(`NicknameSetupModal`)에 동의 절차·정책 링크 없음
 - 회원 탈퇴 없음: 프론트 UI·로직 없음, 백엔드 API 스펙에도 사용자·프로필 삭제 엔드포인트 없음 (DELETE는 관리자용 2개뿐). 로그아웃만 있음(`src/components/AuthButton.tsx`)

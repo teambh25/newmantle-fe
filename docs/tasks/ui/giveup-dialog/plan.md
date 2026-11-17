@@ -1,8 +1,8 @@
 # 포기 확인 창 (classic)
 
-스펙: `docs/spec/hint-giveup.md` B-2, C-2. 내력은 `decision.md`.
+스펙: `docs/rules/hint-giveup.md` B-2, C-2. 내력은 `decision.md`.
 
-- 범위: classic. excel은 그대로 (`specs/excel-ui/plan.md`)
+- 범위: classic. excel은 그대로 (`docs/specs/excel-ui/plan.md`)
 - 이 창의 목적은 경고보다 계속 플레이로 유도. 단, 포기 버튼은 잘 보이고 이름이 분명해야 한다. 죄책감을 주는 문구(confirmshaming)는 쓰지 않는다
 
 ## 1. 포기 버튼 색

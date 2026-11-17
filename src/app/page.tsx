@@ -20,7 +20,7 @@ export default function Home() {
     return <div className="min-h-screen bg-white" />;
   }
 
-  // 같은 경로(/)에서 테마로 화면만 바꾼다 (specs/excel-ui Dec-22)
+  // 같은 경로(/)에서 테마로 화면만 바꾼다 (docs/specs/excel-ui Dec-22)
   return (
     <>
       <NicknameSetupModal />

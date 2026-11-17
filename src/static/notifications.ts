@@ -3,7 +3,7 @@ export interface Notification {
   title: string;
   content: string;
   date: string;
-  type: "update" | "notice" | "incident";
+  type: "update" | "etc" | "incident";
 }
 
 export const notifications: Notification[] = [

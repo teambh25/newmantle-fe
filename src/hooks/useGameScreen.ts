@@ -1,7 +1,7 @@
 "use client";
 // 게임 화면 상태: 게임 상태(useGameState) + 제출 중 줄, 없는 단어·실패 임시 줄, 반복 표시, 게임판 계산,
 // 결과 정보, 실패 안내와 연속 실패 토스트. classic·excel이 같이 쓰고, 어떻게 그릴지만 테마가 정한다
-// (specs/excel-ui Dec-2, Dec-7, Dec-30, Dec-31)
+// (docs/specs/excel-ui Dec-2, Dec-7, Dec-30, Dec-31)
 import { useEffect, useRef, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useGameState, type GameRequestKind } from "@/hooks/useGameState";

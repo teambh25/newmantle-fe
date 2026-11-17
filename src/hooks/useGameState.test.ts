@@ -1,4 +1,4 @@
-// 로직 레벨: 게임 상태 (규칙: docs/spec/hint-giveup.md)
+// 로직 레벨: 게임 상태 (규칙: docs/rules/hint-giveup.md)
 // 게임 서버·Amplitude·축하 효과·Supabase만 mock하고 훅은 실제 코드를 쓴다.
 import { describe, expect, it } from "vitest";
 import { gameServer, ANSWER } from "@/test/fakeGameServer";

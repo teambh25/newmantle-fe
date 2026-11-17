@@ -1,6 +1,6 @@
 # 규칙 페이지 / 첫 방문 모달 (계획)
 
-메인 하단 "도움말"을 없애고, 첫 방문 모달로 짧게 안내하며, 자세한 설명은 `/rule`에 둔다. 내용 기준은 `docs/spec/rules.md`. 이번 범위는 classic 테마만.
+메인 하단 "도움말"을 없애고, 첫 방문 모달로 짧게 안내하며, 자세한 설명은 `/rule`에 둔다. 내용 기준은 `docs/rules/user-guide.md`. 이번 범위는 classic 테마만.
 
 ## 1. 현재 상태
 
@@ -20,7 +20,7 @@
 | --- | --- | --- |
 | M-1 | 언제 열리나 | 메인 첫 방문 시 자동으로. 한 번 닫으면 다시 자동으로 열리지 않음 (localStorage에 확인 여부 저장) |
 | M-2 | 기존 유저 | 저장된 확인 여부가 없으므로 한 번 보게 됨 (도움말을 없애는 대신) |
-| M-3 | 내용 | `docs/spec/rules.md` "첫 방문 모달 요약" + `/rule`로 가는 링크 |
+| M-3 | 내용 | `docs/rules/user-guide.md` "첫 방문 모달 요약" + `/rule`로 가는 링크 |
 | M-4 | 닫기 | X / 바깥 클릭 / ESC |
 | M-5 | 테마 | classic만 (excel은 기존 도움말 유지, 아래 todo) |
 | M-6 | 로그인 말풍선과의 순서 | 비로그인 첫 방문 시 로그인 말풍선도 같이 뜸 → 모달을 닫은 뒤에 말풍선이 보이도록 |
@@ -51,7 +51,7 @@
 | 모달 상태 | `src/hooks/useRuleIntroModal.ts`, localStorage `newmantle_rule_modal_seen` |
 | 로그인 말풍선 순서 (M-6) | `AuthButton`에 `hideTooltip` 추가, 메인에서 모달이 닫히기 전까지 숨김. 말풍선 X 버튼에 접근 가능한 이름 "로그인 안내 닫기" 추가 |
 | 헤더 `?` | `src/app/page.tsx` (classic), 아이콘 `CircleHelp`, 이름 "게임 규칙" |
-| 푸터 "규칙" | `src/components/classic/Footer.tsx` |
+| 푸터 "규칙" | 제거 (2026-11-17). 헤더 `?`와 중복. `src/components/classic/Footer.tsx` |
 | 도움말 제거 | `src/components/HelpSection.tsx` 삭제. `src/static/faq.ts`는 excel 도움말이 쓰므로 유지 |
 
 ## 5. TODO / 검토

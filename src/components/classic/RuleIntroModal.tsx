@@ -19,7 +19,7 @@ interface RuleIntroModalProps {
   onStart?: () => void;
 }
 
-// 첫 방문 안내 모달. 내용 기준: docs/spec/rules.md "첫 방문 모달 요약"
+// 첫 방문 안내 모달. 내용 기준: docs/rules/user-guide.md "첫 방문 모달 요약"
 const RuleIntroModal: React.FC<RuleIntroModalProps> = ({ open, onClose, onStart }) => {
   // "시작하기"로 닫았는지. X / ESC / 바깥 클릭은 입력창으로 보내지 않는다 (docs/tasks/ui/input/plan.md 2)
   const startedRef = useRef(false);
