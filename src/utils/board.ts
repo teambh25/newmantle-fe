@@ -31,6 +31,10 @@ export interface BoardInput {
   pendingWord: string | null;
   /** 방금 다시 낸 이미 제출한 단어 */
   repeatedWord: string | null;
+  /** 방금 입력 자리 모양. 기본은 카드 (docs/specs/progress-view-toggle Dec-7) */
+  view?: "card" | "bar";
+  /** 힌트·초성 힌트·포기 실패 안내. 상단바는 방금 입력 줄에 보여 준다 (카드는 배너가 따로 받음, Dec-8) */
+  requestError?: string | null;
 }
 
 export interface Board {
@@ -38,7 +42,7 @@ export interface Board {
   reveal: string | null;
   /** 방금 입력 칸. 아직 아무것도 안 했으면 null */
   latest: LatestRow | null;
-  /** 기록 표: 순위를 아는 단어(입력·힌트) 전부, 순위순 */
+  /** 기록 표: 순위를 아는 단어(입력·힌트), 순위순. 카드는 전부, 상단바는 방금 입력 칸의 단어를 뺀다 */
   history: SubmittedWord[];
   /** 게이지 최고 순위. 순위 있는 단어가 없으면 null */
   best: number | null;
@@ -49,18 +53,30 @@ const isConsonant = (w: SubmittedWord) => w.attempt === -1 && w.rank === 0;
 /** 초성·정답은 제목에 보이므로 기록 표에서 뺀다 */
 const inHeading = (w: SubmittedWord) => isConsonant(w) || w.correct;
 
-export function buildBoard({ words, gameCompleted, givenUp, attempts, notice, pendingWord, repeatedWord }: BoardInput): Board {
+export function buildBoard({
+  words,
+  gameCompleted,
+  givenUp,
+  attempts,
+  notice,
+  pendingWord,
+  repeatedWord,
+  view = "card",
+  requestError = null,
+}: BoardInput): Board {
   const gameOver = gameCompleted || givenUp;
   const answerWord = words.find((w) => w.correct)?.word;
   const consonantWord = words.find(isConsonant)?.word;
   const reveal = (gameOver ? answerWord : consonantWord) ?? null;
 
-  const history = words.filter((w) => !inHeading(w)).sort(compareByRank);
-
   // 방금 입력 칸은 늘 가장 최근 항목. 기록 표에 없는 것(임시 줄, 초성, 정답)은 방금 칸에만 둔다
   const last = words[0];
-  const notInTable: Extract<LatestRow, { kind: "notice" }> | null = notice
-    ? { kind: "notice", ...notice }
+  // 상단바는 요청 실패도 방금 입력 줄에 (카드는 배너가 error로 따로 받는다)
+  const failure: SubmitNotice | null =
+    view === "bar" && requestError ? { word: "", tone: "failed", message: requestError } : null;
+  const shownNotice = failure ?? notice;
+  const notInTable: Extract<LatestRow, { kind: "notice" }> | null = shownNotice
+    ? { kind: "notice", ...shownNotice }
     : last && isConsonant(last)
       ? { kind: "notice", word: last.word, tone: "consonant" }
       : last?.correct
@@ -73,6 +89,10 @@ export function buildBoard({ words, gameCompleted, givenUp, attempts, notice, pe
       : last
         ? { kind: "word", word: last, isRepeat: repeatedWord !== null && last.word === repeatedWord }
         : null;
+
+  // 상단바는 머리줄을 같이 쓰는 한 표처럼 보여서, 방금 입력 칸의 단어는 다음 항목이 올 때 기록으로 옮긴다 (Dec-7)
+  const inLatest = view === "bar" && latest?.kind === "word" ? latest.word : null;
+  const history = words.filter((w) => !inHeading(w) && w !== inLatest).sort(compareByRank);
 
   // 포기도 gameCompleted가 true라 포기를 먼저 본다
   const end: GameEnd = givenUp ? "givenUp" : gameCompleted ? "solved" : "playing";

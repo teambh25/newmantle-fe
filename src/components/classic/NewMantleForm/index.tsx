@@ -3,6 +3,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import WordTable, { VISIBLE_HISTORY_COUNT } from "./WordTable";
 import ProgressCard from "./ProgressCard";
+import TopBar from "./TopBar";
+import ProgressViewToggle from "./ProgressViewToggle";
+import { useProgressView } from "@/hooks/useProgressView";
 import { GameForm } from "./GameForm";
 import { FeedbackDialog, ResultDialog, ResultStrip } from "./GameResult";
 import { REQUEST_ERROR_MESSAGES, useGameScreen } from "@/hooks/useGameScreen";
@@ -33,6 +36,8 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
   // 정답·포기 순간부터 결과창을 닫을 때까지 입력창 잠금 (요구사항 1)
   const [inputLocked, setInputLocked] = useState(false);
   const resultTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 방금 입력 자리 모양: 진행 상황 카드 / 상단바 (docs/specs/progress-view-toggle)
+  const { view, setView, ready: viewReady } = useProgressView();
   // 게임 상태·게임판·임시 줄·결과 정보·실패 안내는 excel과 같이 쓰는 훅에서. classic만의 것은 결과창 모달 흐름
   const {
     game: gameLogic,
@@ -42,7 +47,7 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
     startRequest,
     requestError,
     clearRequestError,
-  } = useGameScreen(gameDate, "classic");
+  } = useGameScreen(gameDate, "classic", view);
   const { sharedAttempts, sharerHintCount, isLoadingSharerStats, share } = useShareLink({
     gameDate,
     attempts: gameLogic.correctAttempts,
@@ -84,6 +89,8 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
   }, [gameDate]);
 
   const gameOver = result.over;
+  // 게이지 스위치: 표 머리줄 # 칸. 카드 모드는 기록 표, 상단바 모드는 상단바 (docs/specs/progress-view-toggle Dec-12)
+  const toggle = <ProgressViewToggle view={view} onChange={setView} />;
 
   return (
     // PC는 게임 영역(결과 상자·단어 목록)을 480px로 가운데에, 입력창은 그보다 조금 좁은 420px. 모바일은 화면 폭 그대로 (docs/tasks/ui/input/plan.md 1)
@@ -164,17 +171,30 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
         />
 
         {/* 표 자리를 미리 잡지 않는다: 푸터는 화면 맨 아래에 있다가 목록이 거기까지 자라면 밀려 내려간다 (docs/tasks/ui/word-list/plan.md 5) */}
-        <div className="w-full">
+        {/* 최소 높이는 카드 높이로 두 모양 같게: 전환해도 아래가 출렁이지 않는다 (progress-view-toggle Dec-6).
+            저장값을 읽기 전에는 방금 입력 자리를 그리지 않는다 (Dec-5) */}
+        <div className="w-full min-h-[130px]">
           {/* 방금 입력 칸 = 진행 상황 카드. 시작할 때도 바로 보여 준다 (docs/tasks/ui/progress-card/plan.md) */}
-          <ProgressCard
-            latest={board.latest}
-            best={board.best}
-            end={board.end}
-            error={requestError}
-            attempts={gameLogic.attempts}
-            words={gameLogic.submittedWords}
-          />
-          <WordTable history={board.history} showAll={showAllWords} />
+          {viewReady && view === "card" && (
+            <ProgressCard
+              latest={board.latest}
+              best={board.best}
+              end={board.end}
+              error={requestError}
+              attempts={gameLogic.attempts}
+              words={gameLogic.submittedWords}
+            />
+          )}
+          {/* 상단바: 요청 실패도 board.latest로 온다 (Dec-8) */}
+          {viewReady && view === "bar" && <TopBar latest={board.latest} gaugeSwitch={toggle} />}
+          {viewReady && (
+            <WordTable
+              history={board.history}
+              showAll={showAllWords}
+              underTopBar={view === "bar"}
+              gaugeSwitch={view === "card" ? toggle : undefined}
+            />
+          )}
           {board.history.length > VISIBLE_HISTORY_COUNT && (
             <div className="text-center mt-4">
               <Button

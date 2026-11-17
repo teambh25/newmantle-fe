@@ -19,7 +19,8 @@ const SERVER_TROUBLE_FAILURES = 2;
 /** 응답이 이보다 늦으면 제출 중 줄을 보여 준다 (ms) */
 const PENDING_DELAY_MS = 300;
 
-export function useGameScreen(gameDate: string, theme: "classic" | "excel") {
+/** view: classic 방금 입력 자리 모양 (docs/specs/progress-view-toggle Dec-7). excel은 카드 계산 그대로 */
+export function useGameScreen(gameDate: string, theme: "classic" | "excel", view: "card" | "bar" = "card") {
   const { toast } = useToast();
   // 힌트·초성 힌트·포기 실패 안내. 토스트 대신 화면 안에 띄운다 (docs/tasks/ui/input/plan.md 3)
   const [requestError, setRequestError] = useState<string | null>(null);
@@ -99,6 +100,8 @@ export function useGameScreen(gameDate: string, theme: "classic" | "excel") {
     },
     pendingWord,
     repeatedWord,
+    view,
+    requestError,
   });
 
   // 결과 정보: 시도 횟수와 제출 기록에 저장된 정답 정보 (docs/tasks/ui/result-box/plan.md 요구사항 6)
