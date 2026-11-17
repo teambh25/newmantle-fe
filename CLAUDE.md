@@ -23,7 +23,7 @@ npm run lint
 
 # Run tests (Vitest)
 npm test
-npx vitest run -t "A-5-1"   # run by case ID
+npx vitest run -t "힌트"    # run tests whose name matches
 ```
 
 ## Testing
@@ -31,11 +31,10 @@ npx vitest run -t "A-5-1"   # run by case ID
 Harness guide: `src/test/README.md` (fake game server, `renderGame`, presets, clock/timezone helpers, mock setup). Read it before writing tests.
 
 ### Workflow: TDD
-1. Write the test cases first in the Verification section of the task's `specs/<task>/plan.md`, each with an ID (precondition / action / expected), based on the plan and `decisions.md`, not on the implementation
-2. Write the tests, prefixing each test name with its case ID
+1. Write the test cases first in the Verification section of the task's `specs/<task>/plan.md` (precondition / action / expected), as behavior sentences without IDs, based on the plan and `decisions.md`, not on the implementation
+2. Write the tests. Name each test by the behavior it checks, matching the case sentence (precondition → action → expected). Do not put case IDs in test names or comments
 3. Run them and confirm they **fail for the right reason** (missing behavior, not a typo or missing mock). A test that passes before implementation does not distinguish the bug, so revisit the case
 4. Implement until they pass, then update the Phase progress in `plan.md`
-- `docs/tasks/<task>/verification.md` is the old format. Do not create new ones; existing files remain only as the source of existing test IDs and presets
 - Things checked by eye on screen (layout, color, timing, real-phone behavior) are not tested in code; add them to `docs/manual-checks.md` instead
 - When adding tests to code that already exists, do not edit implementation files to see them fail. Check that in an isolated copy (git worktree) and only after asking
 
@@ -43,6 +42,8 @@ Harness guide: `src/test/README.md` (fake game server, `renderGame`, presets, cl
 - Test behavior, not implementation details: assert on requests sent to the server, hook return values, what is visible on screen, stored `localStorage` values, and Amplitude events. Not on internal state/ref names, call order, or component structure
 - Find screen elements by role and accessible name. Do not assert on copy (toast/notice text), only on presence and which options exist
 - Do not verify the same rule at both logic and screen levels
+- Prefer logic tests over screen tests. Move code that computes what a component shows into pure functions in `utils` and test them there. Write screen tests only for flows that need the real screen (timing, focus, dialogs opening and closing, several components working together), with one representative case per flow
+- Do not test what has no app logic: behavior the library already provides (e.g. Radix closing a dialog by ESC / X / outside click), or elements that are always shown regardless of state. Check how the screen looks in `docs/manual-checks.md` instead
 
 ### Mocking
 - Mock only external boundaries: game server (fake `fetch` in `src/test/fakeGameServer.ts`), Supabase, Amplitude, confetti, time/timezone. Use real app code for hooks, components, `utils`, and UI libraries

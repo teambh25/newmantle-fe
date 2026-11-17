@@ -108,7 +108,7 @@ export default function RootLayout({
           <AmplitudeInitializer />
           {children}
           <Toaster />
-          {/* 개발 서버에서만: DEV 표시·실패 주입 (docs/tasks/ui/dev-page.md) */}
+          {/* 개발 서버에서만: DEV 표시·실패 주입 (docs/tasks/ui/dev-page/plan.md) */}
           <DevTools />
         </ReactQueryProvider>
       </body>

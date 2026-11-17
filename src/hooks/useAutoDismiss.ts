@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 
-/** 헤더 말풍선(로그인·통계)이 보이는 시간 (docs/tasks/ui/plan.md 8장) */
+/** 헤더 말풍선(로그인·통계)이 보이는 시간 (docs/tasks/ui/header/plan.md 5) */
 export const HEADER_TOOLTIP_MS = 5000
 
 /**

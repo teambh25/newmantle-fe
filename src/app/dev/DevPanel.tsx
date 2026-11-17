@@ -1,10 +1,12 @@
 "use client";
-// 개발 전용: 가짜 단어 목록·실패 화면을 정하고 메인으로 이동 (docs/tasks/ui/dev-page.md)
+// 개발 전용: 가짜 단어 목록·실패 화면을 정하고 메인으로 이동 (docs/tasks/ui/dev-page/plan.md)
 import { useEffect } from "react";
 import { getKSTDateString } from "@/utils/date";
 import { RULE_MODAL_SEEN_KEY } from "@/hooks/useRuleIntroModal";
 import { SCENARIOS, Scenario } from "./fixtures";
 import { TARGET_LABELS, writeFaults, type FaultTarget } from "./faults";
+import { markLatestNoticeSeen } from "@/hooks/useLastSeenNotice";
+import { LAST_SEEN_NOTICE_KEY } from "@/utils/notifications";
 
 const GAME_KEY = "newmantle_game_data";
 const FAULT_TARGETS = Object.keys(TARGET_LABELS) as FaultTarget[];
@@ -13,11 +15,11 @@ function goHome() {
   window.location.href = "/";
 }
 
-/** 그 요청이 다음 한 번 실패하도록 해 두고 메인으로. 힌트·초성·포기는 버튼이 눌리도록 기록을 비운다 (20위 안 단어가 있으면 힌트가 꺼짐) */
-function armFault(target: FaultTarget) {
-  if (target !== "guess") localStorage.removeItem(GAME_KEY);
+/** 그 요청들이 다음에 차례로 실패하도록 해 두고 메인으로. 힌트·초성·포기는 버튼이 눌리도록 기록을 비운다 (20위 안 단어가 있으면 힌트가 꺼짐) */
+function armFaults(targets: FaultTarget[]) {
+  if (targets.some((t) => t !== "guess")) localStorage.removeItem(GAME_KEY);
   localStorage.setItem(RULE_MODAL_SEEN_KEY, "1");
-  writeFaults([target]);
+  writeFaults(targets);
   goHome();
 }
 
@@ -35,10 +37,17 @@ function seed(s: Scenario) {
       hintUsed: s.words.filter((x) => x.attempt === -1 && x.rank > 0).length,
       givenUp: !!s.givenUp,
       initialConsonantHintUsed: s.words.some((x) => x.attempt === -1 && x.rank === 0),
-      answerSurveyVoted: null,
       firstActionAt: Date.now(),
     }),
   );
+  localStorage.setItem(RULE_MODAL_SEEN_KEY, "1");
+  goHome();
+}
+
+/** 최신 공지를 안 읽음(마지막 본 id를 0으로) 또는 읽음으로 두고 메인으로. classic 띠, excel 상태 표시줄 알림 확인용 */
+function setNoticeUnread(unread: boolean) {
+  if (unread) localStorage.setItem(LAST_SEEN_NOTICE_KEY, "0");
+  else markLatestNoticeSeen();
   localStorage.setItem(RULE_MODAL_SEEN_KEY, "1");
   goHome();
 }
@@ -90,11 +99,25 @@ export default function DevPanel() {
         description="누르면 그 요청이 다음 한 번 실패하도록 해 두고 메인으로 이동합니다. 힌트·초성 힌트·포기는 기록을 비우고 시작합니다. 없는 단어는 직접 입력해 보세요."
       >
         {FAULT_TARGETS.map((target) => (
-          <button key={target} onClick={() => armFault(target)} className={ROW}>
+          <button key={target} onClick={() => armFaults([target])} className={ROW}>
             {TARGET_LABELS[target]} 실패
           </button>
         ))}
+        {/* 연속 2번 실패하면 서버 문제 토스트 (progress-card/plan.md 3) */}
+        <button onClick={() => armFaults(["guess", "guess"])} className={ROW}>
+          단어 제출 2번 연속 실패 (토스트)
+        </button>
       </Section>
+
+      <Section title="새 공지" description="누르면 최신 공지를 안 읽음 / 읽음으로 두고 메인으로 이동합니다. 안 읽음이면 classic은 맨 위 띠, excel은 상태 표시줄 왼쪽에 알림이 뜹니다.">
+        <button onClick={() => setNoticeUnread(true)} className={ROW}>
+          최신 공지 안 읽음으로
+        </button>
+        <button onClick={() => setNoticeUnread(false)} className={ROW}>
+          최신 공지 읽음으로
+        </button>
+      </Section>
+
     </main>
   );
 }

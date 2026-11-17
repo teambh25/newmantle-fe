@@ -86,31 +86,37 @@ export function renderGame() {
 
 export type GameHarness = ReturnType<typeof renderGame>;
 
-// ---- 사전 상태 프리셋 (verification.md) ----
+// ---- 사전 상태 프리셋 ----
 
 let wordSeq = 0;
 const nextWord = () => `단어${++wordSeq}`;
 
 export const presets = {
+  /** 순위 밖(-1) 입력 2개 */
   async OUT_ONLY(h: GameHarness) {
     await h.submit(nextWord(), -1);
     await h.submit(nextWord(), -1);
   },
+  /** 최고 순위 n위 입력 1개 + 순위 밖 입력 1개 */
   async TOP(h: GameHarness, n: number) {
     await h.submit(nextWord(), n);
     await h.submit(nextWord(), -1);
   },
+  /** 초성 힌트만 사용 */
   async CONSONANT_USED(h: GameHarness) {
     await h.consonant();
   },
+  /** k번째 입력에 정답 (앞은 순위 밖) */
   async SOLVED(h: GameHarness, k: number) {
     for (let i = 1; i < k; i++) await h.submit(nextWord(), -1);
     await h.submitAnswer();
   },
+  /** 순위 밖 입력 n개 후 포기 */
   async GIVEN_UP(h: GameHarness, n: number) {
     for (let i = 0; i < n; i++) await h.submit(nextWord(), -1);
     await h.giveUp();
   },
+  /** 겹치지 않는 새 단어 */
   nextWord,
 };
 

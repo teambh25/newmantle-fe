@@ -22,7 +22,7 @@ export default function StatsPage() {
   const router = useRouter();
   const { theme, setTheme } = useUITheme();
 
-  // 통계 페이지를 한 번 봤으면 메인의 통계 안내 말풍선은 더 띄우지 않는다 (docs/tasks/ui/plan.md 5장)
+  // 통계 페이지를 한 번 봤으면 메인의 통계 안내 말풍선은 더 띄우지 않는다 (docs/tasks/ui/header/plan.md 4)
   useEffect(() => {
     markStatsTooltipDismissed();
   }, []);

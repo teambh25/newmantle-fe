@@ -82,7 +82,7 @@ export function SettingsButton({ theme, onThemeChange, variant }: SettingsButton
                     : "text-gray-600"
                   }`}
               >
-                심플
+                기본
               </label>
             </div>
 
@@ -102,7 +102,7 @@ export function SettingsButton({ theme, onThemeChange, variant }: SettingsButton
                     : "text-gray-600"
                   }`}
               >
-                엑셀 스타일
+                엑셀
               </label>
             </div>
           </RadioGroup>
@@ -121,7 +121,7 @@ export function SettingsButton({ theme, onThemeChange, variant }: SettingsButton
                 피드백 남기기
               </span>
             </button>
-            {/* 공지사항 진입점. 헤더 아이콘은 폭이 넘쳐 설정 메뉴에 둔다 (docs/tasks/ui/notices.md 4장) */}
+            {/* 공지사항 진입점. 헤더 아이콘은 폭이 넘쳐 설정 메뉴에 둔다 (docs/tasks/ui/notices/plan.md 4) */}
             <Link
               href="/notices"
               onClick={() => setOpen(false)}
@@ -135,7 +135,16 @@ export function SettingsButton({ theme, onThemeChange, variant }: SettingsButton
             </Link>
           </div>
 
-          {/* 계정: 로그인했을 때만. 회원 탈퇴 진입점도 여기에 붙인다 (docs/tasks/ui/plan.md 1장) */}
+          {/* excel 모바일: 상태 표시줄에서 뺀 약관·문의 링크. 주소는 푸터와 같게 (specs/excel-ui Dec-82) */}
+          {isExcel && (
+            <div className="sm:hidden mt-2 pt-2 border-t border-gray-100 flex flex-wrap gap-x-3 gap-y-1 px-2 text-xs text-gray-500">
+              <a href="#" className="hover:underline">이용약관</a>
+              <a href="#" className="hover:underline">개인정보처리방침</a>
+              <a href="#" className="hover:underline">문의하기</a>
+            </div>
+          )}
+
+          {/* 계정: 로그인했을 때만. 회원 탈퇴 진입점도 여기에 붙인다 (docs/tasks/ui/header/plan.md 1) */}
           {user && (
             <div className="mt-2 pt-2 border-t border-gray-100">
               <button
@@ -155,7 +164,12 @@ export function SettingsButton({ theme, onThemeChange, variant }: SettingsButton
 
       {/* 피드백 팝업 */}
       <Dialog open={showSurvey} onOpenChange={setShowSurvey}>
-        <DialogContent className={`max-w-md ${isExcel ? "p-0 overflow-hidden" : "sm:rounded-xl"}`}>
+        <DialogContent
+          className={`max-w-md ${isExcel ? "p-0 overflow-hidden" : "sm:rounded-xl"}`}
+          aria-describedby={undefined}
+        >
+          {/* excel은 시트 첫 행이 제목 역할. 스크린리더용 이름만 둔다 */}
+          {isExcel && <DialogTitle className="sr-only">피드백</DialogTitle>}
           {!isExcel && (
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
@@ -169,10 +183,10 @@ export function SettingsButton({ theme, onThemeChange, variant }: SettingsButton
             <div className={theme === "excel" ? "" : "bg-gray-50/50 p-6 rounded-lg border border-gray-100"}>
               {theme === "excel" ? (
                 <div className="border-y border-[#d4d4d4]">
-                  <ExcelSurveyContent startRow={1} />
+                  <ExcelSurveyContent entry="settings" startRow={1} />
                 </div>
               ) : (
-                <ClassicSurveyForm />
+                <ClassicSurveyForm entry="settings" />
               )}
             </div>
           </div>

@@ -39,7 +39,7 @@ const GiveUpButton: React.FC<GiveUpButtonProps> = ({
 
   return (
     <>
-      {/* 모바일에선 툴팁이 안 떠서 아이콘 + 글씨로 보여준다 (아이콘으로 두 버튼 구분). 모바일에서만 작게 (docs/tasks/ui/plan.md 4장, 프로토타입) */}
+      {/* 모바일에선 툴팁이 안 떠서 아이콘 + 글씨로 보여준다 (아이콘으로 두 버튼 구분). 모바일에서만 작게 (docs/tasks/ui/input/plan.md 1) */}
       <Button
         type="button"
         onClick={() => setDialogOpen(true)}
@@ -54,7 +54,7 @@ const GiveUpButton: React.FC<GiveUpButtonProps> = ({
       </Button>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        {/* 모바일 양옆 여백·둥근 모서리는 첫 방문 안내 창과 맞춤 (docs/tasks/ui/giveup-dialog.md 5장) */}
+        {/* 모바일 양옆 여백·둥근 모서리는 첫 방문 안내 창과 맞춤 (docs/tasks/ui/giveup-dialog/plan.md 5) */}
         <DialogContent
           className="w-[calc(100%-2rem)] max-w-md rounded-lg"
           onOpenAutoFocus={(e) => {
@@ -62,9 +62,9 @@ const GiveUpButton: React.FC<GiveUpButtonProps> = ({
             continueButtonRef.current?.focus();
           }}
         >
-          {/* 공통 DialogHeader는 모바일에서 가운데 정렬이라 왼쪽으로 고정. 한국어는 단어 단위 줄바꿈 (giveup-dialog.md 7장) */}
+          {/* 공통 DialogHeader는 모바일에서 가운데 정렬이라 왼쪽으로 고정. 한국어는 단어 단위 줄바꿈 (giveup-dialog/plan.md 7) */}
           <DialogHeader className="text-left break-keep">
-            {/* 초성 미사용: 초성 힌트를 권하는 질문이라 "초성 힌트 받기"가 진행 버튼이 됨 (docs/tasks/ui/giveup-dialog.md 3장) */}
+            {/* 초성 미사용: 초성 힌트를 권하는 질문이라 "초성 힌트 받기"가 진행 버튼이 됨 (docs/tasks/ui/giveup-dialog/plan.md 3) */}
             {/* 기본 줄 간격(leading-none)은 두 줄일 때 붙어 보여서 살짝 띄움 */}
             <DialogTitle className="leading-snug">
               {initialConsonantHintUsed ? (
@@ -82,7 +82,7 @@ const GiveUpButton: React.FC<GiveUpButtonProps> = ({
               이후 입력한 단어는 기록되지 않아요.
             </DialogDescription>
           </DialogHeader>
-          {/* 계속 도전(유도)을 마지막에: DialogFooter가 PC에선 오른쪽, 모바일에선 맨 위로 보낸다 (docs/tasks/ui/giveup-dialog.md 2장) */}
+          {/* 계속 도전(유도)을 마지막에: DialogFooter가 PC에선 오른쪽, 모바일에선 맨 위로 보낸다 (docs/tasks/ui/giveup-dialog/plan.md 2) */}
           <DialogFooter className="gap-2 sm:gap-0 pt-2">
             {!initialConsonantHintUsed ? (
               <>
@@ -104,7 +104,7 @@ const GiveUpButton: React.FC<GiveUpButtonProps> = ({
               </>
             )}
           </DialogFooter>
-          {/* 초성 없이 계속하기: X와 같은 동작을 눈에 보이게. 두 선택지보다 약하게 (docs/tasks/ui/giveup-dialog.md 4장) */}
+          {/* 초성 없이 계속하기: X와 같은 동작을 눈에 보이게. 두 선택지보다 약하게 (docs/tasks/ui/giveup-dialog/plan.md 4) */}
           {!initialConsonantHintUsed && (
             <button
               type="button"

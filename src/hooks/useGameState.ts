@@ -9,7 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { logEvent } from "@/utils/amplitude";
 import { triggerConfetti } from "@/utils/confetti";
 import { getKSTDateString, toLegacyDateString } from "@/utils/date";
-import { getNextHintRank, getTopRank, isHintDisabled } from "@/utils/gameRules";
+import { compareByRank, getNextHintRank, getTopRank, isHintDisabled } from "@/utils/gameRules";
 
 const STORAGE_KEY = "newmantle_game_data";
 
@@ -31,7 +31,6 @@ export interface GameData {
   hintUsed: number;
   givenUp: boolean;
   initialConsonantHintUsed: boolean;
-  answerSurveyVoted: boolean | null;
   // 그날 첫 행동(단어 제출·일반 힌트·초성 힌트 성공) 시각, ms. 새로고침해도 유지된다.
   firstActionAt: number | null;
 }
@@ -47,7 +46,6 @@ function createEmptyGameState(): GameData {
     hintUsed: 0,
     givenUp: false,
     initialConsonantHintUsed: false,
-    answerSurveyVoted: null,
     firstActionAt: null,
   };
 }
@@ -97,11 +95,25 @@ function getInitialGameState(): GameData {
   return createEmptyGameState();
 }
 
-export function useGameState(gameDate: string, theme?: string) {
+/** 실패한 요청 종류. 안내 문구에 어떤 기능이 실패했는지 적는 데 쓴다 */
+export type GameRequestKind = "hint" | "consonantHint" | "giveUp";
+
+interface GameStateOptions {
+  /** 힌트·초성 힌트·포기 요청이 실패하면 토스트 대신 부른다 (classic: 입력창 아래 안내, docs/tasks/ui/input/plan.md 3) */
+  onRequestError?: (kind: GameRequestKind) => void;
+}
+
+
+export function useGameState(gameDate: string, theme?: string, { onRequestError }: GameStateOptions = {}) {
   const [gameState, setGameState] = useState<GameData>(getInitialGameState);
   // 이번 페이지 로드 시각. timeSpent(연속 플레이 시간) 기준이며 새로고침하면 다시 잰다.
   const startTimeRef = useRef<number>(Date.now());
   const { toast } = useToast();
+
+  const notifyRequestError = (kind: GameRequestKind, fallbackToast: { title: string; description: string }) => {
+    if (onRequestError) onRequestError(kind);
+    else toast({ ...fallbackToast, variant: "destructive" });
+  };
 
   // 요청 중 잠금 (D-2). ref는 같은 틱 안의 연속 호출을 막고, state는 버튼 비활성에 쓴다.
   // 초성 힌트와 포기는 같은 버튼이므로 하나의 잠금을 공유한다.
@@ -127,13 +139,7 @@ export function useGameState(gameDate: string, theme?: string) {
   const sortedWords = useMemo(() => {
     if (gameState.submittedWords.length <= 1) return gameState.submittedWords;
     const [firstWord, ...restWords] = gameState.submittedWords;
-    const sortedRestWords = restWords.sort((a, b) => {
-      if (a.rank === -1 && b.rank === -1)
-        return (b.similarity ?? 0) - (a.similarity ?? 0);
-      if (a.rank === -1) return 1;
-      if (b.rank === -1) return -1;
-      return a.rank - b.rank;
-    });
+    const sortedRestWords = restWords.sort(compareByRank);
     return [firstWord, ...sortedRestWords];
   }, [gameState.submittedWords]);
 
@@ -150,10 +156,11 @@ export function useGameState(gameDate: string, theme?: string) {
   /**
    * 제출 결과. 실패면 error(안내 문구)와 함께 reason으로 종류를 알려 준다.
    * duplicate: 이미 제출한 단어, unknownWord: 게임 단어 목록에 없음(404), failed: 그 밖의 실패(서버·네트워크·날짜)
+   * solved: 이 제출로 게임이 처음 끝남 (정답). 결과창 자동 표시 기준 (docs/tasks/ui/result-box/plan.md 요구사항 1)
    */
   const submitWordAction = async (
     word: string
-  ): Promise<{ error?: string; reason?: "duplicate" | "unknownWord" | "failed" }> => {
+  ): Promise<{ error?: string; reason?: "duplicate" | "unknownWord" | "failed"; solved?: boolean }> => {
     try {
       if (findWordIndex(gameState.submittedWords, word) !== -1) {
         setGameState((prev) => {
@@ -201,7 +208,7 @@ export function useGameState(gameDate: string, theme?: string) {
         };
       });
 
-      // 축하 멘트는 결과 상자에 있으므로 토스트는 띄우지 않는다 (docs/tasks/ui/result-box.md 6)
+      // 축하 멘트는 결과창에 있으므로 토스트는 띄우지 않는다 (docs/tasks/ui/result-box/plan.md)
       if (newWord.correct) {
         logEvent("Game Completed", {
           attempts: gameState.attempts + 1,
@@ -217,7 +224,9 @@ export function useGameState(gameDate: string, theme?: string) {
         }
       }
 
-      return {}; // success
+      // 이미 끝난 게임(정답 후·포기 후)의 추가 제출은 solved가 아니다
+      const solved = newWord.correct && !gameState.gameCompleted && !gameState.givenUp;
+      return solved ? { solved } : {}; // success
     } catch (error) {
       if (error instanceof Error) {
         if (error.message === "Invalid guess request") {
@@ -258,10 +267,9 @@ export function useGameState(gameDate: string, theme?: string) {
       logEvent("Hint Requested", { hintRank, theme });
     } catch (error) {
       console.error("힌트 요청 중 오류 발생:", error);
-      toast({
+      notifyRequestError("hint", {
         title: "힌트 요청 실패",
         description: "힌트를 가져오는 중 오류가 발생했습니다. 다시 시도해주세요.",
-        variant: "destructive",
       });
     } finally {
       hintPendingRef.current = false;
@@ -295,10 +303,9 @@ export function useGameState(gameDate: string, theme?: string) {
       logEvent("Initial Consonant Hint Requested", { theme });
     } catch (error) {
       console.error("초성 힌트 요청 중 오류 발생:", error);
-      toast({
+      notifyRequestError("consonantHint", {
         title: "초성 힌트 요청 실패",
         description: "초성 힌트를 가져오는 중 오류가 발생했습니다. 다시 시도해주세요.",
-        variant: "destructive",
       });
     } finally {
       giveUpPendingRef.current = false;
@@ -306,9 +313,10 @@ export function useGameState(gameDate: string, theme?: string) {
     }
   };
 
-  const giveUp = async () => {
+  /** 포기. 정답을 받아 포기 처리했으면 true (결과창 자동 표시 기준) */
+  const giveUp = async (): Promise<boolean> => {
     if (gameState.gameCompleted || gameState.givenUp || giveUpPendingRef.current) {
-      return;
+      return false;
     }
 
     giveUpPendingRef.current = true;
@@ -342,24 +350,18 @@ export function useGameState(gameDate: string, theme?: string) {
         initialConsonantHintUsed: gameState.initialConsonantHintUsed,
         theme,
       });
+      return true;
     } catch (error) {
       console.error("정답 가져오기 실패:", error);
-      toast({
+      notifyRequestError("giveUp", {
         title: "정답 가져오기 실패",
         description: "정답을 가져오는 중 오류가 발생했습니다. 다시 시도해주세요.",
-        variant: "destructive",
       });
+      return false;
     } finally {
       giveUpPendingRef.current = false;
       setGiveUpPending(false);
     }
-  };
-
-  const setAnswerSurveyVoted = (voted: boolean | null) => {
-    setGameState((prev) => ({
-      ...prev,
-      answerSurveyVoted: voted,
-    }));
   };
 
   return {
@@ -379,7 +381,5 @@ export function useGameState(gameDate: string, theme?: string) {
     giveUpPending,
     initialConsonantHintUsed: gameState.initialConsonantHintUsed,
     requestInitialConsonantHint,
-    answerSurveyVoted: gameState.answerSurveyVoted,
-    setAnswerSurveyVoted,
   };
 }

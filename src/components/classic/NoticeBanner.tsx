@@ -5,9 +5,9 @@ import { notifications } from "@/static/notifications";
 import { useLastSeenNotice } from "@/hooks/useLastSeenNotice";
 import { getBannerLabel, getLatestNotification, isIncident } from "@/utils/notifications";
 
-// 메인: 안 읽은 최신 공지를 페이지 맨 위 가로 띠(announcement bar)로 (docs/tasks/ui/notices.md 2장)
+// 메인: 안 읽은 최신 공지를 페이지 맨 위 가로 띠(announcement bar)로 (docs/tasks/ui/notices/plan.md 2)
 // 테두리 박스는 입력창과 비슷해 보여서, 옅은 배경의 전체 폭 띠로 구분한다
-// 평소엔 파란 띠 + 진한 라벨, 장애 공지만 빨간 띠 (docs/tasks/ui/color.md)
+// 평소엔 파란 띠 + 진한 라벨, 장애 공지만 빨간 띠 (docs/tasks/ui/notices/plan.md 7)
 const STYLES = {
   normal: {
     bar: "bg-blue-50 border-blue-100",

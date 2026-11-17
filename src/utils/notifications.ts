@@ -1,10 +1,10 @@
-// 공지 정렬·라벨·읽음 판단 (docs/tasks/ui/notices.md)
+// 공지 정렬·라벨·읽음 판단 (docs/tasks/ui/notices/plan.md)
 import type { Notification } from "@/static/notifications";
 import { getKSTDateString } from "@/utils/date";
 
 /** 마지막으로 본 공지 id */
 export const LAST_SEEN_NOTICE_KEY = "newmantle_last_seen_notification_id";
-/** 이전 방식의 마지막 확인 시각 (ISO). excel 공지 목록이 아직 쓴다 */
+/** 이전 방식의 마지막 확인 시각 (ISO). 지금은 쓰지 않고, 이 값만 있는 기존 유저의 읽음 판단에만 읽는다 */
 export const LEGACY_NOTICE_CHECK_KEY = "newmantle_last_notification_check";
 
 const FIRST_VISIT_DAYS = 3;
@@ -37,7 +37,7 @@ export function getBannerLabel(type: Notification["type"]): string {
   return isIncident(type) ? "안내" : getTypeLabel(type);
 }
 
-/** 색은 주의가 필요한 장애만. 나머지는 무채색 (docs/tasks/ui/color.md) */
+/** 색은 주의가 필요한 장애만. 나머지는 무채색 (docs/tasks/ui/notices/plan.md 7) */
 export function isIncident(type: Notification["type"]): boolean {
   return type === "incident";
 }

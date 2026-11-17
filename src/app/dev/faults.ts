@@ -1,4 +1,4 @@
-// 개발 전용: 게임 요청을 다음 한 번 실패시켜 실패 화면을 본다 (docs/tasks/ui/dev-page.md)
+// 개발 전용: 게임 요청을 다음 한 번 실패시켜 실패 화면을 본다 (docs/tasks/ui/dev-page/plan.md)
 // 대기 중인 실패는 localStorage에 두고, /dev 페이지가 쓰고 DevBadge가 읽어 적용한다.
 
 export type FaultTarget = "guess" | "hint" | "consonant" | "giveUp";
@@ -23,11 +23,19 @@ function targetOf(url: string): FaultTarget | null {
   return m[2] === "0" ? "consonant" : "hint";
 }
 
-/** 이 요청을 실패시켜야 하면 그 종류를 뺀 대기 목록, 아니면 null */
+/** 이 요청을 실패시켜야 하면 그 종류 하나를 뺀 대기 목록, 아니면 null. 같은 종류가 여럿이면 연속으로 실패 */
 export function takeFault(url: string, pending: FaultTarget[]): FaultTarget[] | null {
   const target = targetOf(url);
-  if (!target || !pending.includes(target)) return null;
-  return pending.filter((t) => t !== target);
+  const i = target ? pending.indexOf(target) : -1;
+  if (i < 0) return null;
+  return [...pending.slice(0, i), ...pending.slice(i + 1)];
+}
+
+/** 대기 목록 표시: "단어 제출 2번·힌트" */
+export function faultSummary(pending: FaultTarget[]): string {
+  const counts = new Map<FaultTarget, number>();
+  pending.forEach((t) => counts.set(t, (counts.get(t) ?? 0) + 1));
+  return Array.from(counts, ([t, n]) => (n > 1 ? `${TARGET_LABELS[t]} ${n}번` : TARGET_LABELS[t])).join("·");
 }
 
 export function readFaults(): FaultTarget[] {

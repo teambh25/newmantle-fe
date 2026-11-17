@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-// 첫 입력 유도 말풍선을 끝냈는지 (docs/tasks/ui/plan.md 7장)
+// 첫 입력 유도 말풍선을 끝냈는지 (docs/tasks/ui/input/plan.md 2)
 export const INPUT_TOOLTIP_DONE_KEY = "newmantle_input_tooltip_done";
 
 type TooltipState = "unknown" | "show" | "done";

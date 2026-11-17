@@ -8,7 +8,7 @@
 | 받는 사람이 보는 것 | 링크 → 들어와서 풀면서 비교 | 결과 이미지 / 카드 (들어오지 않아도 내용이 보임) |
 | 상태 | 구현돼 있음 ("도전장 보내기") | 없음. **이번 개편의 대상** |
 
-> **수정 필요 (2026-11-13)**: 결과 상자 정리(`docs/tasks/ui/result-box.md`)로 버튼 이름이 "도전장 보내기" → **"공유하기"**로 바뀌고, 버튼이 결과 상자 안으로 들어갔으며 위의 "친구는 나보다 빨리 맞힐까요?" 문구는 빠졌다. 이 문서의 "도전장 보내기" 표기와 A-1 노출 조건을 맞춰야 한다. 대결형·자랑형을 한 버튼으로 둘지, 버튼 이름을 어떻게 나눌지도 개편 때 정한다 (심플 테마만 바뀜, excel은 그대로)
+> **수정 필요 (2026-11-13)**: 결과 상자 정리(`docs/tasks/ui/result-box/plan.md`)로 버튼 이름이 "도전장 보내기" → **"공유하기"**로 바뀌고, 버튼이 결과 상자 안으로 들어갔으며 위의 "친구는 나보다 빨리 맞힐까요?" 문구는 빠졌다. 이 문서의 "도전장 보내기" 표기와 A-1 노출 조건을 맞춰야 한다. 대결형·자랑형을 한 버튼으로 둘지, 버튼 이름을 어떻게 나눌지도 개편 때 정한다 (excel도 결과 블록에 같은 "공유하기"를 둔다, `specs/excel-ui/decisions.md` Dec-4)
 
 개편의 초점은 자랑형 공유다. 대결형은 현재 동작과 문제만 기록해 두고, 자랑형과 겹치는 부분만 같이 손본다.
 
@@ -22,7 +22,7 @@
 
 | 역할 | 위치 |
 | --- | --- |
-| 링크 생성 / 링크 진입 처리 | `src/components/classic/NewMantleForm/index.tsx`, `src/components/excel/NewMantleForm/index.tsx` (같은 로직이 테마별로 복제돼 있음) |
+| 링크 생성 / 링크 진입 처리 | `src/hooks/useShareLink.ts` (classic·excel 공용) |
 | 친구 비교 바 | `src/components/CompetitiveBar.tsx` |
 | 공유자 기록 조회 | `fetchSharerStats` (`src/utils/api.ts`), `SharerStats` (`src/types/stats.ts`) |
 | 테스트 | `NewMantleForm.test.tsx` C-4-3, C-4-4 (classic만) |
@@ -83,7 +83,7 @@
   - 서버 stats의 `status`(`FAIL`)로 구분할 수 있지만 현재 쓰지 않음
 - 받는 쪽도 포기로 끝내면 시도 횟수만 비교함 → 적게 입력하고 포기하면 "승리!"
 - 친구 기록은 URL의 `shared_attempts`를 그대로 믿음 → 숫자를 고쳐서 보낼 수 있음. 서버 `guess_count`와 대조하지 않음
-- 힌트 사용이 승패에 반영되지 않음 (랭킹 가중치와 같은 문제, `docs/todo/results.md` 3번)
+- 힌트 사용이 승패에 반영되지 않음 (랭킹 가중치와 같은 문제, `docs/todo/ranking.md`)
 
 동작상의 구멍
 
@@ -100,7 +100,6 @@
 
 코드
 
-- 링크 생성 / 진입 처리가 classic, excel에 그대로 복제돼 있음 → 손댈 때 훅으로 분리
 - 테스트는 C-4-3, C-4-4 두 개뿐 (classic). 네이티브 공유, 날짜 불일치, 힌트 조회, excel 테마는 미검증
 
 해결된 항목
@@ -136,7 +135,7 @@
   - 다운로드 버튼
   - 모바일: `navigator.share({ files })`로 이미지 자체를 공유 시트에 넘기기 (지원 여부는 `navigator.canShare`로 확인, 미지원 시 다운로드)
   - 이미지 클립보드 복사 (데스크톱)
-- 캡처하기 좋은 결과 화면 자체를 만드는 것도 방법. 결과창 계획(`docs/todo/results.md`)과 같이 설계
+- 캡처하기 좋은 결과 화면 자체를 만드는 것도 방법. 결과창(`docs/tasks/ui/result-box/plan.md`)과 같이 설계
 
 #### B-2. 카드 형태 공유 (카카오톡 / 디스코드)
 
@@ -172,4 +171,4 @@
 ## 같이 볼 항목
 
 - `docs/spec/hint-giveup.md` B-4 (힌트 횟수 기준은 서버 `hint_count`), C-4 (포기 시 시도 횟수)
-- `docs/todo/results.md` (결과창 / 랭킹. 자랑형 카드에 담을 내용, 힌트 가중치와 대결 승패 기준을 같이 정해야 함)
+- `docs/todo/ranking.md` (랭킹. 결과창은 `docs/tasks/ui/result-box/plan.md`. 자랑형 카드에 담을 내용, 힌트 가중치와 대결 승패 기준을 같이 정해야 함)

@@ -11,6 +11,8 @@ Vitest + React Testing Library + user-event. 실행 명령은 루트 `README.md`
 - 화면 테스트는 역할과 접근성 이름으로 요소를 찾는다 (`getByRole("button", { name: "힌트" })`). CSS 클래스·DOM 구조에 기대는 것은 다른 방법이 없을 때만
 - 문구(토스트·안내 문장)는 검증하지 않는다. "있는지 / 없는지 / 어떤 선택지인지"만 본다
 - 같은 규칙을 로직·화면 두 레벨에서 중복 검증하지 않는다. 로직에서 확인한 규칙은 화면에서 "버튼에 반영되는지"만 본다
+- 화면 테스트보다 로직 테스트를 먼저 쓴다. 컴포넌트에서 화면에 넘길 값을 계산하는 코드는 `utils`의 순수 함수로 빼서 테스트한다 (예: `src/utils/board.ts`). 화면 테스트는 화면이 있어야만 확인할 수 있는 흐름(타이밍, 포커스, 창 열고 닫기, 여러 컴포넌트가 함께 움직이는 것)만 쓰고, 흐름마다 대표 케이스 하나로 한다
+- 앱 로직이 없는 건 테스트하지 않는다. 예: 라이브러리가 처리하는 동작(Radix 창을 ESC·X·바깥 클릭으로 닫기), 상태와 상관없이 항상 보이는 요소. 모양은 `docs/manual-checks.md`에서 직접 확인한다
 
 ### 2. mock은 외부 경계에서만
 
@@ -19,6 +21,7 @@ Vitest + React Testing Library + user-event. 실행 명령은 루트 `README.md`
 | 대상 | 방식 | 위치 |
 |---|---|---|
 | 게임 서버 API | `fetch`를 가로채는 가짜 서버. API 클라이언트(`api.ts`)는 실제 코드 | `fakeGameServer.ts` |
+| 피드백 웹훅 (Make.com) | 웹훅 URL로 가는 `fetch`만 가로채 본문을 기록. 실패(500)·네트워크 오류·붙잡기 | `fakeFeedbackWebhook.ts` |
 | Supabase | 게스트(세션 없음) 고정 | `setup.ts` |
 | Amplitude | `track` 등 spy | `setup.ts` |
 | 축하 효과 (`canvas-confetti`) | 호출 spy | `setup.ts` |
@@ -29,11 +32,10 @@ Vitest + React Testing Library + user-event. 실행 명령은 루트 `README.md`
 
 ### 3. 테스트 케이스를 먼저 문서로 정한다
 
-- 작업마다 `specs/<작업>/plan.md`의 Verification 섹션에 케이스 표를 둔다 (ID / 사전 상태 / 행동 / 기대 결과)
+- 작업마다 `specs/<작업>/plan.md`의 Verification 섹션에 케이스를 적는다 (사전 상태 / 행동 / 기대 결과). ID는 붙이지 않고 동작 문장으로 적는다
 - 케이스는 `plan.md`와 `decisions.md`의 결정 사항을 기준으로 만든다. 구현 기록을 보고 케이스를 바꾸지 않는다
-- 테스트 이름 앞에 케이스 ID를 붙인다: `it("A-5-1: 999부터 15회 만에 20위에 도달", ...)` → `npx vitest run -t "A-5-1"`로 바로 실행 가능
+- 테스트 이름은 케이스 문장과 맞춰 확인하는 동작으로 짓는다: `it("힌트를 받을 수 없을 때까지 반복 → 999부터 20까지 15회", ...)`. 케이스 ID는 테스트 이름·주석에 적지 않는다. 일부만 실행할 때는 이름으로 고른다: `npx vitest run -t "힌트"`
 - 케이스를 추가·변경하면 문서를 먼저 고친 뒤 테스트를 고친다. 통과하면 `plan.md`의 Phase 진행상황을 갱신한다
-- `docs/tasks/<작업>/verification.md`는 이전 형식이다. 새로 만들지 않고, 기존 테스트 ID와 프리셋 정의를 찾을 때만 본다
 
 ### 4. TDD: 테스트 먼저, 실패 확인, 그다음 구현
 
@@ -49,12 +51,14 @@ Vitest + React Testing Library + user-event. 실행 명령은 루트 `README.md`
 |---|---|
 | `setup.ts` | 모든 테스트 전에 실행 (`vitest.config.ts`의 `setupFiles`). 외부 mock, jsdom에 없는 브라우저 API, 테스트마다 초기화 |
 | `fakeGameServer.ts` | 가짜 게임 서버 (`gameServer`), 정답 상수 `ANSWER` |
+| `fakeFeedbackWebhook.ts` | 가짜 피드백 웹훅 (`feedbackWebhook`): `bodies`, `failNext()`, `networkErrorNext()`, `holdNext()` → `release()`. 예: `src/app/feedback.test.tsx` |
+| `formHarness.tsx` | 화면 레벨 도구: 게임 화면 렌더링·조작 (NewMantleForm 폴더의 화면 테스트가 같이 씀) |
 | `gameHarness.ts` | 로직 레벨 도구: `renderGame`, `presets`, `amplitudeEvents`, `confettiFired`, `GAME_DATE` |
 | `clock.ts` | 기기 타임존·현재 시각 고정: `setClock`, 기준 시각 상수 |
 
 ## 테스트마다 자동으로 되는 것 (`setup.ts`)
 
-- 시작 전: `gameServer.reset()`, `fetch`를 가짜 서버로 교체, `setInterval`만 가짜 타이머(축하 효과가 다음 테스트로 새지 않게), `console.error` 출력 억제
+- 시작 전: `gameServer.reset()`, `feedbackWebhook.reset()`, `fetch`를 가짜 서버로 교체(웹훅 URL은 가짜 웹훅으로), `setInterval`만 가짜 타이머(축하 효과가 다음 테스트로 새지 않게), `console.error` 출력 억제
 - 끝난 후: 렌더링 정리, 타이머 정리, `localStorage.clear()`, URL을 `/`로, mock 호출 기록 초기화, `vi.stubGlobal` 해제
 
 따라서 테스트 안에서 저장소·URL·서버 상태를 직접 되돌릴 필요는 없다.
@@ -98,13 +102,15 @@ expect(h.game.attempts).toBe(1); // 훅 반환값
 - `h.start(action)` + `h.settle(p)`: 응답을 기다리지 않고 요청만 시작 (`holdNext`와 함께 요청 중 상태 재현)
 - `h.failureToastShown()` / `h.dismissToasts()`: 실패 안내 여부
 - `h.unmount()` 후 다시 `renderGame()` = 새로고침 (`localStorage`는 유지됨)
-- 사전 상태 프리셋 (`presets`): `OUT_ONLY`, `TOP(n)`, `CONSONANT_USED`, `SOLVED(k)`, `GIVEN_UP(n)` — 정의는 `docs/tasks/hint-giveup-fix/verification.md`. 겹치지 않는 단어가 필요하면 `presets.nextWord()`
+- 사전 상태 프리셋 (`presets`): `OUT_ONLY`, `TOP(n)`, `CONSONANT_USED`, `SOLVED(k)`, `GIVEN_UP(n)` — 정의는 `gameHarness.ts`의 주석. 겹치지 않는 단어가 필요하면 `presets.nextWord()`
 - 저장된 기록에서 시작해야 하면 마운트 전에 `localStorage.setItem("newmantle_game_data", ...)`
 - `amplitudeEvents(name)`: 그 이벤트의 속성 목록. `confettiFired()`: 축하 효과 실행 여부
 
 ## 화면 레벨
 
-실제 컴포넌트를 렌더링하고 user-event로 조작한다. 예: `src/components/classic/NewMantleForm/NewMantleForm.test.tsx`
+실제 컴포넌트를 렌더링하고 user-event로 조작한다. 예: `src/components/classic/NewMantleForm/HintGiveUp.test.tsx`
+
+- 게임 화면(NewMantleForm) 테스트는 `formHarness.tsx`의 도구를 같이 쓴다: `setup()`(렌더링 + 날짜 기다림), 버튼·입력창 찾기, `submitWord`, `submitAnswer`, `takeConsonantHint`, `giveUpViaDialog`, 방금 입력 칸·기록 표 읽기
 
 - `userEvent.setup({ pointerEventsCheck: 0 })`: Radix 확인 창이 `body`에 `pointer-events: none`을 거는 것 때문에 필요
 - 마운트 직후 게임 날짜가 정해질 때까지 기다린 뒤 조작한다 (`await waitFor(() => expect(textbox).toBeEnabled())`)
@@ -118,7 +124,7 @@ expect(h.game.attempts).toBe(1); // 훅 반환값
 setClock("America/Los_Angeles", KST_AFTERNOON); // 기기 타임존 + 현재 시각 고정
 ```
 
-- 기준 시각: `KST_AFTERNOON`, `SAME_DAY`, `KST_BEFORE_MIDNIGHT`, `KST_MIDNIGHT` (UTC·KST·LA 값은 상수 주석과 `docs/tasks/kst-date-fix/verification.md`)
+- 기준 시각: `KST_AFTERNOON`, `SAME_DAY`, `KST_BEFORE_MIDNIGHT`, `KST_MIDNIGHT` (UTC·KST·LA 값은 상수 주석)
 - `setup.ts`가 이미 `setInterval`만 가짜로 설치해 두므로, `Date`까지 고정하려면 `vi.useRealTimers()` 후 `Date`를 포함해 다시 설치해야 한다. `setClock`이 이걸 한다. 그냥 `vi.useFakeTimers()`를 다시 부르면 `Date`가 고정되지 않는다
 - 시각만 멈추고 흘려보내는 경우(경과 시간 측정)는 `src/hooks/useGameState.events.test.ts`의 `freezeClock` / `passSeconds` 참고
 - `setTimeout`은 가짜로 만들지 않는다 (user-event와 가짜 서버가 실제 `setTimeout`을 쓴다)

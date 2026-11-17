@@ -7,7 +7,7 @@ interface HintButtonProps {
   disabled: boolean;
 }
 
-// 모바일에선 툴팁이 안 떠서 아이콘 + 글씨로 보여준다 (아이콘으로 두 버튼 구분). 모바일에서만 작게 (docs/tasks/ui/plan.md 4장, 프로토타입)
+// 모바일에선 툴팁이 안 떠서 아이콘 + 글씨로 보여준다 (아이콘으로 두 버튼 구분). 모바일에서만 작게 (docs/tasks/ui/input/plan.md 1)
 const HintButton: React.FC<HintButtonProps> = ({ onHintRequest, disabled }) => {
   return (
     <Button

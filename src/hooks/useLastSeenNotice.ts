@@ -15,7 +15,7 @@ export function markLatestNoticeSeen() {
 
 /**
  * 최신 공지 안 읽음 여부. 읽기만 하고, 읽음 처리는 markSeen을 부를 때만 한다
- * (docs/tasks/ui/notices.md 3장)
+ * (docs/tasks/ui/notices/plan.md 3)
  */
 export function useLastSeenNotice() {
   // localStorage를 읽기 전에는 false (배너를 띄우지 않음)
