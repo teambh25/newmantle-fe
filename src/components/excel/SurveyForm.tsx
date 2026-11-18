@@ -24,7 +24,7 @@ const SurveyForm: React.FC<SurveyFormProps> = ({ entry, startRow = 21 }) => {
       </div>
 
       {sent ? (
-        // 보낸 뒤: 안내·입력·보내기 세 행(2~4행)을 셀 병합처럼 합쳐 감사 인사. 바탕·글자색은 평소 셀 그대로 (specs/excel-ui Dec-81)
+        // 보낸 뒤: 안내·입력·보내기 세 행(2~4행)을 셀 병합처럼 합쳐 감사 인사. 바탕·글자색은 평소 셀 그대로 (docs/specs/excel-ui Dec-81)
         <div className="flex bg-white border-b border-[#e1e1e1]">
           <div className="flex flex-col flex-shrink-0">
             <div className="sheet-cell-header min-h-[40px]">{startRow + 1}</div>

@@ -9,6 +9,7 @@ import { ANSWER, gameServer } from "@/test/fakeGameServer";
 import { notifications } from "@/static/notifications";
 import { getLatestNotification } from "@/utils/notifications";
 import { getKSTDateString } from "@/utils/date";
+import { PROGRESS_VIEW_TOOLTIP_DONE_KEY } from "@/utils/progressViewTooltip";
 
 // 로그인 여부를 케이스마다 바꾼다 (기본: 비로그인)
 const auth = vi.hoisted(() => ({ user: null as null | { id: string; email: string } }));
@@ -43,6 +44,8 @@ type User = ReturnType<typeof userEvent.setup>;
 
 beforeEach(() => {
   auth.user = null;
+  // 보기 방식 말풍선은 이미 본 상태로 둔다. 이 말풍선과 헤더 말풍선의 순서는 progressViewTooltip.test.tsx에서 본다
+  localStorage.setItem(PROGRESS_VIEW_TOOLTIP_DONE_KEY.classic, "1");
 });
 
 /** 메인을 렌더링하고, 헤더(로그인 버튼)와 게임 입력창이 준비될 때까지 기다린다 */
@@ -705,7 +708,7 @@ describe("첫 입력 유도 말풍선 / 말풍선 순서", () => {
 describe("공지 배너 / 공지사항 진입점", () => {
   const LAST_SEEN_KEY = "newmantle_last_seen_notification_id";
   const LEGACY_CHECK_KEY = "newmantle_last_notification_check";
-  // 최신 공지 = 정렬 1순위 (날짜순). 지난 일을 기록한 공지는 id가 더 커도 최신이 아님 (docs/spec/notices.md)
+  // 최신 공지 = 정렬 1순위 (날짜순). 지난 일을 기록한 공지는 id가 더 커도 최신이 아님 (docs/rules/notices.md)
   const latestId = getLatestNotification(notifications)!.id;
   const olderId = String(Number(latestId) - 1);
 

@@ -27,7 +27,7 @@ import {
   WrapText,
 } from "lucide-react";
 
-// 엑셀 홈 탭 리본. 장식이고, 글꼴·크기 칸 자리에만 시도 횟수를 보여 준다 (specs/excel-ui Dec-59, Dec-67)
+// 엑셀 홈 탭 리본. 장식이고, 글꼴·크기 칸 자리에만 시도 횟수를 보여 준다 (docs/specs/excel-ui Dec-59, Dec-67)
 // 장식은 누를 수 있어 보이지 않게 hover 음영·포인터를 두지 않는다 (Dec-78)
 // 좁은 화면에서는 오른쪽 그룹부터 숨긴다
 

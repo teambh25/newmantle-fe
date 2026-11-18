@@ -2,7 +2,7 @@
 
 메인 하단의 공지 전체 목록을 `/notices` 페이지로 옮기고, 메인에는 안 읽은 새 공지를 알리는 띠만 둔다. 내력은 `decision.md`.
 
-- 범위: classic. excel 테마는 그대로 (`specs/excel-ui/plan.md`)
+- 범위: classic. excel 테마는 그대로 (`docs/specs/excel-ui/plan.md`)
 - Amplitude 이벤트는 추가하지 않는다 (Amplitude 개편 때 함께)
 
 ## 1. `/notices` 페이지
@@ -20,7 +20,7 @@
 - 메인(classic)에 공지 목록은 없다
 - 페이지 맨 위(헤더 위)에 전체 폭 띠(announcement bar): `타입 라벨 │ 최신 공지 제목  ›`
   - 옅은 파란 배경 + 아래 경계선, 작은 글씨
-  - 장애 공지면 빨간 띠, 라벨은 "안내" (7, `docs/spec/notices.md`)
+  - 장애 공지면 빨간 띠, 라벨은 "안내" (7, `docs/rules/notices.md`)
   - 누르면 `/notices`로 이동
   - 제목이 길면 한 줄 말줄임
   - 닫기(X) 버튼: 닫으면 읽음 처리
@@ -51,19 +51,19 @@
 
 ## 6. 공지 종류
 
-- 업데이트 / 공지 / 장애(`incident`). 규칙은 `docs/spec/notices.md`
+- 업데이트 / 기타 / 장애(`incident`). 규칙은 `docs/rules/notices.md`
 - 사과문(id 1)은 `incident`
 
 ## 7. 색
 
 원칙: 기본은 파랑과 무채색. 다른 색은 경고처럼 뜻이 있을 때만 쓴다. 공지 종류는 강조할 정보가 아니라 글자로 충분하고, 장애만 주의가 필요하다.
 
-| 곳 | 평소 (업데이트·공지) | 장애 |
+| 곳 | 평소 (업데이트·기타) | 장애 |
 | --- | --- | --- |
 | 메인 띠 배경 | 옅은 파랑 (`bg-blue-50`) | 옅은 빨강 (`bg-red-50`) |
 | 메인 띠 라벨 | 굵은 검정 (`text-gray-900`) | 굵은 빨강 (`text-red-700`), 라벨은 "안내" |
 | 메인 띠 제목 | 회색 (`text-gray-700`) | 진한 빨강 (`text-red-900`) |
-| `/notices` 배지 | 회색 (`bg-gray-100 text-gray-600`) | 옅은 빨강 (`bg-red-50 text-red-700`) |
+| `/notices` 배지 | 업데이트: 파랑 (`bg-blue-50 text-blue-700`), 기타: 회색 (`bg-gray-100 text-gray-600`) | 옅은 빨강 (`bg-red-50 text-red-700`) |
 
 - 색은 `src/utils/notifications.ts` 한 곳에서 정해서 띠와 `/notices`가 같이 바뀐다
 

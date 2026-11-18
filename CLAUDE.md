@@ -31,7 +31,7 @@ npx vitest run -t "힌트"    # run tests whose name matches
 Harness guide: `src/test/README.md` (fake game server, `renderGame`, presets, clock/timezone helpers, mock setup). Read it before writing tests.
 
 ### Workflow: TDD
-1. Write the test cases first in the Verification section of the task's `specs/<task>/plan.md` (precondition / action / expected), as behavior sentences without IDs, based on the plan and `decisions.md`, not on the implementation
+1. Write the test cases first in the Verification section of the task's `docs/specs/<task>/plan.md` (precondition / action / expected), as behavior sentences without IDs, based on the plan and `decisions.md`, not on the implementation
 2. Write the tests. Name each test by the behavior it checks, matching the case sentence (precondition → action → expected). Do not put case IDs in test names or comments
 3. Run them and confirm they **fail for the right reason** (missing behavior, not a typo or missing mock). A test that passes before implementation does not distinguish the bug, so revisit the case
 4. Implement until they pass, then update the Phase progress in `plan.md`
@@ -96,7 +96,7 @@ src/
   - `GET /v2/quizzes/{date}/guess/{word}` - Submit a guess. `rank` is 1~999 when ranked, `-1` when out of rank, `null` when correct
   - `GET /v2/quizzes/{date}/hint/{rank}` - Word at the given rank (`0 <= rank <= 999`); `rank=0` returns the answer's initial consonants
   - `GET /v2/quizzes/{date}/give-up` - Returns the answer
-- Hint / give-up game rules: `docs/spec/hint-giveup.md`
+- Hint / give-up game rules: `docs/rules/hint-giveup.md`
 - Game requests have a 3-second timeout with AbortController
 
 ### State Management

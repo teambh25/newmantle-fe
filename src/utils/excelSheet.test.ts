@@ -1,8 +1,8 @@
-// 로직 레벨: excel 시트 표시 계산 (선택된 셀) (specs/excel-ui)
+// 로직 레벨: excel 시트 표시 계산 (선택된 셀) (docs/specs/excel-ui)
 import { describe, expect, it } from "vitest";
 import type { SubmittedWord } from "@/utils/api";
 import type { LatestRow } from "@/utils/board";
-import { bestSimilarity, latestHistoryIndex } from "@/utils/excelSheet";
+import { bestSimilarity, latestHistoryIndex, selectedCell } from "@/utils/excelSheet";
 
 const w = (word: string, rank: number, attempt: number): SubmittedWord => ({
   word,
@@ -24,6 +24,28 @@ describe("선택된 셀: 방금 입력한 단어의 기록 표 줄", () => {
     const latest: LatestRow = { kind: "notice", word: "뭐", tone: "unknown" };
     expect(latestHistoryIndex(history, latest)).toBe(-1);
     expect(latestHistoryIndex(history, null)).toBe(-1);
+  });
+});
+
+describe("선택된 셀: 모드별 (상단바 모드는 상단바 행, docs/specs/progress-view-toggle Dec-16, Dec-22)", () => {
+  const consonant: SubmittedWord = { word: "ㅈㄷ", similarity: null, rank: 0, attempt: -1, correct: false };
+
+  it("그래프, 방금 항목이 초성 → 기록 표의 초성 행", () => {
+    const history = [consonant, w("가", 10, 2), w("나", 101, 1)];
+    const latest: LatestRow = { kind: "notice", word: "ㅈㄷ", tone: "consonant" };
+    expect(selectedCell(history, latest, "chart")).toEqual({ in: "history", index: 0 });
+  });
+
+  it("상단바, 방금 항목이 단어 → 상단바 행", () => {
+    const history = [w("나", 101, 1)];
+    const latest: LatestRow = { kind: "word", word: w("가", 10, 2), isRepeat: false };
+    expect(selectedCell(history, latest, "bar")).toEqual({ in: "bar" });
+  });
+
+  it("상단바, 방금 항목이 없는 단어 → 선택 없음", () => {
+    const history = [w("가", 10, 2), w("나", 101, 1)];
+    const latest: LatestRow = { kind: "notice", word: "뭐", tone: "unknown" };
+    expect(selectedCell(history, latest, "bar")).toBeNull();
   });
 });
 

@@ -6,7 +6,7 @@ import type { GameEnd, LatestRow } from "@/utils/board";
 import { chartPoints, chartTicks, chartTopLevel, limitPoints, visibleLabels, type LabelBox } from "@/utils/rankChart";
 import { rankStyle } from "./WordTable";
 
-// classic 진행 상황 카드의 excel 버전: 엑셀 꺾은선 차트 (specs/excel-ui Dec-46~Dec-52)
+// classic 진행 상황 카드의 excel 버전: 엑셀 꺾은선 차트 (docs/specs/excel-ui Dec-46~Dec-52)
 // 제목 = 방금 입력(classic 배너와 같은 규칙), 점 = 최고 기록을 깬 단어, 가로 간격은 고르게, 세로는 classic 게이지 눈금
 
 const GREEN = "#217346";

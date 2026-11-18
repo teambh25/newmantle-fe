@@ -3,7 +3,7 @@ export interface Notification {
   title: string;
   content: string;
   date: string;
-  type: "update" | "notice" | "incident";
+  type: "update" | "etc" | "incident";
 }
 
 export const notifications: Notification[] = [
@@ -68,6 +68,14 @@ export const notifications: Notification[] = [
     content:
       "게임 화면이 새롭게 바뀌었어요! 더 깔끔하고 직관적인 화면에서 뉴맨틀을 즐겨보세요",
     date: "2026-11-17",
+    type: "update",
+  },
+  {
+    id: "9",
+    title: "보기 방식 선택 기능 추가",
+    content:
+      "여러분의 피드백을 반영해, 진행 상황을 표시하는 방식을 직접 선택할 수 있도록 개선했어요!\n\n표 제목행의 버튼을 통해 기존처럼 입력한 단어를 표 상단에 표시하거나, 새롭게 추가된 카드·그래프 방식으로 진행 상황을 확인할 수 있어요. 선택한 방식은 다음에도 그대로 유지됩니다.\n\n앞으로도 많은 피드백 부탁드립니다!",
+    date: "2026-11-19",
     type: "update",
   },
 ];

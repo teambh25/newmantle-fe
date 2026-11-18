@@ -32,12 +32,12 @@ export const GameForm: React.FC<GameFormProps> = ({
     handleSubmit,
     clearInput,
   } = useGameForm(submitAction);
-  // 엑셀에서 셀을 편집하는 동안처럼 ✕ ✓가 살아난다 (specs/excel-ui Dec-70)
+  // 엑셀에서 셀을 편집하는 동안처럼 ✕ ✓가 살아난다 (docs/specs/excel-ui Dec-70)
   const editing = inputWord.length > 0 && !isLoading;
 
   return (
     <form onSubmit={handleSubmit} className="flex border-b border-[#d4d4d4] w-full bg-white items-stretch h-10 relative shadow-sm" autoComplete="off">
-      {/* 이름 상자: 엑셀처럼 선택된 셀 주소. 날짜는 파일 이름(헤더)에 (specs/excel-ui Dec-38, Dec-69) */}
+      {/* 이름 상자: 엑셀처럼 선택된 셀 주소. 날짜는 파일 이름(헤더)에 (docs/specs/excel-ui Dec-38, Dec-69) */}
       <div className="hidden sm:flex items-center justify-center w-[48px] border-r border-[#d4d4d4] text-[11px] font-sans text-gray-500 select-none bg-white font-medium text-center leading-tight relative overflow-visible z-10">
         {cellAddress}
       </div>

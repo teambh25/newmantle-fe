@@ -12,7 +12,7 @@ interface AuthButtonProps {
     tooltipAlign?: 'center' | 'end'
     /** 결과창이 열린 동안 로그인 버튼을 어두운 배경 위로 띄우고 저장 안내 말풍선 (docs/tasks/ui/result-box/plan.md 요구사항 8) */
     spotlight?: boolean
-    /** excel은 녹색 헤더 위라 옆 아이콘 버튼과 같은 밝은 버튼 + 녹색 글씨 (specs/excel-ui Dec-16) */
+    /** excel은 녹색 헤더 위라 옆 아이콘 버튼과 같은 밝은 버튼 + 녹색 글씨 (docs/specs/excel-ui Dec-16) */
     variant?: 'classic' | 'excel'
 }
 

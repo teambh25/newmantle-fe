@@ -1,4 +1,4 @@
-// 로직 레벨: excel 순위 그래프의 점과 단어 표시 (specs/excel-ui)
+// 로직 레벨: excel 순위 그래프의 점과 단어 표시 (docs/specs/excel-ui)
 import { describe, expect, it } from "vitest";
 import type { SubmittedWord } from "@/utils/api";
 import { CHART_TICKS, chartPoints, chartTicks, chartTopLevel, limitPoints, visibleLabels, type LabelBox } from "@/utils/rankChart";

@@ -2,8 +2,8 @@ import React from "react";
 import { MessageSquare, Share2 } from "lucide-react";
 import type { AnswerData } from "@/utils/api";
 
-// 결과 블록: 엑셀 레코드처럼 "항목 | 값" 행. 항목은 시도 칸, 값은 단어 칸 (specs/excel-ui Dec-74)
-// 순서: 정답 → 설명([분류] 설명) → 시도 횟수 → 공유 → 피드백. 정답 글자는 맞힘 녹색, 포기 회색 + (포기)
+// 결과 블록: 엑셀 레코드처럼 "항목 | 값" 행. 항목은 시도 칸, 값은 단어 칸 (docs/specs/excel-ui Dec-74)
+// 순서: 정답 → 예문([분류] 예문) → 시도 횟수 → 공유 → 피드백. 정답 글자는 맞힘 녹색, 포기 회색 + (포기)
 
 interface GameResultProps {
   /** 첫 행 번호 */
@@ -51,7 +51,7 @@ export function GameResult({ startRow, givenUp, attempts, answer, onShare, feedb
         {givenUp && <span className="ml-1.5 text-xs text-gray-400">(포기)</span>}
       </Row>
       {explanation && (
-        <Row row={row++} label="설명" valueClass="py-2 text-[13px] text-gray-700 break-keep whitespace-normal">
+        <Row row={row++} label="예문" valueClass="py-2 text-[13px] text-gray-700 break-keep whitespace-normal">
           {explanation}
         </Row>
       )}

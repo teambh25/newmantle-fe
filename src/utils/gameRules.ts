@@ -1,6 +1,6 @@
 import type { SubmittedWord } from "@/utils/api";
 
-// 힌트 / 포기 규칙: docs/spec/hint-giveup.md
+// 힌트 / 포기 규칙: docs/rules/hint-giveup.md
 
 // 순위권 단어가 없을 때 주는 첫 힌트 순위 (A-1).
 export const FIRST_HINT_RANK = 999;

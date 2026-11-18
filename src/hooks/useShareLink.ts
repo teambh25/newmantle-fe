@@ -1,6 +1,6 @@
 "use client";
 // 대결형 공유: 친구 공유 링크로 들어왔을 때 읽기, 내 공유 링크 만들어 보내기 (docs/todo/share.md A)
-// classic·excel이 같이 쓴다 (specs/excel-ui Dec-2)
+// classic·excel이 같이 쓴다 (docs/specs/excel-ui Dec-2)
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { logEvent } from "@/utils/amplitude";

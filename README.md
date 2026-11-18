@@ -38,7 +38,7 @@ npx vitest run src/utils/gameRules.test.ts
 npx vitest run -t "힌트"
 ```
 
-Test files live next to the code they test (`*.test.ts`, `*.test.tsx`). Test cases are written first in each task's `specs/<task>/plan.md` (Verification section). The test harness (fake game server, helpers, mocking rules, TDD workflow) is documented in `src/test/README.md`.
+Test files live next to the code they test (`*.test.ts`, `*.test.tsx`). Test cases are written first in each task's `docs/specs/<task>/plan.md` (Verification section). The test harness (fake game server, helpers, mocking rules, TDD workflow) is documented in `src/test/README.md`.
 
 ## Learn More
 

@@ -23,8 +23,8 @@ export function getTypeLabel(type: Notification["type"]): string {
   switch (type) {
     case "update":
       return "업데이트";
-    case "notice":
-      return "공지";
+    case "etc":
+      return "기타";
     case "incident":
       return "장애";
     default:
@@ -44,7 +44,9 @@ export function isIncident(type: Notification["type"]): boolean {
 
 /** `/notices` 종류 배지 */
 export function getTypeColor(type: Notification["type"]): string {
-  return isIncident(type) ? "bg-red-50 text-red-700" : "bg-gray-100 text-gray-600";
+  if (isIncident(type)) return "bg-red-50 text-red-700";
+  if (type === "update") return "bg-blue-50 text-blue-700";
+  return "bg-gray-100 text-gray-600";
 }
 
 interface ReadState {
