@@ -848,8 +848,8 @@
   (A) 표시하지 않는다
   (B) 방금 입력한 단어의 기록 표 단어 칸을 선택된 셀로: 녹색 테두리 + 오른쪽 아래 채우기 핸들, 그 행 번호와 열 머리 B를 옅은 녹색으로. 이름 상자에 그 셀 주소(예: B5), 선택이 없으면 A1
 선택 — B
-근거 — 엑셀의 가장 익숙한 모습이고 방금 입력이 기록 표 어디에 들어갔는지 보인다. 방금 항목이 단어가 아니면(없는 단어·제출 중 등) 선택이 없다 (기록 표를 접지 않게 된 뒤로는 늘 보인다, Dec-72). 열 머리를 강조하려고 열 머리 줄을 게임 화면으로 옮겼다
-영향 — `src/utils/excelSheet.ts`의 `latestHistoryIndex`, `WordTable.tsx`, `GameForm.tsx`, `index.tsx`, `ExcelHome.tsx`
+근거 — 엑셀의 가장 익숙한 모습이고 방금 입력이 기록 표 어디에 들어갔는지 보인다. 방금 항목이 기록 표에 없으면(없는 단어·제출 중·요청 실패·정답·포기) 선택이 없다 (기록 표를 접지 않게 된 뒤로는 늘 보인다, Dec-72). 초성은 기록 표에 들어가므로 방금 항목이 초성이면 초성 행이 선택된다(`docs/specs/progress-view-toggle` Dec-21, Dec-22). 상단바 모드에서는 기록 표 대신 상단바 행의 단어 칸이 선택되고 이름 상자도 그 주소다(같은 문서 Dec-16). 열 머리를 강조하려고 열 머리 줄을 게임 화면으로 옮겼다
+영향 — `src/utils/excelSheet.ts`의 `latestHistoryIndex`·`selectedCell`, `WordTable.tsx`, `TopBar.tsx`, `GameForm.tsx`, `index.tsx`, `ExcelHome.tsx`
 상태 — active
 
 ### Dec-70. 수식 입력줄 ✕ ✓

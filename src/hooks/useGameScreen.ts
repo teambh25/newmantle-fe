@@ -102,6 +102,7 @@ export function useGameScreen(gameDate: string, theme: "classic" | "excel", view
     repeatedWord,
     view,
     requestError,
+    consonantInHistory: theme === "excel",
   });
 
   // 결과 정보: 시도 횟수와 제출 기록에 저장된 정답 정보 (docs/tasks/ui/result-box/plan.md 요구사항 6)

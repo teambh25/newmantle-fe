@@ -286,3 +286,32 @@ describe("모드별 방금 입력과 기록 표 (상단바는 방금 단어를 �
     expect(historyWords(b)).toEqual(["사과", "바나나"]);
   });
 });
+
+describe("excel 초성 행 (초성 포함: 모드와 상관없이 초성을 기록 표에 넣는다)", () => {
+  const excel = (words: SubmittedWord[], extra: Partial<BoardInput> = {}) =>
+    board(words, { consonantInHistory: true, ...extra });
+
+  it("초성 포함, 그래프, 100위 뒤 초성 힌트 → 방금 입력은 초성, 기록은 초성·100위 순", () => {
+    const b = excel(history([["사과", 100], "consonant"]));
+    expect(b.latest).toMatchObject({ kind: "notice", tone: "consonant", word: CONSONANT });
+    expect(historyWords(b)).toEqual([CONSONANT, "사과"]);
+  });
+
+  it("초성 포함, 상단바, 100위 뒤 초성 힌트 → 방금 입력은 초성, 기록은 100위만", () => {
+    const b = excel(history([["사과", 100], "consonant"]), { view: "bar" });
+    expect(b.latest).toMatchObject({ kind: "notice", tone: "consonant", word: CONSONANT });
+    expect(historyWords(b)).toEqual(["사과"]);
+  });
+
+  it("초성 포함, 상단바, 100위·초성 힌트 뒤 500위 → 방금 입력은 500위, 기록은 초성·100위 순", () => {
+    const b = excel(history([["사과", 100], "consonant", ["바나나", 500]]), { view: "bar" });
+    expect(latestWord(b)).toBe("바나나");
+    expect(historyWords(b)).toEqual([CONSONANT, "사과"]);
+  });
+
+  it("초성 포함, 초성 힌트 뒤 정답 → 기록 맨 위에 초성이 남음", () => {
+    const b = excel(history([["사과", 100], "consonant", "answer"]));
+    expect(historyWords(b)[0]).toBe(CONSONANT);
+    expect(historyWords(b)).not.toContain(ANSWER);
+  });
+});

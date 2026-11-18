@@ -2,12 +2,16 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import WordTable, { SELECTED_HEADER } from "./WordTable";
-import { bestSimilarity, latestHistoryIndex } from "@/utils/excelSheet";
+import { bestSimilarity, selectedCell } from "@/utils/excelSheet";
 import { GameForm } from "./GameForm";
 import { GameResult, resultRowCount } from "./GameResult";
 import { FeedbackRow } from "./FeedbackRow";
 import { RankChart } from "./RankChart";
 import { ResultTabs, type SlotView } from "./ResultTabs";
+import { TopBar } from "./TopBar";
+import ProgressViewToggle from "./ProgressViewToggle";
+import { useProgressView } from "@/hooks/useProgressView";
+import type { ExcelProgressView } from "@/utils/progressView";
 import { REQUEST_ERROR_MESSAGES, useGameScreen } from "@/hooks/useGameScreen";
 import { useShareLink } from "@/hooks/useShareLink";
 import { useGameDate } from "@/hooks/useGameDate";
@@ -27,6 +31,9 @@ export default function NewMantleForm() {
   // 끝난 뒤 결과 자리에 결과와 그래프 중 무엇을 보일지. 끝나는 순간·다시 들어왔을 때는 결과 (Dec-53)
   const [view, setView] = useState<SlotView>("result");
   const [mounted, setMounted] = useState(false);
+  // 방금 입력 자리: 순위 그래프 / 상단바. 저장값을 읽기 전에는 둘 다 그리지 않는다 (docs/specs/progress-view-toggle Dec-15, Dec-19, Dec-23)
+  const { view: progressView, setView: setProgressView, ready: viewReady } = useProgressView("excel");
+  const barMode = progressView === "bar";
   const {
     game: gameLogic,
     board,
@@ -35,7 +42,7 @@ export default function NewMantleForm() {
     startRequest,
     requestError,
     clearRequestError,
-  } = useGameScreen(gameDate, "excel");
+  } = useGameScreen(gameDate, "excel", barMode ? "bar" : "card");
   const { sharedAttempts, sharerHintCount, isLoadingSharerStats, share } = useShareLink({
     gameDate,
     attempts: gameLogic.correctAttempts,
@@ -53,24 +60,36 @@ export default function NewMantleForm() {
     setView(next);
     if (next === "chart") setFeedbackOpen(false);
   };
+  // 스위치를 켜면 끝난 뒤 탭이 생기고 결과부터 보인다 (Dec-20)
+  const changeProgressView = (next: ExcelProgressView) => {
+    if (next === "chart") setView("result");
+    setProgressView(next);
+  };
 
-  // 행 번호: 결과 자리(진행 중엔 그래프, 끝나면 결과·그래프 전환) → 피드백 → 친구 비교 → 표 머리 → 기록.
+  // 행 번호: 결과 자리(진행 중엔 그래프, 끝나면 결과·그래프 전환) → 피드백 → 친구 비교 → 표 머리 → (상단바) → 기록.
   // classic처럼 입력줄 바로 아래 그래프, 그 아래 표 (Dec-53, Dec-57)
+  // 상단바 모드는 그래프 대신 표 머리 아래 상단바, 끝난 뒤에도 탭 없이 결과만 (progress-view-toggle Dec-17, Dec-20)
   let row = 1;
-  const tabsRow = result.over ? row++ : null;
-  const showResult = result.over && view === "result";
+  const tabsRow = result.over && !barMode ? row++ : null;
+  const showResult = result.over && (barMode || view === "result");
   const resultRow = showResult ? row : null;
   if (resultRow !== null) row += resultRowCount(result.answer);
   const feedbackRow = showResult && feedbackOpen ? row++ : null;
-  const chartRow = showResult ? null : row++;
+  const chartRow = !showResult && !barMode && viewReady ? row++ : null;
   const competitiveRow = sharedAttempts !== null ? row++ : null;
   const headerRow = row++;
+  const topBarRow = barMode && viewReady ? row++ : null;
   const historyStart = row;
 
-  // 선택된 셀 = 방금 입력한 단어의 단어 칸 (Dec-69)
-  const latestIndex = latestHistoryIndex(board.history, board.latest);
-  const selectedIndex = latestIndex;
-  const cellAddress = selectedIndex >= 0 ? `B${historyStart + selectedIndex}` : "A1";
+  // 선택된 셀 = 방금 입력한 단어의 단어 칸. 상단바 모드는 상단바 행 (Dec-69, progress-view-toggle Dec-16, Dec-22)
+  const selected = selectedCell(board.history, board.latest, progressView);
+  const selectedIndex = selected?.in === "history" ? selected.index : -1;
+  const cellAddress =
+    selected?.in === "bar" && topBarRow !== null
+      ? `B${topBarRow}`
+      : selected?.in === "history"
+        ? `B${historyStart + selected.index}`
+        : "A1";
   const bestSim = bestSimilarity(gameLogic.submittedWords);
 
   return (
@@ -79,7 +98,7 @@ export default function NewMantleForm() {
       <div className="excel-row bg-[#f8f9fa] border-b border-[#d4d4d4] sticky top-0 z-10">
         <div className="excel-col-header border-b border-[#d4d4d4]"></div>
         <div className="excel-col-header border-b border-[#d4d4d4]">A</div>
-        <div className={`excel-col-header border-b border-[#d4d4d4] ${selectedIndex >= 0 ? SELECTED_HEADER : ""}`}>B</div>
+        <div className={`excel-col-header border-b border-[#d4d4d4] ${selected ? SELECTED_HEADER : ""}`}>B</div>
         <div className="excel-col-header border-b border-[#d4d4d4]">C</div>
         <div className="excel-col-header border-b border-[#d4d4d4] border-r-0">D</div>
       </div>
@@ -181,11 +200,16 @@ export default function NewMantleForm() {
       {/* 표 머리 */}
       <div className="excel-row bg-[#f3f2f1] text-[#444] font-bold text-sm text-center border-b border-[#d4d4d4]">
         <div className="sheet-cell-header">{headerRow}</div>
-        <div className="excel-cell justify-center">시도</div>
+        {/* 시도 칸: 그래프 스위치 (Dec-18) */}
+        <div className="excel-cell justify-center px-1">
+          {viewReady && <ProgressViewToggle view={progressView} onChange={changeProgressView} />}
+        </div>
         <div className="excel-cell justify-center">단어</div>
         <div className="excel-cell justify-center">순위</div>
         <div className="excel-cell justify-center border-r-0">유사도</div>
       </div>
+
+      {topBarRow !== null && <TopBar rowNumber={topBarRow} latest={board.latest} selected={selected?.in === "bar"} />}
 
       <WordTable history={board.history} startIndex={historyStart} selectedIndex={selectedIndex} />
 
