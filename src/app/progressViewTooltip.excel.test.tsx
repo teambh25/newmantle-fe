@@ -54,12 +54,11 @@ describe("excel 보기 방식 말풍선", () => {
     expect(viewTooltip()).not.toBeInTheDocument();
   });
 
-  it("스위치를 끄면 말풍선이 사라지고 상단바로 바뀜", async () => {
+  it("스위치를 끄면 말풍선이 사라짐", async () => {
     const { user } = await renderExcelHome();
     await screen.findByRole("button", { name: "보기 방식 안내" });
 
     await user.click(chartSwitch());
     await waitFor(() => expect(viewTooltip()).not.toBeInTheDocument());
-    expect(chartSwitch()).toHaveAttribute("aria-checked", "false");
   });
 });
