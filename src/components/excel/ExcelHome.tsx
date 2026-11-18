@@ -7,6 +7,7 @@ import ExcelFooter from "@/components/excel/Footer";
 import Ribbon from "@/components/excel/Ribbon";
 import type { UITheme } from "@/hooks/useUITheme";
 import { useGameDate } from "@/hooks/useGameDate";
+import { useProgressViewTooltip } from "@/hooks/useProgressViewTooltip";
 import { excelFileName } from "@/utils/date";
 
 const ExcelNewMantleForm = dynamic(() => import("@/components/excel/NewMantleForm"), {
@@ -23,6 +24,8 @@ export default function ExcelHome({ theme, setTheme }: ExcelHomeProps) {
   // 게임 날짜는 엑셀 파일 이름에 (예: newmantle_2026_11_17.xlsx, docs/specs/excel-ui Dec-38)
   const gameDate = useGameDate();
   const fileName = excelFileName(gameDate);
+  // 말풍선은 한 번에 하나: 보기 방식 말풍선 → 로그인 말풍선 (docs/specs/progress-view-toggle Dec-34)
+  const progressViewTooltip = useProgressViewTooltip("excel");
 
   return (
     <div className="flex flex-col h-screen excel-theme select-none overflow-hidden">
@@ -44,7 +47,7 @@ export default function ExcelHome({ theme, setTheme }: ExcelHomeProps) {
            </nav>
          </div>
          <div className="flex items-center space-x-4">
-           <AuthButton variant="excel" />
+           <AuthButton variant="excel" hideTooltip={!progressViewTooltip.done} />
            <SettingsButton theme={theme} onThemeChange={setTheme} variant="excel" />
          </div>
       </header>
@@ -58,8 +61,10 @@ export default function ExcelHome({ theme, setTheme }: ExcelHomeProps) {
           <div className="excel-sheet border-none shadow-none">
             {/* Main Content Areas */}
             <div className="bg-white">
-              <ExcelNewMantleForm />
-              
+              <ExcelNewMantleForm
+                showProgressViewTooltip={progressViewTooltip.show}
+                onProgressViewTooltipDone={progressViewTooltip.dismiss}
+              />
             </div>
           </div>
         </div>

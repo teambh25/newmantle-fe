@@ -72,7 +72,8 @@ const WordTable: React.FC<WordTableProps> = ({ history, showAll, underTopBar = f
   if (displayed.length === 0 && underTopBar) return null;
   return (
     <div className={underTopBar ? "" : "mt-3"}>
-      <Table className="table-fixed" aria-label="기록">
+      {/* 머리줄 스위치 위로 뜨는 보기 방식 말풍선이 잘리지 않게 (docs/specs/progress-view-toggle Dec-35). 고정 폭 표라 가로 스크롤은 없다 */}
+      <Table className="table-fixed" aria-label="기록" containerClassName={gaugeSwitch ? "overflow-visible" : undefined}>
         {/* 상단바 모드는 상단바 머리줄을 같이 쓴다 */}
         {!underTopBar && (
           <TableHeader>

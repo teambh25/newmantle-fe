@@ -9,6 +9,7 @@ import { ANSWER, gameServer } from "@/test/fakeGameServer";
 import { notifications } from "@/static/notifications";
 import { getLatestNotification } from "@/utils/notifications";
 import { getKSTDateString } from "@/utils/date";
+import { PROGRESS_VIEW_TOOLTIP_DONE_KEY } from "@/utils/progressViewTooltip";
 
 // 로그인 여부를 케이스마다 바꾼다 (기본: 비로그인)
 const auth = vi.hoisted(() => ({ user: null as null | { id: string; email: string } }));
@@ -43,6 +44,8 @@ type User = ReturnType<typeof userEvent.setup>;
 
 beforeEach(() => {
   auth.user = null;
+  // 보기 방식 말풍선은 이미 본 상태로 둔다. 이 말풍선과 헤더 말풍선의 순서는 progressViewTooltip.test.tsx에서 본다
+  localStorage.setItem(PROGRESS_VIEW_TOOLTIP_DONE_KEY.classic, "1");
 });
 
 /** 메인을 렌더링하고, 헤더(로그인 버튼)와 게임 입력창이 준비될 때까지 기다린다 */
