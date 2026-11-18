@@ -16,9 +16,9 @@ import { TIER_TEXT } from "./tierColors";
 export const VISIBLE_HISTORY_COUNT = 7;
 
 // 두 표의 칸 폭을 맞춘다 (table-fixed는 첫 줄 폭을 따름)
-const NUM_W = "w-12 sm:w-16";
-const STAT_W = "w-20 sm:w-24";
-const COL = {
+export const NUM_W = "w-12 sm:w-16";
+export const STAT_W = "w-20 sm:w-24";
+export const COL = {
   num: `text-center py-2 px-1 ${NUM_W}`,
   word: "text-center py-2 whitespace-nowrap overflow-hidden text-ellipsis",
   stat: `text-center py-2 px-1 ${STAT_W}`,
@@ -56,26 +56,36 @@ interface WordTableProps {
   /** 기록 표: 순위를 아는 모든 단어(입력·힌트, 방금 단어 포함), 순위순 */
   history: SubmittedWord[];
   showAll: boolean;
+  /** 상단바 모드: 상단바 바로 밑에 붙고 머리줄은 상단바 것을 같이 쓴다 (docs/specs/progress-view-toggle Dec-1) */
+  underTopBar?: boolean;
+  /** 머리줄 # 칸에 둘 게이지 스위치 (카드 모드, docs/specs/progress-view-toggle Dec-12) */
+  gaugeSwitch?: React.ReactNode;
 }
 
 /**
  * 기록 표 (docs/tasks/ui/word-list/plan.md 1). 방금 항목은 진행 상황 카드가 따로 보여 주고, 표는 낸 단어 전체를 순위순으로.
- * 머리줄은 표 맨 위. 기록이 없으면 표 없음
+ * 머리줄은 표 맨 위. 카드 모드는 # 칸의 게이지 스위치 때문에 기록이 없어도 머리줄을 보여 준다 (Dec-12).
+ * 상단바 모드는 머리줄을 상단바가 맡아서 기록이 없으면 표 없음
  */
-const WordTable: React.FC<WordTableProps> = ({ history, showAll }) => {
+const WordTable: React.FC<WordTableProps> = ({ history, showAll, underTopBar = false, gaugeSwitch }) => {
   const displayed = showAll ? history : history.slice(0, VISIBLE_HISTORY_COUNT);
-  if (displayed.length === 0) return null;
+  if (displayed.length === 0 && underTopBar) return null;
   return (
-    <div className="mt-3">
+    <div className={underTopBar ? "" : "mt-3"}>
       <Table className="table-fixed" aria-label="기록">
-        <TableHeader>
-          <TableRow>
-            <TableHead className={`text-center px-1 ${NUM_W}`}>#</TableHead>
-            <TableHead className="text-center">단어</TableHead>
-            <TableHead className={`text-center px-1 ${STAT_W}`}>순위</TableHead>
-            <TableHead className={`text-center px-1 ${STAT_W}`}>유사도</TableHead>
-          </TableRow>
-        </TableHeader>
+        {/* 상단바 모드는 상단바 머리줄을 같이 쓴다 */}
+        {!underTopBar && (
+          <TableHeader>
+            <TableRow>
+              <TableHead className={`text-center px-1 ${NUM_W}`}>
+                {gaugeSwitch ? <span className="inline-flex justify-center w-full">{gaugeSwitch}</span> : "#"}
+              </TableHead>
+              <TableHead className="text-center">단어</TableHead>
+              <TableHead className={`text-center px-1 ${STAT_W}`}>순위</TableHead>
+              <TableHead className={`text-center px-1 ${STAT_W}`}>유사도</TableHead>
+            </TableRow>
+          </TableHeader>
+        )}
         <TableBody>
           {displayed.map((word) => (
             <WordRow key={`${word.attempt}:${word.word}`} word={word} />

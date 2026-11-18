@@ -244,3 +244,74 @@ describe("게이지 최고 순위와 게임 끝", () => {
     expect(gaugeFill(b.best, b.end)).toBeGreaterThan(0);
   });
 });
+
+describe("모드별 방금 입력과 기록 표 (상단바는 방금 단어를 다음 항목이 올 때 기록으로 옮긴다)", () => {
+  const bar = (words: SubmittedWord[], extra: Partial<BoardInput> = {}) => board(words, { view: "bar", ...extra });
+
+  it("상단바, 100위·500위 → 방금 입력은 500위, 기록은 100위만", () => {
+    const b = bar(TWO);
+    expect(latestWord(b)).toBe("바나나");
+    expect(historyWords(b)).toEqual(["사과"]);
+  });
+
+  it("상단바, 100위·500위 뒤 없는 단어 → 방금 입력은 없는 단어, 기록은 100위·500위", () => {
+    const b = bar(TWO, { notice: unknown("없는말") });
+    expect(b.latest).toMatchObject({ kind: "notice", tone: "unknown" });
+    expect(historyWords(b)).toEqual(["사과", "바나나"]);
+  });
+
+  it("상단바, 100위·500위 뒤 다음 단어 제출 중 → 방금 입력은 제출 중, 기록은 100위·500위", () => {
+    const b = bar(TWO, { pendingWord: "포도" });
+    expect(b.latest).toMatchObject({ kind: "pending", word: "포도" });
+    expect(historyWords(b)).toEqual(["사과", "바나나"]);
+  });
+
+  it("상단바, 100위·500위 뒤 100위 단어를 다시 냄 → 방금 입력은 100위(반복), 기록은 500위만", () => {
+    const b = bar(resubmit(TWO, "사과"), { repeatedWord: "사과" });
+    expect(b.latest).toMatchObject({ kind: "word", isRepeat: true });
+    expect(latestWord(b)).toBe("사과");
+    expect(historyWords(b)).toEqual(["바나나"]);
+  });
+
+  it("상단바, 100위·500위 뒤 힌트 요청 실패 → 방금 입력은 그 실패 안내, 기록은 100위·500위", () => {
+    const b = bar(TWO, { requestError: "힌트 실패" });
+    expect(b.latest).toMatchObject({ kind: "notice", tone: "failed", message: "힌트 실패" });
+    expect(historyWords(b)).toEqual(["사과", "바나나"]);
+  });
+
+  it("카드, 100위·500위 뒤 힌트 요청 실패 → 방금 입력은 500위 그대로, 기록은 100위·500위", () => {
+    const b = board(TWO, { view: "card", requestError: "힌트 실패" });
+    expect(latestWord(b)).toBe("바나나");
+    expect(b.latest).toMatchObject({ kind: "word" });
+    expect(historyWords(b)).toEqual(["사과", "바나나"]);
+  });
+});
+
+describe("excel 초성 행 (초성 포함: 모드와 상관없이 초성을 기록 표에 넣는다)", () => {
+  const excel = (words: SubmittedWord[], extra: Partial<BoardInput> = {}) =>
+    board(words, { consonantInHistory: true, ...extra });
+
+  it("초성 포함, 그래프, 100위 뒤 초성 힌트 → 방금 입력은 초성, 기록은 초성·100위 순", () => {
+    const b = excel(history([["사과", 100], "consonant"]));
+    expect(b.latest).toMatchObject({ kind: "notice", tone: "consonant", word: CONSONANT });
+    expect(historyWords(b)).toEqual([CONSONANT, "사과"]);
+  });
+
+  it("초성 포함, 상단바, 100위 뒤 초성 힌트 → 방금 입력은 초성, 기록은 100위만", () => {
+    const b = excel(history([["사과", 100], "consonant"]), { view: "bar" });
+    expect(b.latest).toMatchObject({ kind: "notice", tone: "consonant", word: CONSONANT });
+    expect(historyWords(b)).toEqual(["사과"]);
+  });
+
+  it("초성 포함, 상단바, 100위·초성 힌트 뒤 500위 → 방금 입력은 500위, 기록은 초성·100위 순", () => {
+    const b = excel(history([["사과", 100], "consonant", ["바나나", 500]]), { view: "bar" });
+    expect(latestWord(b)).toBe("바나나");
+    expect(historyWords(b)).toEqual([CONSONANT, "사과"]);
+  });
+
+  it("초성 포함, 초성 힌트 뒤 정답 → 기록 맨 위에 초성이 남음", () => {
+    const b = excel(history([["사과", 100], "consonant", "answer"]));
+    expect(historyWords(b)[0]).toBe(CONSONANT);
+    expect(historyWords(b)).not.toContain(ANSWER);
+  });
+});
