@@ -5,7 +5,9 @@ import WordTable, { VISIBLE_HISTORY_COUNT } from "./WordTable";
 import ProgressCard from "./ProgressCard";
 import TopBar from "./TopBar";
 import ProgressViewToggle from "./ProgressViewToggle";
+import ProgressViewTooltip from "@/components/ProgressViewTooltip";
 import { useProgressView } from "@/hooks/useProgressView";
+import type { ProgressView } from "@/utils/progressView";
 import { GameForm } from "./GameForm";
 import { FeedbackDialog, ResultDialog, ResultStrip } from "./GameResult";
 import { REQUEST_ERROR_MESSAGES, useGameScreen } from "@/hooks/useGameScreen";
@@ -25,9 +27,18 @@ interface NewMantleFormProps {
   onInputTooltipDone?: () => void;
   /** 결과창 열림 상태를 메인에 알린다 (헤더 로그인 강조, docs/tasks/ui/result-box/plan.md 요구사항 8) */
   onResultOpenChange?: (open: boolean) => void;
+  /** 보기 방식 말풍선 (docs/specs/progress-view-toggle Dec-27~40). 순서는 메인이 정한다 */
+  showProgressViewTooltip?: boolean;
+  onProgressViewTooltipDone?: () => void;
 }
 
-export default function NewMantleForm({ showInputTooltip = false, onInputTooltipDone, onResultOpenChange }: NewMantleFormProps = {}) {
+export default function NewMantleForm({
+  showInputTooltip = false,
+  onInputTooltipDone,
+  onResultOpenChange,
+  showProgressViewTooltip = false,
+  onProgressViewTooltipDone,
+}: NewMantleFormProps = {}) {
   const gameDate = useGameDate();
   const [displayDate, setDisplayDate] = useState("");
   const [showAllWords, setShowAllWords] = useState(false);
@@ -90,7 +101,19 @@ export default function NewMantleForm({ showInputTooltip = false, onInputTooltip
 
   const gameOver = result.over;
   // 게이지 스위치: 표 머리줄 # 칸. 카드 모드는 기록 표, 상단바 모드는 상단바 (docs/specs/progress-view-toggle Dec-12)
-  const toggle = <ProgressViewToggle view={view} onChange={setView} />;
+  // 스위치를 누르면 보기 방식 말풍선도 끝난다 (Dec-31)
+  const changeView = (next: ProgressView) => {
+    setView(next);
+    onProgressViewTooltipDone?.();
+  };
+  const toggle = (
+    <span className="relative inline-flex">
+      <ProgressViewToggle view={view} onChange={changeView} />
+      {showProgressViewTooltip && onProgressViewTooltipDone && (
+        <ProgressViewTooltip variant="classic" onDismiss={onProgressViewTooltipDone} />
+      )}
+    </span>
+  );
 
   return (
     // PC는 게임 영역(결과 상자·단어 목록)을 480px로 가운데에, 입력창은 그보다 조금 좁은 420px. 모바일은 화면 폭 그대로 (docs/tasks/ui/input/plan.md 1)

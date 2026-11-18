@@ -10,6 +10,7 @@ import { RankChart } from "./RankChart";
 import { ResultTabs, type SlotView } from "./ResultTabs";
 import { TopBar } from "./TopBar";
 import ProgressViewToggle from "./ProgressViewToggle";
+import ProgressViewTooltip from "@/components/ProgressViewTooltip";
 import { useProgressView } from "@/hooks/useProgressView";
 import type { ExcelProgressView } from "@/utils/progressView";
 import { REQUEST_ERROR_MESSAGES, useGameScreen } from "@/hooks/useGameScreen";
@@ -23,8 +24,14 @@ import CompetitiveBar from "@/components/CompetitiveBar";
 /** 기록 아래 빈 행 수 */
 const SHEET_FILLER_ROWS = 30;
 
+interface NewMantleFormProps {
+  /** 보기 방식 말풍선 (docs/specs/progress-view-toggle Dec-27~40). 순서는 메인이 정한다 */
+  showProgressViewTooltip?: boolean;
+  onProgressViewTooltipDone?: () => void;
+}
+
 // excel 게임 화면. 게임 동작은 classic과 같은 훅(useGameScreen)을 쓰고, 시트 행으로 그린다 (docs/specs/excel-ui)
-export default function NewMantleForm() {
+export default function NewMantleForm({ showProgressViewTooltip = false, onProgressViewTooltipDone }: NewMantleFormProps = {}) {
   const gameDate = useGameDate();
   // 결과 블록 아래 피드백 행. 보낸 뒤에도 접지 않는다 (Dec-5)
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -64,6 +71,8 @@ export default function NewMantleForm() {
   const changeProgressView = (next: ExcelProgressView) => {
     if (next === "chart") setView("result");
     setProgressView(next);
+    // 스위치를 누르면 보기 방식 말풍선도 끝난다 (progress-view-toggle Dec-31)
+    onProgressViewTooltipDone?.();
   };
 
   // 행 번호: 결과 자리(진행 중엔 그래프, 끝나면 결과·그래프 전환) → 피드백 → 친구 비교 → 표 머리 → (상단바) → 기록.
@@ -202,7 +211,14 @@ export default function NewMantleForm() {
         <div className="sheet-cell-header">{headerRow}</div>
         {/* 시도 칸: 그래프 스위치 (Dec-18) */}
         <div className="excel-cell justify-center px-1">
-          {viewReady && <ProgressViewToggle view={progressView} onChange={changeProgressView} />}
+          {viewReady && (
+            <span className="relative inline-flex">
+              <ProgressViewToggle view={progressView} onChange={changeProgressView} />
+              {showProgressViewTooltip && onProgressViewTooltipDone && (
+                <ProgressViewTooltip variant="excel" onDismiss={onProgressViewTooltipDone} />
+              )}
+            </span>
+          )}
         </div>
         <div className="excel-cell justify-center">단어</div>
         <div className="excel-cell justify-center">순위</div>

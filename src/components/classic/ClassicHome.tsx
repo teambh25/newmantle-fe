@@ -12,6 +12,7 @@ import StatsLink from "@/components/StatsLink";
 import { SettingsButton } from "@/components/SettingsButton";
 import type { useRuleIntroModal } from "@/hooks/useRuleIntroModal";
 import type { useInputTooltip } from "@/hooks/useInputTooltip";
+import { useProgressViewTooltip } from "@/hooks/useProgressViewTooltip";
 import type { UITheme } from "@/hooks/useUITheme";
 
 const ClassicNewMantleForm = dynamic(() => import("@/components/classic/NewMantleForm"), {
@@ -28,9 +29,11 @@ interface ClassicHomeProps {
 
 /** classic 테마 메인 화면 */
 export default function ClassicHome({ theme, setTheme, ruleModal, inputTooltip }: ClassicHomeProps) {
-  // 말풍선은 한 번에 하나: 모달 → 입력창 말풍선 → 헤더 말풍선 (docs/tasks/ui/input/plan.md 2)
+  // 말풍선은 한 번에 하나: 모달 → 입력창 말풍선 → 보기 방식 말풍선 → 헤더 말풍선 (docs/tasks/ui/input/plan.md 2, docs/specs/progress-view-toggle Dec-32)
+  const progressViewTooltip = useProgressViewTooltip("classic");
   const showInputTooltip = ruleModal.closed && inputTooltip.show;
-  const hideHeaderTooltip = !ruleModal.closed || !inputTooltip.done;
+  const showProgressViewTooltip = ruleModal.closed && inputTooltip.done && progressViewTooltip.show;
+  const hideHeaderTooltip = !ruleModal.closed || !inputTooltip.done || !progressViewTooltip.done;
   // 결과창이 열린 동안 헤더 로그인 버튼 강조 (docs/tasks/ui/result-box/plan.md 요구사항 8)
   const [resultOpen, setResultOpen] = useState(false);
 
@@ -69,6 +72,8 @@ export default function ClassicHome({ theme, setTheme, ruleModal, inputTooltip }
             showInputTooltip={showInputTooltip}
             onInputTooltipDone={inputTooltip.dismiss}
             onResultOpenChange={setResultOpen}
+            showProgressViewTooltip={showProgressViewTooltip}
+            onProgressViewTooltipDone={progressViewTooltip.dismiss}
           />
         </div>
       </main>
