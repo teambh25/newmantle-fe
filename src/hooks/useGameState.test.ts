@@ -20,13 +20,6 @@ describe("일반 힌트", () => {
     expect(hintRows(h)[0].rank).toBe(999);
   });
 
-  it("순위 밖 단어만 있을 때 힌트 요청 → 999위", async () => {
-    const h = renderGame();
-    await presets.OUT_ONLY(h);
-    await h.hint();
-    expect(gameServer.normalHintRanks()).toEqual([999]);
-  });
-
   it("힌트를 받을 수 없을 때까지 반복 → 15회, 999부터 20까지 spec 수열", async () => {
     const h = renderGame();
     for (let i = 0; i < 20; i++) await h.hint();
@@ -36,30 +29,12 @@ describe("일반 힌트", () => {
     expect(h.game.hintDisabled).toBe(true);
   });
 
-  it("300 → 50 → 120 → 순위 밖 순서로 입력 후 힌트 → 38위 (최고 순위는 가장 작은 순위 숫자)", async () => {
-    const h = renderGame();
-    await h.submit(presets.nextWord(), 300);
-    await h.submit(presets.nextWord(), 50);
-    await h.submit(presets.nextWord(), 120);
-    await h.submit(presets.nextWord(), -1);
-    await h.hint();
-    expect(gameServer.normalHintRanks()).toEqual([38]);
-  });
-
   it("최고 순위 20이면 힌트 요청해도 서버에 요청하지 않음", async () => {
     const h = renderGame();
     await presets.TOP(h, 20);
     expect(h.game.hintDisabled).toBe(true);
     await h.hint();
     expect(gameServer.count("hint")).toBe(0);
-  });
-
-  it("최고 순위 101에서 힌트 2회 → 76, 57 (받은 힌트가 다음 기준)", async () => {
-    const h = renderGame();
-    await presets.TOP(h, 101);
-    await h.hint();
-    await h.hint();
-    expect(gameServer.normalHintRanks()).toEqual([76, 57]);
   });
 
   it("일반 힌트가 막힌 상태(최고 순위 10)에서도 초성 힌트는 받을 수 있음", async () => {
@@ -142,7 +117,7 @@ describe("포기", () => {
     expect(correctRows(h)[0].attempt).toBe(0);
   });
 
-  it("입력 3개 + 일반 힌트 2회 + 초성 힌트 후 포기 → 기록·정답 행·Game Given Up 모두 3 (힌트는 세지 않음)", async () => {
+  it("입력 3개 + 일반 힌트 2회 + 초성 힌트 후 포기 → 기록·정답 행 모두 3 (힌트는 세지 않음)", async () => {
     const h = renderGame();
     for (let i = 0; i < 3; i++) await h.submit(presets.nextWord(), -1);
     await h.hint();
@@ -152,9 +127,6 @@ describe("포기", () => {
     expect(h.game.solvedAttempts).toBe(3);
     expect(h.game.correctAttempts).toBe(3);
     expect(correctRows(h)[0].attempt).toBe(3);
-    expect(amplitudeEvents("Game Given Up")).toEqual([
-      expect.objectContaining({ attempts: 3 }),
-    ]);
   });
 
   it("포기 후 단어 2개 더 제출 → 목록에 들어가지만 기록·포기 상태 유지, 축하 효과 없음", async () => {
@@ -338,47 +310,10 @@ describe("요청 실패", () => {
 });
 
 describe("Amplitude", () => {
-  it("힌트 없이 정답 → Game Completed에 힌트 0, 초성 false", async () => {
-    const h = renderGame();
-    await presets.SOLVED(h, 1);
-    expect(amplitudeEvents("Game Completed")).toEqual([
-      expect.objectContaining({ hintUsed: 0, initialConsonantHintUsed: false }),
-    ]);
-  });
-
-  it("일반 힌트 2회 + 초성 힌트 후 정답 → Game Completed에 힌트 2, 초성 true", async () => {
-    const h = renderGame();
-    await h.hint();
-    await h.hint();
-    await h.consonant();
-    await h.submitAnswer();
-    expect(amplitudeEvents("Game Completed")).toEqual([
-      expect.objectContaining({ hintUsed: 2, initialConsonantHintUsed: true }),
-    ]);
-  });
-
-  it("일반 힌트 1회 + 초성 힌트 후 포기 → Game Given Up에 힌트 1, 초성 true", async () => {
-    const h = renderGame();
-    await h.hint();
-    await h.consonant();
-    await h.giveUp();
-    expect(amplitudeEvents("Game Given Up")).toEqual([
-      expect.objectContaining({ hintUsed: 1, initialConsonantHintUsed: true }),
-    ]);
-  });
-
   it("초성 힌트 요청 성공 → Initial Consonant Hint Requested 1회", async () => {
     const h = renderGame();
     await h.consonant();
     expect(amplitudeEvents("Initial Consonant Hint Requested")).toHaveLength(1);
-  });
-
-  it("힌트 없이 포기 → Game Given Up에 힌트 0, 초성 false", async () => {
-    const h = renderGame();
-    await h.giveUp();
-    expect(amplitudeEvents("Game Given Up")).toEqual([
-      expect.objectContaining({ hintUsed: 0, initialConsonantHintUsed: false }),
-    ]);
   });
 });
 

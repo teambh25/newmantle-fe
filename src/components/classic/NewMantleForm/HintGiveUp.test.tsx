@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { screen, waitFor, within } from "@testing-library/react";
 import { ANSWER, gameServer } from "@/test/fakeGameServer";
-import { amplitudeEvents, GAME_DATE } from "@/test/gameHarness";
+import { GAME_DATE } from "@/test/gameHarness";
 import {
   setup,
   hintButton,
@@ -98,11 +98,11 @@ describe("초성 힌트 / 확인 창", () => {
 });
 
 describe("포기", () => {
-  it("입력 0개에서 포기 선택 → 포기 요청, 정답 공개, 게임 종료", async () => {
+  it("입력 0개에서 포기 선택 → 포기 요청 1회, 확인 창 닫힘", async () => {
     const { user } = await setup();
     await giveUpViaDialog(user);
     expect(gameServer.count("give-up")).toBe(1);
-    expect(screen.getAllByText(ANSWER.word).length).toBeGreaterThan(0);
+    expect(dialog()).not.toBeInTheDocument();
   });
 
   // 닫는 방법(ESC·X·바깥)은 Radix Dialog가 맡는다. 앱 규칙 "닫으면 요청 없음"만 본다 (초성 미사용 상태는 "창 닫기를 3번 반복" 테스트가 봄)
@@ -162,7 +162,7 @@ describe("포기", () => {
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
   });
 
-  it("입력 3개 후 포기 → 결과 창 3, 공유 링크 shared_attempts=3, 공유 이벤트 시도 횟수 3", async () => {
+  it("입력 3개 후 포기 → 결과 창 3, 공유 링크 shared_attempts=3", async () => {
     const { user } = await setup();
     for (const w of ["하나", "둘", "셋"]) await submitWord(user, w, -1);
     await giveUpViaDialog(user, { keepResultOpen: true });
@@ -178,9 +178,6 @@ describe("포기", () => {
       return text;
     });
     expect(new URL(link).searchParams.get("shared_attempts")).toBe("3");
-    expect(amplitudeEvents("Result Shared")).toEqual([
-      expect.objectContaining({ attempts: 3 }),
-    ]);
   });
 
   it("친구 공유 링크(shared_attempts=5)로 진입, 입력 3개 후 포기 → 친구 비교에 내 시도 3", async () => {

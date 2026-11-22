@@ -48,6 +48,20 @@ beforeEach(() => {
   localStorage.setItem(PROGRESS_VIEW_TOOLTIP_DONE_KEY.classic, "1");
 });
 
+/**
+ * setTimeout까지 가짜 타이머로 바꾼다. setup.ts가 setInterval만 가짜로 깔아 두었으므로 한 번 풀고 다시 깐다 (src/test/README.md 시간).
+ * 실제 시간도 같이 흐르게 해 두어(shouldAdvanceTime) waitFor·userEvent·가짜 서버가 멈추지 않는다
+ */
+function fakeTimeouts() {
+  vi.useRealTimers();
+  vi.useFakeTimers({
+    toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"],
+    shouldAdvanceTime: true,
+  });
+}
+/** 가짜 시계를 흘려보낸다. 그 사이 예약된 타이머가 실행된다 */
+const pass = (ms: number) => act(() => vi.advanceTimersByTimeAsync(ms));
+
 /** 메인을 렌더링하고, 헤더(로그인 버튼)와 게임 입력창이 준비될 때까지 기다린다 */
 async function renderHome({ strict = false } = {}) {
   const user = userEvent.setup({ pointerEventsCheck: 0 });
@@ -271,8 +285,6 @@ describe("헤더 말풍선 자동 닫힘 / 헤더 로그인 링크", () => {
   const logIn = () => {
     auth.user = { id: "user-1", email: "tester@example.com" };
   };
-  /** 시간을 흘려보낸다. 실제 시간도 같이 흐르게 해 두어(shouldAdvanceTime) waitFor·userEvent가 멈추지 않는다 */
-  const pass = (ms: number) => act(() => vi.advanceTimersByTimeAsync(ms));
   const loginLinks = () =>
     screen.queryAllByRole("link", { hidden: true }).filter((a) => a.getAttribute("href") === "/login");
 
@@ -283,12 +295,7 @@ describe("헤더 말풍선 자동 닫힘 / 헤더 로그인 링크", () => {
 
   describe("말풍선 5초", () => {
     beforeEach(() => {
-      // setup.ts가 setInterval만 가짜로 깔아 두었으므로, 한 번 풀고 setTimeout까지 다시 깐다 (src/test/README.md 시간)
-      vi.useRealTimers();
-      vi.useFakeTimers({
-        toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"],
-        shouldAdvanceTime: true,
-      });
+      fakeTimeouts();
     });
 
     it("로그인 말풍선은 5초 전엔 있고 5초 뒤 사라지며 닫은 것으로 저장", async () => {
@@ -341,8 +348,6 @@ describe("결과창 모달", () => {
   const findResultDialog = () => screen.findByRole("dialog", { name: "게임 결과" }, { timeout: 3000 });
   const reopenButton = () => screen.queryByRole("button", { name: /결과창 보기/ });
   const gameInput = () => screen.getByRole("textbox");
-  /** 실제 시간을 흘려보낸다 (setTimeout은 가짜가 아님) */
-  const wait = (ms: number) => act(() => new Promise<void>((r) => setTimeout(r, ms)));
 
   /** 오늘 정답 맞힘 / 포기 저장. 정답 항목에 서버 정답 정보(answer)가 들어 있다 */
   function storeFinished({ givenUp = false } = {}) {
@@ -374,6 +379,8 @@ describe("결과창 모달", () => {
   beforeEach(() => {
     localStorage.setItem(MODAL_SEEN_KEY, "1");
     setPlayed();
+    // 결과창은 정답·포기 응답 뒤 잠시 지연되어 열린다. "열리지 않음"은 가짜 시계를 흘려 확인한다
+    fakeTimeouts();
   });
 
   describe("자동 표시", () => {
@@ -405,7 +412,7 @@ describe("결과창 모달", () => {
       storeFinished();
       await renderHome();
       expect(await screen.findByRole("button", { name: /결과창 보기/ })).toBeInTheDocument();
-      await wait(1500);
+      await pass(1500);
       expect(resultDialog()).not.toBeInTheDocument();
     });
 
@@ -413,7 +420,7 @@ describe("결과창 모달", () => {
       storeFinished({ givenUp: true });
       await renderHome();
       expect(await screen.findByRole("button", { name: /결과창 보기/ })).toBeInTheDocument();
-      await wait(1500);
+      await pass(1500);
       expect(resultDialog()).not.toBeInTheDocument();
     });
 
@@ -426,7 +433,7 @@ describe("결과창 모달", () => {
       await submit(user, "바나나");
       // 진행 상황 카드와 기록 표 두 곳에 보인다
       expect((await screen.findAllByText("바나나")).length).toBeGreaterThan(0);
-      await wait(1500);
+      await pass(1500);
       expect(resultDialog()).not.toBeInTheDocument();
     });
 
@@ -466,7 +473,7 @@ describe("결과창 모달", () => {
       await waitFor(() => expect(gameServer.count("give-up")).toBe(1));
       await waitFor(() => expect(screen.getByRole("button", { name: "포기" })).toBeEnabled());
       expect(gameInput()).toBeEnabled();
-      await wait(1500);
+      await pass(1500);
       expect(resultDialog()).not.toBeInTheDocument();
     });
   });
@@ -552,7 +559,7 @@ describe("결과창 모달", () => {
       });
       await user.click(link);
       expect(clicked).toBe(true);
-      await wait(300);
+      await pass(300);
       expect(resultDialog()).toBeInTheDocument();
     });
 
@@ -642,10 +649,11 @@ describe("첫 입력 유도 말풍선 / 말풍선 순서", () => {
 
   it("입력창을 누르지 않으면 말풍선이 그대로 있음 (개발 서버 StrictMode, 규칙 페이지에서 돌아온 경우)", async () => {
     localStorage.setItem(MODAL_SEEN_KEY, "1");
+    fakeTimeouts();
     await renderHome({ strict: true });
     await screen.findByRole("button", { name: "입력 안내" });
     // 진입 직후 자동 포커스(50ms 지연)가 지나도 남아 있어야 한다
-    await new Promise((r) => setTimeout(r, 150));
+    await pass(150);
     expect(inputTooltip()).toBeInTheDocument();
   });
 
@@ -658,11 +666,12 @@ describe("첫 입력 유도 말풍선 / 말풍선 순서", () => {
   });
 
   it("모달을 X로 닫으면 입력창으로 포커스가 가지 않음, 입력창 말풍선은 남아 있음", async () => {
+    fakeTimeouts();
     const { user } = await renderHome();
     await screen.findByRole("dialog");
     await closeWithX(user);
     // 닫힌 뒤 포커스 이동이 끝날 시간을 둔다
-    await new Promise((r) => setTimeout(r, 100));
+    await pass(100);
     expect(gameInput()).not.toHaveFocus();
     expect(inputTooltip()).toBeInTheDocument();
   });
@@ -739,9 +748,10 @@ describe("공지 배너 / 공지사항 진입점", () => {
     const legacy = "2026-01-01T00:00:00.000Z";
     localStorage.setItem(LAST_SEEN_KEY, olderId);
     localStorage.setItem(LEGACY_CHECK_KEY, legacy);
+    fakeTimeouts();
     await renderHome();
     // 기존 공지 목록은 마운트 100ms 뒤 기존 키를 덮어썼다
-    await new Promise((r) => setTimeout(r, 200));
+    await pass(200);
     expect(localStorage.getItem(LAST_SEEN_KEY)).toBe(olderId);
     expect(localStorage.getItem(LEGACY_CHECK_KEY)).toBe(legacy);
   });
