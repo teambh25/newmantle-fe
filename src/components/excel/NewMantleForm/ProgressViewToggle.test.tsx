@@ -5,7 +5,6 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Home from "@/app/page";
 import { ANSWER, gameServer } from "@/test/fakeGameServer";
-import { amplitudeEvents } from "@/test/gameHarness";
 
 // 메인 화면 헤더·설정 메뉴가 쓰는 Supabase (비로그인)
 vi.mock("@/utils/supabase/client", () => ({
@@ -52,7 +51,7 @@ async function submitWord(user: ReturnType<typeof userEvent.setup>, word: string
 }
 
 describe("excel 순위 그래프 / 상단바 전환", () => {
-  it("처음 들어오면(단어 없음) 그래프와 켜진 스위치 → 끄면 상단바, 다시 켜면 그래프로 돌아오고 매번 저장되며 전환 이벤트가 나감", async () => {
+  it("처음 들어오면(단어 없음) 그래프와 켜진 스위치 → 끄면 상단바, 다시 켜면 그래프로 돌아오고 매번 저장됨", async () => {
     const { user } = await renderExcelHome();
     expect(chart()).toBeInTheDocument();
     expect(topBar()).not.toBeInTheDocument();
@@ -64,7 +63,6 @@ describe("excel 순위 그래프 / 상단바 전환", () => {
     expect(chart()).not.toBeInTheDocument();
     expect(graphSwitch()).toHaveAttribute("aria-checked", "false");
     expect(localStorage.getItem(EXCEL_KEY)).toBe("bar");
-    expect(amplitudeEvents("Progress View Switched")).toEqual([{ view: "bar" }]);
 
     await user.click(graphSwitch());
 
@@ -72,7 +70,6 @@ describe("excel 순위 그래프 / 상단바 전환", () => {
     expect(topBar()).not.toBeInTheDocument();
     expect(graphSwitch()).toHaveAttribute("aria-checked", "true");
     expect(localStorage.getItem(EXCEL_KEY)).toBe("chart");
-    expect(amplitudeEvents("Progress View Switched")).toEqual([{ view: "bar" }, { view: "chart" }]);
   });
 
   it("classic 저장값만 상단바 → excel로 들어오면 그래프", async () => {

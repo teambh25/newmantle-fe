@@ -1,8 +1,9 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { logEvent } from "@/utils/amplitude";
 import { getKSTDateString } from "@/utils/date";
+import { getOpenQuizDate } from "@/hooks/useGameDate";
 
 // 피드백 창 공통 로직 (classic·excel). docs/tasks/ui/feedback/plan.md
 
@@ -42,13 +43,6 @@ export function useFeedback({ entry, theme }: { entry: FeedbackEntry; theme: Fee
   const [sending, setSending] = useState(false);
   // 열 때의 KST 날짜로 판정한다. 창은 열 때마다 새로 마운트된다
   const [sent, setSent] = useState(() => readSentDate() === getKSTDateString());
-  const openedLogged = useRef(false);
-
-  useEffect(() => {
-    if (openedLogged.current) return;
-    openedLogged.current = true;
-    logEvent("Feedback Opened", { entry, theme });
-  }, [entry, theme]);
 
   const trimmed = text.trim();
   const canSend = trimmed.length > 0 && !sending && !sent;
@@ -80,8 +74,8 @@ export function useFeedback({ entry, theme }: { entry: FeedbackEntry; theme: Fee
       // 창은 그대로 두고 감사 안내로 바뀐다. 성공 토스트는 없다 (Dec-18)
       setSent(true);
       setText("");
-      // 본문은 Amplitude에 보내지 않는다 (Dec-8)
-      logEvent("Feedback Submitted", { length: trimmed.length, entry, theme });
+      // 본문은 Amplitude에 보내지 않는다 (Dec-8). 퀴즈 날짜는 열려 있는 게임 화면 기준, 없으면(통계 화면) 오늘 (docs/specs/amplitude-migration Dec-34)
+      logEvent("Feedback Submitted", { quiz_date: getOpenQuizDate() ?? quizDate, entry });
     } catch (error) {
       console.error("Error submitting feedback:", error);
       toast({

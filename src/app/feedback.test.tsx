@@ -406,20 +406,7 @@ describe("전송 실패", () => {
 });
 
 describe("Amplitude", () => {
-  it("열 때마다 Feedback Opened (진입점·테마)", async () => {
-    storeFinished();
-    const { user } = await renderHome();
-    const d = await openFromSettings(user);
-    await closeDialog(user, d);
-    await openFromResult(user);
-
-    expect(amplitudeEvents("Feedback Opened")).toEqual([
-      expect.objectContaining({ entry: "settings", theme: "classic" }),
-      expect.objectContaining({ entry: "result", theme: "classic" }),
-    ]);
-  });
-
-  it("보내기 성공 → Feedback Submitted에 글자 수만, 본문은 어디에도 없음", async () => {
+  it("보내기 성공 → Feedback Submitted 1회, 본문은 어디에도 없음", async () => {
     const { user } = await renderHome();
     const d = await openFromSettings(user);
     await write(user, d, "좋아요 굿");
@@ -428,9 +415,18 @@ describe("Amplitude", () => {
 
     const submitted = amplitudeEvents("Feedback Submitted");
     expect(submitted).toHaveLength(1);
-    expect(submitted[0]).toMatchObject({ length: 5, entry: "settings", theme: "classic" });
     expect(JSON.stringify(vi.mocked(amplitude.track).mock.calls)).not.toContain("좋아요 굿");
-    expect(amplitudeEvents("Survey Vote")).toHaveLength(0);
+  });
+
+  it("어제 퀴즈 화면을 연 채 KST 자정이 지난 뒤 피드백을 보내면 → quiz_date는 어제", async () => {
+    setClock("Asia/Seoul", KST_BEFORE_MIDNIGHT);
+    const { user } = await renderHome();
+    vi.setSystemTime(new Date(KST_MIDNIGHT));
+    const d = await openFromSettings(user);
+    await write(user, d, "의견");
+    await send(user, d);
+    await expectSentState(d);
+    expect(amplitudeEvents("Feedback Submitted").map((e) => e.quiz_date)).toEqual(["2026-11-10"]);
   });
 
   it("보내기 실패 → Feedback Submitted 없음", async () => {

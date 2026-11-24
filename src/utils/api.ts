@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/client';
+import { setUserProperties } from '@/utils/amplitude';
 
 async function getAuthHeader(): Promise<Record<string, string>> {
   const supabase = createClient();
@@ -13,6 +14,8 @@ async function getAuthHeader(): Promise<Record<string, string>> {
     if (!guestId) {
       guestId = crypto.randomUUID();
       localStorage.setItem('newmantle_guest_id', guestId);
+      // 처음 만들어질 때 Amplitude 사용자 속성으로도 남긴다. 문의 대응용 (docs/rules/amplitude.md 3장)
+      setUserProperties({ guest_id: guestId });
     }
     return { 'X-Guest-Id': guestId };
   }

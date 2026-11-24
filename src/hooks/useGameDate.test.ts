@@ -10,7 +10,7 @@ import { KST_AFTERNOON, setClock } from "@/test/clock";
 function renderGameWithDate() {
   return renderHook(() => {
     const gameDate = useGameDate();
-    return { gameDate, game: useGameState(gameDate, "classic") };
+    return { gameDate, game: useGameState(gameDate) };
   });
 }
 

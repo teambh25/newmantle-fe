@@ -32,7 +32,7 @@ export function useGameScreen(gameDate: string, theme: "classic" | "excel", view
       toast({ title: "서버와 연결이 원활하지 않아요", description: "잠시 후 다시 시도해 주세요.", variant: "destructive" });
     }
   };
-  const game = useGameState(gameDate, theme, {
+  const game = useGameState(gameDate, {
     onRequestError: (kind) => {
       setRequestError(REQUEST_ERROR_MESSAGES[kind]);
       countFailure();

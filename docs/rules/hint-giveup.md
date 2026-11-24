@@ -62,6 +62,8 @@
 
 ## E. 분석 (Amplitude)
 
+이벤트를 언제·몇 번 보내는지는 `docs/specs/amplitude-migration/plan.md`, `decisions.md`. 여기서는 힌트 정보 속성만 정한다.
+
 | # | 항목 | 규칙 |
 |---|---|---|
 | E-1 | 포기 / 정답 이벤트의 힌트 정보 | "Game Given Up", "Game Completed" 둘 다 `hintUsed`, `initialConsonantHintUsed` 속성 포함. 초성 힌트 요청 시 "Initial Consonant Hint Requested" 이벤트 |
