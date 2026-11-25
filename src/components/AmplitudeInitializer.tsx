@@ -2,10 +2,16 @@
 
 import { useEffect } from "react";
 import { initAmplitude, setUserProperties } from "@/utils/amplitude";
+import { getAmplitudeIdentity } from "@/utils/analytics";
 import { createClient } from "@/utils/supabase/client";
+import { GUEST_ID_KEY } from "@/utils/guestId";
 import * as amplitude from "@amplitude/analytics-browser";
 
-const GUEST_ID_KEY = "newmantle_guest_id";
+function applyIdentity(session: Parameters<typeof getAmplitudeIdentity>[0]) {
+  const { userId, loggedIn } = getAmplitudeIdentity(session);
+  amplitude.setUserId(userId);
+  setUserProperties({ logged_in: loggedIn });
+}
 
 export default function AmplitudeInitializer() {
   useEffect(() => {
@@ -21,21 +27,9 @@ export default function AmplitudeInitializer() {
 
     const supabase = createClient();
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        amplitude.setUserId(session.user.id);
-      }
-      setUserProperties({ logged_in: Boolean(session?.user) });
-    });
+    supabase.auth.getSession().then(({ data: { session } }) => applyIdentity(session));
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        amplitude.setUserId(session.user.id);
-      } else {
-        amplitude.setUserId(undefined);
-      }
-      setUserProperties({ logged_in: Boolean(session?.user) });
-    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => applyIdentity(session));
 
     return () => subscription.unsubscribe();
   }, []);

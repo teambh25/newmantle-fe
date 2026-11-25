@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest";
 import type { SubmittedWord } from "@/utils/api";
 import {
+  getAmplitudeIdentity,
   getEndedBy,
   isFirstNormalHint,
   parseProgressViewSetting,
@@ -161,5 +162,19 @@ describe("진행 상황 보기 _chosen", () => {
     ["excel", "bar"],
   ] as const)("%s 보기 저장값이 %s → 그 값, chosen true", (theme, raw) => {
     expect(parseProgressViewSetting(raw, theme)).toEqual({ value: raw, chosen: true });
+  });
+});
+
+describe("사용자 식별", () => {
+  it("로그인 세션이 있으면 → 그 사용자 id, logged_in true", () => {
+    expect(getAmplitudeIdentity({ user: { id: "user-1" } })).toEqual({ userId: "user-1", loggedIn: true });
+  });
+
+  it("세션이 없으면 → id 없음, logged_in false", () => {
+    expect(getAmplitudeIdentity(null)).toEqual({ userId: undefined, loggedIn: false });
+  });
+
+  it("세션은 있지만 사용자가 없으면 → id 없음, logged_in false", () => {
+    expect(getAmplitudeIdentity({ user: null })).toEqual({ userId: undefined, loggedIn: false });
   });
 });

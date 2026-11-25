@@ -87,3 +87,12 @@ export function parseProgressViewSetting<T extends ProgressViewTheme>(
   const value = parseProgressView(raw, theme);
   return { value, chosen: raw === value };
 }
+
+/** Amplitude 사용자 식별. 로그인 세션이 있으면 그 사용자 id, 없으면 undefined (docs/rules/amplitude.md 3장) */
+export function getAmplitudeIdentity(session: { user?: { id: string } | null } | null): {
+  userId: string | undefined;
+  loggedIn: boolean;
+} {
+  const user = session?.user;
+  return { userId: user?.id, loggedIn: Boolean(user) };
+}

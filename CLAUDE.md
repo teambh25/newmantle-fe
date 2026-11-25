@@ -36,7 +36,7 @@ Harness guide: `src/test/README.md` (fake game server, `renderGame`, presets, cl
 3. Run them and confirm they **fail for the right reason** (missing behavior, not a typo or missing mock). A test that passes before implementation does not distinguish the bug, so revisit the case
 4. Implement until they pass, then update the Phase progress in `plan.md`
 - Things checked by eye on screen (layout, color, real-phone behavior) and visual or perceived timing (animation speed, flicker, delay the user feels) are not tested in code; add them to the Verification section of the task's `plan.md` instead
-- When adding tests to code that already exists, do not edit implementation files to see them fail. Check that in an isolated copy (git worktree) and only after asking
+- When adding tests to code that already exists, check that they fail for the right reason with a mutation check: break the rule in an isolated copy (git worktree) by default, without asking first. Never edit implementation files in the working tree, even temporarily
 
 ### What to test
 - Test behavior, not implementation details: assert on requests sent to the server, hook return values, what is visible on screen, stored `localStorage` values, and Amplitude events. Not on internal state/ref names, call order, or component structure
