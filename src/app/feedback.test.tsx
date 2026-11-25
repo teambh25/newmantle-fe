@@ -1,18 +1,18 @@
 // 화면 레벨: 피드백 창
 // 문구는 검증하지 않는다. 요소는 역할과 접근 가능한 이름으로 찾는다.
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import * as amplitude from "@amplitude/analytics-browser";
 import Home from "./page";
 import { Toaster } from "@/components/ui/toaster";
 import { ANSWER } from "@/test/fakeGameServer";
-import { feedbackWebhook } from "@/test/fakeFeedbackWebhook";
+import { feedbackTable } from "@/test/fakeFeedbackTable";
 import { amplitudeEvents } from "@/test/gameHarness";
 import { KST_AFTERNOON, KST_BEFORE_MIDNIGHT, KST_MIDNIGHT, setClock } from "@/test/clock";
 import { getKSTDateString } from "@/utils/date";
 
-// 메인 화면이 쓰는 Supabase 메서드 (비로그인 게스트)
+// 메인 화면이 쓰는 Supabase 메서드 (비로그인 게스트). 피드백 insert는 가짜 테이블로
 vi.mock("@/utils/supabase/client", () => ({
   createClient: () => ({
     auth: {
@@ -21,9 +21,10 @@ vi.mock("@/utils/supabase/client", () => ({
       getSession: async () => ({ data: { session: null } }),
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
     },
-    from: () => ({
-      select: () => ({ eq: () => ({ single: async () => ({ data: null }) }) }),
-    }),
+    from: (table: string) =>
+      table === "feedback"
+        ? feedbackTable.table()
+        : { select: () => ({ eq: () => ({ single: async () => ({ data: null }) }) }) },
   }),
 }));
 
@@ -136,9 +137,9 @@ async function write(user: User, d: HTMLElement, text: string) {
 }
 
 async function send(user: User, d: HTMLElement) {
-  const before = feedbackWebhook.bodies.length;
+  const before = feedbackTable.inserts.length;
   await user.click(sendButton(d)!);
-  await waitFor(() => expect(feedbackWebhook.bodies.length).toBe(before + 1));
+  await waitFor(() => expect(feedbackTable.inserts.length).toBe(before + 1));
 }
 
 /** 보낸 상태: 입력창과 보내기 버튼이 없고, 창 안에 감사 안내(status)가 있음 */
@@ -164,7 +165,19 @@ function expectInputState(d: HTMLElement) {
 }
 
 const failureToast = () => screen.findByRole("status");
-const lastBody = () => feedbackWebhook.bodies[feedbackWebhook.bodies.length - 1];
+const lastInsert = () => feedbackTable.inserts[feedbackTable.inserts.length - 1];
+
+/**
+ * setTimeout까지 가짜 타이머로 바꾼다. setup.ts가 setInterval만 가짜로 깔아 두었으므로 한 번 풀고 다시 깐다 (src/test/README.md 시간).
+ * 실제 시간도 같이 흐르게 해 두어(shouldAdvanceTime) waitFor·userEvent가 멈추지 않는다
+ */
+function fakeTimeouts() {
+  vi.useRealTimers();
+  vi.useFakeTimers({
+    toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"],
+    shouldAdvanceTime: true,
+  });
+}
 
 // ---- 케이스 ----
 
@@ -177,74 +190,29 @@ describe("입력", () => {
   });
 });
 
-describe("웹훅 요청", () => {
-  it("설정에서 보내기 → 웹훅 본문에 맥락 필드가 있고 식별자가 없음", async () => {
-    const { user } = await renderHome();
-    const d = await openFromSettings(user);
-    await write(user, d, "힌트가 더 있으면 좋겠어요");
-    await send(user, d);
-
-    expect(feedbackWebhook.bodies).toHaveLength(1);
-    const body = lastBody();
-    expect(Object.keys(body).sort()).toEqual(
-      ["entry", "feedback", "gameStatus", "quizDate", "theme", "timestamp"].sort()
-    );
-    expect(body).toMatchObject({
-      feedback: "힌트가 더 있으면 좋겠어요",
-      quizDate: getKSTDateString(),
-      theme: "classic",
-      entry: "settings",
-      gameStatus: "playing",
-    });
-  });
-
-  it("정답 맞힌 날 결과창에서 보내기 → entry=result, gameStatus=solved", async () => {
-    storeFinished();
-    const { user } = await renderHome();
-    const d = await openFromResult(user);
-    await write(user, d, "재밌어요");
-    await send(user, d);
-    expect(lastBody()).toMatchObject({ entry: "result", gameStatus: "solved" });
-  });
-
-  it("포기한 날 설정에서 보내기 → entry=settings, gameStatus=given_up", async () => {
-    storeFinished({ givenUp: true });
-    const { user } = await renderHome();
-    const d = await openFromSettings(user);
-    await write(user, d, "어려워요");
-    await send(user, d);
-    expect(lastBody()).toMatchObject({ entry: "settings", gameStatus: "given_up" });
-  });
-
-  it("excel에서 보내기 → theme=excel", async () => {
-    useExcel();
-    const { user } = await renderHome();
-    const d = await openFromSettings(user);
-    await write(user, d, "엑셀 좋아요");
-    await send(user, d);
-    expect(lastBody()).toMatchObject({ theme: "excel", entry: "settings" });
-  });
-
-  it("응답 전에는 보내기 비활성, 다시 눌러도 요청 1회", async () => {
+describe("전송", () => {
+  // 보내는 행의 필드 값은 로직 테스트(src/utils/feedback.test.ts)에서 확인한다
+  it("응답 전에는 보내기 비활성, 다시 눌러도 insert 1회", async () => {
     const { user } = await renderHome();
     const d = await openFromSettings(user);
     await write(user, d, "의견");
-    const held = feedbackWebhook.holdNext();
+    const held = feedbackTable.holdNext();
     await send(user, d);
     expect(sendButton(d)).toBeDisabled();
     await user.click(sendButton(d)!);
     await held.release();
-    expect(feedbackWebhook.bodies).toHaveLength(1);
+    expect(feedbackTable.inserts).toHaveLength(1);
   });
 });
 
 describe("퀴즈 날짜(KST)당 1회", () => {
-  it("보내기 성공 → 창은 열린 채 보낸 상태, 토스트 없음, 저장값이 오늘, alert 없음", async () => {
+  it("피드백을 입력하고 보내기 → feedback 테이블에 한 행 insert, 창은 열린 채 보낸 상태, 토스트 없음, 저장값이 오늘, alert 없음", async () => {
     const { user } = await renderHome();
     const d = await openFromSettings(user);
     await write(user, d, "의견");
     await send(user, d);
     await expectSentState(d);
+    expect(feedbackTable.inserts).toHaveLength(1);
     // 감사 안내(창 안 status) 말고는 status가 없음 = 토스트 없음
     expect(screen.getAllByRole("status").every((el) => d.contains(el))).toBe(true);
     expect(localStorage.getItem(SENT_KEY)).toBe(getKSTDateString());
@@ -311,14 +279,14 @@ describe("퀴즈 날짜(KST)당 1회", () => {
     else expectInputState(d);
   });
 
-  it("23:59:59에 열고 00:00에 보내면 보내는 시점 날짜로 기록", async () => {
+  it("게임 화면을 23:59:59에 열고 00:00에 보내면 → 행의 quiz_date는 열린 화면의 퀴즈 날짜, 하루 1회 저장값은 보내는 시점 날짜", async () => {
     setClock("Asia/Seoul", KST_BEFORE_MIDNIGHT);
     const { user } = await renderHome();
     const d = await openFromSettings(user);
     await write(user, d, "의견");
     vi.setSystemTime(new Date(KST_MIDNIGHT));
     await send(user, d);
-    expect(lastBody()).toMatchObject({ quizDate: "2026-11-11" });
+    expect(lastInsert()).toMatchObject({ quiz_date: "2026-11-10" });
     await waitFor(() => expect(localStorage.getItem(SENT_KEY)).toBe("2026-11-11"));
   });
 });
@@ -360,9 +328,9 @@ describe("닫으면 연 곳으로", () => {
 
 describe("전송 실패", () => {
   it.each([
-    ["500", () => feedbackWebhook.failNext()],
-    ["네트워크 오류", () => feedbackWebhook.networkErrorNext()],
-  ])("웹훅 %s → 실패 토스트, 입력 유지, 저장 안 함, alert 없음", async (_label, failNext) => {
+    ["오류 응답", () => feedbackTable.failNext()],
+    ["네트워크 오류", () => feedbackTable.networkErrorNext()],
+  ])("insert가 %s → 실패 토스트, 입력 유지, 저장 안 함, alert 없음", async (_label, failNext) => {
     const { user } = await renderHome();
     const d = await openFromSettings(user);
     await write(user, d, "의견");
@@ -380,23 +348,39 @@ describe("전송 실패", () => {
     const { user } = await renderHome();
     const d = await openFromSettings(user);
     await write(user, d, "의견");
-    feedbackWebhook.failNext();
+    feedbackTable.failNext();
     await send(user, d);
     await failureToast();
     await waitFor(() => expect(sendButton(d)).toBeEnabled());
 
     await send(user, d);
-    expect(feedbackWebhook.bodies).toHaveLength(2);
+    expect(feedbackTable.inserts).toHaveLength(2);
     await expectSentState(d);
     expect(localStorage.getItem(SENT_KEY)).toBe(getKSTDateString());
   });
 
-  it("excel에서 웹훅 500 → 실패 토스트, 입력 유지, 저장 안 함", async () => {
+  it("insert가 3초 넘게 응답하지 않음 → 3초 뒤 실패 토스트, 입력 유지, 다시 보낼 수 있음", async () => {
+    fakeTimeouts();
+    const { user } = await renderHome();
+    const d = await openFromSettings(user);
+    await write(user, d, "의견");
+    feedbackTable.holdNext();
+    await send(user, d);
+    expect(sendButton(d)).toBeDisabled();
+
+    await act(() => vi.advanceTimersByTimeAsync(3000));
+    expect(await failureToast()).toBeInTheDocument();
+    expect(input(d)).toHaveValue("의견");
+    await waitFor(() => expect(sendButton(d)).toBeEnabled());
+    expect(localStorage.getItem(SENT_KEY)).toBeNull();
+  });
+
+  it("excel에서 insert 오류 → 실패 토스트, 입력 유지, 저장 안 함", async () => {
     useExcel();
     const { user } = await renderHome();
     const d = await openFromSettings(user);
     await write(user, d, "의견");
-    feedbackWebhook.failNext();
+    feedbackTable.failNext();
     await send(user, d);
 
     expect(await failureToast()).toBeInTheDocument();
@@ -437,7 +421,7 @@ describe("Amplitude", () => {
     const { user } = await renderHome();
     const d = await openFromSettings(user);
     await write(user, d, "의견");
-    feedbackWebhook.failNext();
+    feedbackTable.failNext();
     await send(user, d);
     await failureToast();
     expect(amplitudeEvents("Feedback Submitted")).toHaveLength(0);
