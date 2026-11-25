@@ -1,5 +1,4 @@
 import { createClient } from '@/utils/supabase/client';
-import { setUserProperties } from '@/utils/amplitude';
 import { ensureGuestId } from '@/utils/guestId';
 
 async function getAuthHeader(): Promise<Record<string, string>> {
@@ -11,9 +10,8 @@ async function getAuthHeader(): Promise<Record<string, string>> {
   }
 
   if (typeof window !== 'undefined') {
-    const { guestId, created } = ensureGuestId();
-    // 처음 만들어질 때 Amplitude 사용자 속성으로도 남긴다. 문의 대응용 (docs/rules/amplitude.md 3장)
-    if (created) setUserProperties({ guest_id: guestId });
+    // 처음 만들 때의 Amplitude guest_id 전송은 ensureGuestId가 한다
+    const { guestId } = ensureGuestId();
     return { 'X-Guest-Id': guestId };
   }
 

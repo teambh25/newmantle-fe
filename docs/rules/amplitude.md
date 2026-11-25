@@ -71,13 +71,13 @@ identify로 보낸다. 월 이벤트 한도에 들어가지 않는다. Amplitude
 | `excel_progress_view` | `chart` / `bar` | 페이지를 열 때, excel 진행 상황 보기를 바꿀 때 |
 | `excel_progress_view_chosen` | true / false | 같음 |
 | `logged_in` | true / false | 페이지를 열 때, 로그인·로그아웃할 때 |
-| `guest_id` | 서버가 게스트를 식별하는 UUID (`newmantle_guest_id`) | 페이지를 열 때 있으면, 처음 만들어질 때(첫 게임 요청) |
+| `guest_id` | 서버가 게스트를 식별하는 UUID (`newmantle_guest_id`) | 페이지를 열 때 있으면, 처음 만들어질 때(첫 게임 요청 또는 피드백 전송). 만드는 곳(`ensureGuestId`)에서 보낸다 |
 
 - 페이지를 열 때 보내는 identify는 `Game Page Visited`보다 먼저 호출한다. 그래야 그날 첫 이벤트에도 값이 찍힌다
 - classic과 excel의 진행 상황 보기는 따로 저장되므로 속성도 따로 둔다
 - `_chosen`이 false인 사용자는 기본값을 고른 것이 아니라 바꾼 적이 없는 것이다. "기본값을 선호한다"는 해석은 `_chosen = true`인 사용자로 한다
 - 로그인 사용자는 user_id로 Supabase user id(UUID)를 보낸다
-- `guest_id`는 문의 대응용이다. 분석 지표에 쓰지 않는다. 게스트 id는 첫 게임 요청 때 만들어지므로, 아무 요청 없이 나간 첫 방문자에게는 없을 수 있다
+- `guest_id`는 문의 대응용이다. 분석 지표에 쓰지 않는다. 게스트 id는 첫 게임 요청이나 피드백 전송 때 만들어지므로, 둘 다 하지 않고 나간 첫 방문자에게는 없을 수 있다
 - 유입 경로(`utm_*`, `referrer`, `referring_domain`, `initial_*`)는 SDK가 자동으로 보낸다. 공유 링크에는 `utm_medium=share`가 붙어서, 공유로 들어온 사용자는 `initial_utm_medium = share`로 보인다
 
 ## 4. 보내지 않는 것

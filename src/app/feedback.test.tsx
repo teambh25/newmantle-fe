@@ -279,15 +279,18 @@ describe("퀴즈 날짜(KST)당 1회", () => {
     else expectInputState(d);
   });
 
-  it("게임 화면을 23:59:59에 열고 00:00에 보내면 → 행의 quiz_date는 열린 화면의 퀴즈 날짜, 하루 1회 저장값은 보내는 시점 날짜", async () => {
+  // 행과 이벤트의 quiz_date는 같은 규칙이라 한 테스트에서 함께 본다 (docs/specs/feedback-migration Dec-24, Dec-25)
+  it("게임 화면을 연 채 KST 자정이 지난 뒤 피드백을 보내면 → 행과 Feedback Submitted의 quiz_date는 어제, 하루 1회 저장값은 오늘", async () => {
     setClock("Asia/Seoul", KST_BEFORE_MIDNIGHT);
     const { user } = await renderHome();
+    vi.setSystemTime(new Date(KST_MIDNIGHT));
     const d = await openFromSettings(user);
     await write(user, d, "의견");
-    vi.setSystemTime(new Date(KST_MIDNIGHT));
     await send(user, d);
+    await expectSentState(d);
     expect(lastInsert()).toMatchObject({ quiz_date: "2026-11-10" });
-    await waitFor(() => expect(localStorage.getItem(SENT_KEY)).toBe("2026-11-11"));
+    expect(amplitudeEvents("Feedback Submitted").map((e) => e.quiz_date)).toEqual(["2026-11-10"]);
+    expect(localStorage.getItem(SENT_KEY)).toBe("2026-11-11");
   });
 });
 
@@ -400,17 +403,6 @@ describe("Amplitude", () => {
     const submitted = amplitudeEvents("Feedback Submitted");
     expect(submitted).toHaveLength(1);
     expect(JSON.stringify(vi.mocked(amplitude.track).mock.calls)).not.toContain("좋아요 굿");
-  });
-
-  it("어제 퀴즈 화면을 연 채 KST 자정이 지난 뒤 피드백을 보내면 → quiz_date는 어제", async () => {
-    setClock("Asia/Seoul", KST_BEFORE_MIDNIGHT);
-    const { user } = await renderHome();
-    vi.setSystemTime(new Date(KST_MIDNIGHT));
-    const d = await openFromSettings(user);
-    await write(user, d, "의견");
-    await send(user, d);
-    await expectSentState(d);
-    expect(amplitudeEvents("Feedback Submitted").map((e) => e.quiz_date)).toEqual(["2026-11-10"]);
   });
 
   it("보내기 실패 → Feedback Submitted 없음", async () => {

@@ -79,7 +79,7 @@
   - feat/amplitude가 merge돼 있다
   - `src/test/fakeFeedbackWebhook.ts`가 삭제되고, 기존 피드백 테스트(하루 1회, 실패 재시도, 돌아가기, Amplitude)가 Supabase stub으로 통과한다
   - `npm test`, `npm run lint`, `npm run build`가 통과한다
-- 진행상황: [~] 진행 중 — 테스트 작성, 실패 확인 (2026-11-25), 구현 대기
+- 진행상황: [~] 진행 중 — 테스트 작성, 실패 확인 (2026-11-25), feat/amplitude merge, `ensureGuestId`의 `guest_id` 전송 구현·통과 (2026-11-25), 피드백 전송 구현 대기
 
 ### Phase 3 — 배포와 Make.com 종료
 - 범위: 프론트 배포, 실제 환경에서 확인, Make.com 웹훅 큐 처리 대기, 시나리오 종료와 웹훅 삭제
@@ -116,7 +116,7 @@
 - insert가 오류를 돌려주는 상태 → 보내기 → 실패 알림이 보이고, 입력이 남아 있으며, 다시 보낼 수 있다
 - insert가 네트워크 오류로 실패하는 상태 → 보내기 → 실패 알림이 보이고, 다시 보낼 수 있다
 - insert가 3초 넘게 응답하지 않는 상태 → 보내기 후 3초가 지남 → 실패 알림이 보이고, 다시 보낼 수 있다
-- 게임 화면을 KST 자정 전에 연 채 자정이 지난 뒤 보내기 → insert 행과 `Feedback Submitted`의 `quiz_date`가 모두 어제이고, 하루 1회 저장값은 오늘이다 (Dec-24, Dec-25). feat/amplitude의 같은 상황 Amplitude 테스트와 합쳐 하나로 둔다
+- 게임 화면을 KST 자정 전에 연 채 자정이 지난 뒤 보내기 → insert 행과 `Feedback Submitted`의 `quiz_date`가 모두 어제이고, 하루 1회 저장값은 오늘이다 (Dec-24, Dec-25). 행과 이벤트를 한 테스트에서 함께 본다 (feat/amplitude의 같은 상황 Amplitude 테스트를 합침)
 - 기존 하루 1회·돌아가기 테스트는 전송 stub만 바꾸고 그대로 둔다. Amplitude 테스트는 feat/amplitude 버전을 따른다
 
 ### Supabase 확인 (프론트 테스트로 확인 불가, 대시보드·anon key로 직접)
