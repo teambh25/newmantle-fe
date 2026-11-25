@@ -45,7 +45,7 @@ const GiveUpButton: React.FC<GiveUpButtonProps> = ({
 
   // 엑셀 "저장하지 않고 닫기" 확인 창처럼: 버튼은 모두 회색, 기본 선택(계속 플레이 쪽)만 테두리를 진하게 (C-2: 포기 쪽을 색으로 경고하지 않음)
   const buttonBase =
-    "min-w-[5.5rem] px-3 py-1 border bg-[#fdfdfd] text-[13px] text-gray-900 hover:bg-[#e5f1fb] hover:border-[#0078d4] focus-visible:outline-none";
+    "sm:min-w-[5.5rem] px-3 py-1 border bg-[#fdfdfd] text-[13px] text-gray-900 hover:bg-[#e5f1fb] hover:border-[#0078d4] focus-visible:outline-none";
   const defaultButton = `${buttonBase} border-gray-600 border-2`;
   const otherButton = `${buttonBase} border-[#d0d0d0]`;
 
@@ -98,7 +98,7 @@ const GiveUpButton: React.FC<GiveUpButtonProps> = ({
             <div className="mt-5 flex flex-wrap justify-end gap-2">
               {!initialConsonantHintUsed && (
                 <button ref={continueButtonRef} onClick={handleInitialConsonantHint} className={defaultButton}>
-                  초성 힌트 받고 계속 도전하기
+                  초성 힌트 받기
                 </button>
               )}
               <button onClick={handleGiveUp} className={otherButton}>
