@@ -587,3 +587,15 @@
 근거 — 행동별 이벤트는 나중에 합치기 쉽지만, 합쳐 둔 기간의 행동별 데이터는 되살릴 수 없다(사용자 선택). 비용은 1인 하루 최대 약 8개로 한도 안이다. 앞으로 Amplitude에 넣을지는 `docs/rules/amplitude.md` 1장의 기준으로 판단한다. 배포 후 행동별 이벤트를 쓰지 않는다면 B로 합친다
 영향 — `docs/rules/amplitude.md` 1장, Dec-21, Dec-28, Dec-31
 상태 — active
+
+### Dec-48. 통계 페이지 방문을 `Stats Page Visited`로 하루 1회 남김
+영향도: local · 출처: user-suggested
+
+문제 — 통계 페이지를 얼마나 보는지 알고 싶다. 규칙·이용약관 페이지는 보지 않는다
+옵션
+  (A) 들어올 때마다 보낸다
+  (B) 하루(KST 날짜) 1회 보낸다. 속성은 없다
+선택 — B
+근거 — 보고 싶은 것은 통계를 보는 고유 사용자 수와 그들의 리텐션이라 하루 1회로 충분하다. A는 새로고침·오가기만큼 늘어 횟수에 의미가 없다. 서버 이벤트 로그는 게임 요청만 남기고, 방문은 Amplitude가 맡는다(`docs/rules/amplitude.md` 1장). 퀴즈와 상관없는 페이지라 `quiz_date`를 싣지 않는다. 들어오는 곳은 테마마다 하나씩(classic 헤더 통계 버튼, excel 시트 탭)이라 사용자 속성 `theme`으로 나뉘고, 로그인 여부도 `logged_in`으로 보인다. 하루 1회 판단은 `Game Page Visited`와 같은 규칙(Dec-10)을 쓴다. 비용은 1인 하루 최대 1개
+영향 — `src/app/stats/page.tsx`, `docs/rules/amplitude.md` 2·6장, Scope, Verification, Dec-21
+상태 — active

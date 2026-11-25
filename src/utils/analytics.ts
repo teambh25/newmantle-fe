@@ -5,9 +5,12 @@ import { parseProgressView, type ProgressViewOf, type ProgressViewTheme } from "
 
 /** `Game Page Visited`를 마지막으로 보낸 퀴즈 날짜 */
 export const PAGE_VISIT_LOGGED_KEY = "newmantle_page_visit_logged_date";
+/** `Stats Page Visited`를 마지막으로 보낸 KST 날짜 */
+export const STATS_VISIT_LOGGED_KEY = "newmantle_stats_visit_logged_date";
 
 /**
- * 게임 화면 방문을 보낼지. 퀴즈 날짜가 정해지기 전(빈 값)에는 보내지 않고, 그 퀴즈 날짜에 이미 보냈으면 보내지 않는다.
+ * 방문 이벤트(게임 화면·통계 페이지)를 보낼지. 통계 페이지는 퀴즈 날짜 대신 KST 오늘 날짜를 넘긴다 (Dec-48).
+ * 퀴즈 날짜가 정해지기 전(빈 값)에는 보내지 않고, 그 퀴즈 날짜에 이미 보냈으면 보내지 않는다.
  * 기록을 읽을 수 없으면 보낸다 (Dec-10)
  */
 export function shouldLogPageVisit(quizDate: string, readLastVisitDate: () => string | null): boolean {

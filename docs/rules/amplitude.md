@@ -32,6 +32,7 @@ Amplitude에 무엇을, 언제, 어떤 이름으로 보내는지 정한다. 이�
 | `Game Given Up` | 포기 버튼으로 포기 | `quiz_date`, `attempts`, `time_to_give_up`, `hint_count`, `initial_consonant_hint_used` |
 | `Result Shared` | 공유에 성공할 때마다 | `quiz_date`, `method` |
 | `Feedback Submitted` | 피드백 제출 | `quiz_date`, `entry` |
+| `Stats Page Visited` | 통계 페이지에 들어올 때, 하루(KST 날짜) 1회 | 없음 |
 
 - "하루", "그날"은 퀴즈 날짜(KST `gameDate`) 기준이다. 자정을 넘겨도 열어 둔 화면은 어제 퀴즈다
 - "제출"은 서버가 단어를 판정한 것만 센다: 순위·정답 응답과 없는 단어 응답. 네트워크·서버 오류와 이미 낸 단어의 재입력은 세지 않는다
@@ -106,6 +107,7 @@ identify로 보낸다. 월 이벤트 한도에 들어가지 않는다. Amplitude
 | 로그인·게스트 비교 | 사용자 속성 `logged_in` |
 | 공유 | `Result Shared` (공유하는 쪽), `initial_utm_medium = share` (들어온 쪽) |
 | 피드백 | `Feedback Submitted`의 `entry` |
+| 통계 페이지 사용 | `Stats Page Visited` 고유 사용자 |
 
 위 지표를 테마·보기 설정·유입 경로별로 나눌 때는 사용자 속성 필터를 쓴다.
 

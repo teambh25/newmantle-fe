@@ -38,6 +38,7 @@
     - `Word Submitted`: 게임 중 그날 첫 제출만 (Dec-2, Dec-31, Dec-43)
   - `Post Game Word Submitted` 추가: 게임이 끝난 뒤 그날 첫 제출 (Dec-43)
   - 제출로 세는 범위를 서버가 단어를 판정한 것(없는 단어 포함)으로 정함 (Dec-44)
+  - `Stats Page Visited` 추가: 통계 페이지 방문 하루 1회 (Dec-48)
     - `Hint Requested`: 그날 첫 일반 힌트만 (Dec-4, Dec-31)
   - 이벤트 속성을 `docs/rules/amplitude.md` 2장대로 바꿈
     - 모든 이벤트에서 `theme` 제거 (Dec-29)
@@ -89,7 +90,7 @@
   - 모든 이벤트와 사용자 속성이 `docs/rules/amplitude.md`의 이름·속성과 일치한다
   - 삭제한 이벤트가 더 이상 나가지 않고, 클립보드 복사 실패는 Sentry에 기록된다
   - 관련 테스트와 기존 이벤트 테스트를 통과한다. `npm run lint`, `npm run build`를 통과한다
-- 진행상황: [~] 진행 중. API 키 환경변수화, SDK 자동 수집 끄기 완료 (2026-11-18). 나머지 코드 변경 완료, 테스트·`npm run lint` 통과 (2026-11-23), `npm run build` 통과 (2026-11-24). 게임 끝난 뒤 제출·제출 범위 변경(Dec-43~46) 구현, 테스트·lint·build 통과 (2026-11-25). 운영 배포 대기
+- 진행상황: [~] 진행 중. API 키 환경변수화, SDK 자동 수집 끄기 완료 (2026-11-18). 나머지 코드 변경 완료, 테스트·`npm run lint` 통과 (2026-11-23), `npm run build` 통과 (2026-11-24). 게임 끝난 뒤 제출·제출 범위 변경(Dec-43~46) 구현, 테스트·lint·build 통과 (2026-11-25). 통계 페이지 방문(Dec-48) 구현, 테스트·lint·build 통과 (2026-11-25). 운영 배포 대기
 
 ### Phase 3 — 배포 후 확인
 - 완료 기준: 아래 Verification의 "Amplitude에서 직접 확인" 중 배포 후 항목을 모두 확인했다
@@ -114,6 +115,8 @@
 - 끝난 뒤 제출 (Dec-43, Dec-44)
   - 정답을 맞힌 뒤 → 이미 낸 단어 재입력, 제출 오류를 하면 → `Post Game Word Submitted` 0회. 이어서 없는 단어, 단어 여러 개 제출, 새로고침 후 단어 제출을 하면 → 1회. `Word Submitted`는 정답 전의 1회 그대로다
   - 입력 0개에서 포기한 뒤 → 단어를 제출하면 → `Post Game Word Submitted` 1회, `Word Submitted` 0회
+- 통계 페이지 방문 (Dec-48)
+  - 오늘 보낸 기록이 없을 때 → 통계 페이지를 열고, 닫았다 다시 열면 → `Stats Page Visited` 1회. 하루 1회 판단 규칙은 방문과 같은 순수 함수로 본다
 - 시간 (Dec-33)
   - 단어 제출 → 60초 → 새로고침 → 30초 → 포기하면 → `time_to_give_up` 90
   - 기존 `Game Completed` 플레이 시간 테스트는 `time_to_solve`를 보도록 이름만 바꾼다. 첫 행동 시각 규칙의 유일한 검증이다
