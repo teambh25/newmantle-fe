@@ -62,7 +62,6 @@ export default function NewMantleForm({
   const { sharedAttempts, sharerHintCount, isLoadingSharerStats, share } = useShareLink({
     gameDate,
     attempts: gameLogic.correctAttempts,
-    theme: "classic",
   });
   // 결과창은 정답·포기 그 순간에만 자동으로 연다. 꽃가루와 제목의 정답이 먼저 보이게 짧게 늦춘다 (docs/tasks/ui/result-box/plan.md 요구사항 1)
   const openResultSoon = () => {

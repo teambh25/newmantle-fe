@@ -12,7 +12,7 @@ export const GAME_DATE = getKSTDateString();
 
 export function renderGame() {
   const hook = renderHook(() => ({
-    game: useGameState(GAME_DATE, "classic"),
+    game: useGameState(GAME_DATE),
     toast: useToast(),
   }));
   // 토스트 상태는 모듈 전역이라 이전 테스트의 토스트를 닫아 둔다

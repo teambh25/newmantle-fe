@@ -53,7 +53,6 @@ export default function NewMantleForm({ showProgressViewTooltip = false, onProgr
   const { sharedAttempts, sharerHintCount, isLoadingSharerStats, share } = useShareLink({
     gameDate,
     attempts: gameLogic.correctAttempts,
-    theme: "excel",
   });
 
   useEffect(() => {

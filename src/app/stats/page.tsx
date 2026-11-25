@@ -3,7 +3,9 @@
 import React, { useEffect } from "react";
 import { format, subDays } from "date-fns";
 import { fetchStatsOverview } from "@/utils/api";
-import { getKSTToday } from "@/utils/date";
+import { getKSTDateString, getKSTToday } from "@/utils/date";
+import { logEvent } from "@/utils/amplitude";
+import { shouldLogPageVisit, STATS_VISIT_LOGGED_KEY } from "@/utils/analytics";
 import { StatOverviewResp } from "@/types/stats";
 import { useQuery } from "@tanstack/react-query";
 import { StatsSummaryCards } from "@/components/stats/StatsSummaryCards";
@@ -25,6 +27,18 @@ export default function StatsPage() {
   // 통계 페이지를 한 번 봤으면 메인의 통계 안내 말풍선은 더 띄우지 않는다 (docs/tasks/ui/header/plan.md 4)
   useEffect(() => {
     markStatsTooltipDismissed();
+  }, []);
+
+  // 통계 페이지 방문은 하루(KST 날짜) 1회 (docs/specs/amplitude-migration Dec-48)
+  useEffect(() => {
+    const today = getKSTDateString();
+    if (!shouldLogPageVisit(today, () => localStorage.getItem(STATS_VISIT_LOGGED_KEY))) return;
+    logEvent("Stats Page Visited");
+    try {
+      localStorage.setItem(STATS_VISIT_LOGGED_KEY, today);
+    } catch {
+      // 저장하지 못하면 다음 방문에 다시 보낸다 (Dec-10)
+    }
   }, []);
 
   // 1. Fetch Session

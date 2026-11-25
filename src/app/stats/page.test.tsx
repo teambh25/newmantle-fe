@@ -4,6 +4,7 @@ import { render, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { KST_AFTERNOON, setClock } from "@/test/clock";
 import type { StatOverviewResp } from "@/types/stats";
+import { amplitudeEvents } from "@/test/gameHarness";
 import StatsPage from "./page";
 
 const signOut = vi.hoisted(() => vi.fn(async () => ({ error: null })));
@@ -81,5 +82,24 @@ describe("통계 유도 말풍선", () => {
       </QueryClientProvider>
     );
     await waitFor(() => expect(localStorage.getItem("stats-tooltip-dismissed")).not.toBeNull());
+  });
+});
+
+describe("통계 페이지 방문", () => {
+  it("오늘 보낸 기록이 없을 때 → 통계 페이지를 열고 닫았다 다시 열면 → Stats Page Visited 1회", () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({ ok: true, status: 200, json: async () => OVERVIEW }) as Response)
+    );
+    const open = () =>
+      render(
+        <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+          <StatsPage />
+        </QueryClientProvider>
+      );
+
+    open().unmount();
+    open();
+    expect(amplitudeEvents("Stats Page Visited")).toHaveLength(1);
   });
 });

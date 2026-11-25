@@ -1,8 +1,9 @@
 "use client";
-// 방금 입력 모양 저장·분석. 테마(useUITheme)와 같은 방식: localStorage + Amplitude 사용자 속성 + 전환 이벤트
+// 방금 입력 모양 저장·분석. 테마(useUITheme)와 같은 방식: localStorage + Amplitude 사용자 속성(전환 이벤트 없음, docs/specs/amplitude-migration Dec-29)
 // 테마마다 따로 저장한다 (docs/specs/progress-view-toggle Dec-5, Dec-9, Dec-19)
 import { useEffect, useState } from "react";
-import { logEvent, setUserProperty } from "@/utils/amplitude";
+import { setUserProperties } from "@/utils/amplitude";
+import { parseProgressViewSetting } from "@/utils/analytics";
 import {
   parseProgressView,
   PROGRESS_VIEW_CONFIG,
@@ -23,9 +24,9 @@ export function useProgressView<T extends ProgressViewTheme = "classic">(theme: 
     } catch {
       // 저장소를 못 쓰면 기본값
     }
-    const initial = parseProgressView(saved, theme);
+    const { value: initial, chosen } = parseProgressViewSetting(saved, theme);
     setViewState(initial);
-    setUserProperty(userProperty, initial);
+    setUserProperties({ [userProperty]: initial, [`${userProperty}_chosen`]: chosen });
     setReady(true);
   }, [storageKey, userProperty, theme]);
 
@@ -37,8 +38,7 @@ export function useProgressView<T extends ProgressViewTheme = "classic">(theme: 
     } catch {
       // 저장 못 해도 이번 화면에서는 바뀐다
     }
-    setUserProperty(userProperty, next);
-    logEvent("Progress View Switched", { view: next });
+    setUserProperties({ [userProperty]: next, [`${userProperty}_chosen`]: true });
   };
 
   return { view, setView, ready };
