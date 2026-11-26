@@ -11,7 +11,6 @@ interface SurveyFormProps {
 const SurveyForm: React.FC<SurveyFormProps> = ({ entry, startRow = 21 }) => {
   const { text, setText, sending, sent, canSend, submit, maxLength } = useFeedback({
     entry,
-    theme: "excel",
   });
 
   return (

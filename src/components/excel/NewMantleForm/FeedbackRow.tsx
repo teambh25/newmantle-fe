@@ -8,7 +8,6 @@ import { useFeedback } from "@/hooks/useFeedback";
 export function FeedbackRow({ rowNumber }: { rowNumber: number }) {
   const { text, setText, sending, sent, canSend, submit, maxLength } = useFeedback({
     entry: "result",
-    theme: "excel",
   });
   // 펼치면 바로 쓸 수 있게 포커스. 보통 빈 셀과 구분되도록 칸은 늘 선택된 셀처럼 녹색 테두리 (Dec-45)
   const inputRef = useRef<HTMLInputElement>(null);

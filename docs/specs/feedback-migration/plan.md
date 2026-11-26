@@ -79,7 +79,7 @@
   - feat/amplitude가 merge돼 있다
   - `src/test/fakeFeedbackWebhook.ts`가 삭제되고, 기존 피드백 테스트(하루 1회, 실패 재시도, 돌아가기, Amplitude)가 Supabase stub으로 통과한다
   - `npm test`, `npm run lint`, `npm run build`가 통과한다
-- 진행상황: [~] 진행 중 — 테스트 작성, 실패 확인 (2026-11-25), feat/amplitude merge, `ensureGuestId`의 `guest_id` 전송 구현·통과 (2026-11-25), 피드백 전송 구현 대기
+- 진행상황: [x] 완료 (2026-11-27) — 테스트 작성, 실패 확인 (2026-11-25), feat/amplitude merge, `ensureGuestId`의 `guest_id` 전송 구현·통과 (2026-11-25), 피드백 전송 구현, `npm test`·`npm run lint`·`npm run build` 통과 (2026-11-27)
 
 ### Phase 3 — 배포와 Make.com 종료
 - 범위: 프론트 배포, 실제 환경에서 확인, Make.com 웹훅 큐 처리 대기, 시나리오 종료와 웹훅 삭제
@@ -163,5 +163,6 @@
 - 단어별 구조화 신고 (단어 행마다 순위 이상 신고): `{ quiz_date, word, rank, 방향 }`을 별도 테이블에. UI와 서버 작업 필요 (Dec-15)
 - LLM 유사도 검증 파이프라인: 피드백 분류 결과와 로그에서 뽑은 맥락을 별도 테이블(`feedback_labels` 등)에 저장 (Dec-15)
 - 스팸이 생기면 Route Handler(service role) 경로와 IP 기준 횟수 제한으로 이전 (Dec-3)
+- Supabase 메모리 원인이 `pg_net`이면 디스코드 알림을 Route Handler로 이전. 라우트가 insert와 알림을 함께 한다 (Dec-31)
 - `SurveyForm`, `showSurvey`, `ExcelSurveyContent`를 Feedback 계열 이름으로 정리 (Dec-17)
 - LLM 파이프라인을 만들 때: 피드백 본문은 사용자 입력이라 프롬프트 인젝션이 들어 있을 수 있다. 본문은 지시가 아니라 데이터로 다룬다

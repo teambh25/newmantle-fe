@@ -308,7 +308,7 @@
 상태 — active
 
 ### Dec-25. 하루 1회 저장값은 보내는 시점의 KST 날짜로 유지
-영향도: local · 출처: ai-selected
+영향도: local · 출처: user-suggested
 
 문제 — `quiz_date`를 열린 게임 화면 날짜로 바꾸면(Dec-24), 하루 1회 판정에 쓰는 저장값(`newmantle_feedback_sent_date`)도 같이 바꾸나?
 옵션
@@ -320,7 +320,7 @@
 상태 — active
 
 ### Dec-26. 피드백 한 건을 DB와 Amplitude에 어떻게 나눠 남기나
-영향도: local · 출처: ai-selected
+영향도: local · 출처: user-suggested
 
 문제 — 피드백 한 건에 대해 Supabase `feedback` 행과 Amplitude `Feedback Submitted`에 각각 무엇을 남기나? 같은 값을 두 곳에 둘지, 한 곳에만 둘지?
 옵션
@@ -329,4 +329,67 @@
 선택 — B
 근거 — DB는 피드백을 읽고 처리하고 서버 로그와 맞춰 보는 곳이라 본문, `quiz_date`, `game_status`, `user_type` + `subject_id`, `status`, `created_at`을 둔다(Dec-6, Dec-21). Amplitude는 어디서 얼마나 보냈는지를 보는 곳이라 `entry`, `quiz_date`, 사용자 속성(`theme`, `logged_in`, `guest_id`)을 쓴다. 본문은 보내지 않는다(`docs/rules/amplitude.md`). `game_status`는 같은 날 `Game Completed` / `Game Given Up`으로 보인다. `quiz_date`와 사용자 식별자(로그인 user id, 게스트 ID)는 두 곳에서 같은 값이라, 문의가 오면 서로 찾아볼 수 있다. A는 값이 어긋날 곳만 늘고 Amplitude 이벤트 예산을 쓴다. 정리한 표는 plan.md Context
 영향 — `src/utils/feedback.ts`, `src/hooks/useFeedback.ts`, Dec-21, Dec-24, plan.md Context
+상태 — active
+
+### Dec-27. 디스코드 알림에 무엇을 담나
+영향도: local · 출처: user-suggested
+
+문제 — 새 피드백 알림 메시지에 어떤 값을 넣나?
+옵션
+  (A) 퀴즈 날짜, 게임 상태, 유저 구분, 본문
+  (B) 퀴즈 날짜와 본문만
+선택 — B
+근거 — 알림은 새 피드백이 왔다는 것과 내용을 보는 용도다. 생성 시각은 트리거가 insert 직후 보내서 디스코드 메시지 시각과 같다. 나머지 값은 Table Editor에서 본다. 본문 속 멘션 차단(`allowed_mentions`)은 payload 한 줄이라 유지한다. 인용(`>`)으로 감싸도 멘션은 그대로 울리고, 코드 블록은 본문에 백틱이 있으면 깨진다
+영향 — `supabase/migrations/20261125000000_feedback.sql`, Dec-11
+상태 — active
+
+### Dec-28. 검증되지 않는 클라이언트 값을 어떻게 다루나
+영향도: local · 출처: user-suggested
+
+문제 — `game_status`(localStorage 게임 기록)와 게스트 `subject_id`는 사용자가 바꿀 수 있다. 서버를 거쳐 엄밀하게 받을까, 검증되지 않는 값으로 두고 표시만 할까?
+옵션
+  (A) 서버(백엔드 엔드포인트)를 거쳐 서버 기록으로 `game_status`를 채운다
+  (B) 클라이언트 값으로 두고, 검증되지 않는다는 것을 컬럼 설명에 남긴다
+  (C) `game_status`를 뺀다 (서버 로그·Amplitude로 알 수 있음)
+선택 — B
+근거 — `game_status`는 Table Editor에서 바로 보기 위한 편의 값이다. 정확한 기록은 서버 로그·통계로 확인한다. A로도 게스트 식별은 엄밀해지지 않는다: 서버도 게스트를 `X-Guest-Id` 헤더의 UUID로만 알아서, 같은 방식으로 바꿀 수 있다. 회원 `subject_id`는 지금도 엄밀하다: Supabase가 JWT 서명을 검증하고 RLS가 `subject_id = auth.uid()`를 강제한다. 서버도 JWT 서명을 검증해(확인함) 회원의 서버 기록으로 `game_status`를 맞춰 볼 수 있다. 다만 `/v2/stats/link`로 합친 게스트 기록은 검증되지 않는다. 얻는 것은 `game_status` 정확도와 횟수 제한뿐인데 백엔드 작업이 든다 (Dec-3). 피드백이라 그 정도 엄밀함은 필요 없다. C는 바로 보는 편의를 잃는다. 컬럼 설명(`comment on column`)은 Table Editor에 보여 데이터를 보는 사람이 알 수 있다
+영향 — `supabase/migrations/20261125000000_feedback.sql`, Dec-3, Dec-19
+상태 — active
+
+### Dec-29. `useFeedback`의 `theme` 인자를 지운다
+영향도: local · 출처: user-suggested
+
+문제 — 웹훅이 없어지고 행에도 `theme`가 없으면(Dec-21) `useFeedback({ entry, theme })`의 `theme`를 아무도 쓰지 않는다. 정리할까?
+옵션
+  (A) 이번에 인자와 호출처 3곳(classic·excel SurveyForm, excel FeedbackRow)을 정리
+  (B) Backlog로 넘김
+선택 — A
+근거 — 쓰지 않는 인자는 "어딘가 테마별로 다르게 동작한다"는 오해를 준다. 호출처 3곳에서 한 줄씩이라 작다. 테마는 Amplitude 사용자 속성으로 추적된다(Dec-26)
+영향 — `src/hooks/useFeedback.ts`, `src/components/classic/SurveyForm.tsx`, `src/components/excel/SurveyForm.tsx`, `src/components/excel/NewMantleForm/FeedbackRow.tsx`
+상태 — active
+
+### Dec-30. `ensureGuestId()`는 게스트 ID 문자열만 돌려준다
+영향도: local · 출처: user-suggested
+
+문제 — Dec-23으로 Amplitude 전송을 `ensureGuestId()` 안으로 옮기자 `created` 반환값을 쓰는 호출처가 없어졌다. 테스트를 위해 내부 함수를 따로 분리할까, 반환값을 정리할까? (분리 여부 질문은 사용자, 반환값 정리는 AI 제안)
+옵션
+  (A) 저장 로직을 내부 함수로 분리해 그 함수를 테스트
+  (B) 그대로 `{ guestId, created }`를 돌려줌
+  (C) 분리하지 않고 반환값을 `string` 하나로 줄임
+선택 — C
+근거 — 지금 테스트는 localStorage 값과 mock한 Amplitude 호출만 보는 동작 테스트라, 내부 함수로 나눠도 "처음 만들 때 보낸다"는 결국 `ensureGuestId()`로 확인해야 해서 테스트가 줄지 않는다. `created`는 테스트만 쓰는 값이 되어, 새로 만들었는지는 저장값과 Amplitude 호출로 확인한다
+영향 — `src/utils/guestId.ts`, `src/utils/guestId.test.ts`, `src/utils/api.ts`, `src/utils/feedback.ts`, Dec-23
+상태 — active
+
+### Dec-31. Supabase 메모리 최적화 중에도 디스코드 알림은 DB 트리거로 유지
+영향도: local · 출처: ai-suggested
+
+문제 — Supabase가 원인 모를 메모리 과다 사용으로 최적화 중이다. `pg_net` 부담을 피하려고 알림을 다른 곳에서 보낼까?
+옵션
+  (A) DB 트리거 + `pg_net` 유지 (Dec-11)
+  (B) 프론트에서 디스코드 웹훅으로 직접 전송
+  (C) 프론트 → Next.js Route Handler → 디스코드
+선택 — A
+근거 — B는 웹훅 URL(토큰 포함)이 브라우저에 노출돼, 누구나 메시지를 보내거나 웹훅을 지울 수 있다. 지금 Make.com 웹훅 주소가 공개된 문제가 되풀이된다. C는 URL은 숨기지만 라우트 주소가 공개라 insert 없이 알림만 보낼 수 있고, 저장과 알림이 어긋날 수 있다. A는 저장된 행만 알림이 나간다. `pg_net` 부담은 백그라운드 워커 1개와 요청·응답 기록(응답은 기본 6시간 뒤 삭제)이고, 피드백은 하루 몇 건 수준이라 작다고 본다(측정하지 않음). 메모리 원인이 `pg_net`으로 밝혀지거나 꺼야 하면 C로 옮기되, 라우트가 insert와 알림을 함께 한다
+영향 — Dec-11, Backlog
 상태 — active

@@ -164,7 +164,8 @@ function expectInputState(d: HTMLElement) {
   expect(sendButton(d)).toBeInTheDocument();
 }
 
-const failureToast = () => screen.findByRole("status");
+// Radix가 화면 낭독기용 안내 span(role=status)을 1초 동안 함께 붙인다. 가짜 타이머에서 둘이 같이 보일 수 있어 첫 번째만 쓴다
+const failureToast = async () => (await screen.findAllByRole("status"))[0];
 const lastInsert = () => feedbackTable.inserts[feedbackTable.inserts.length - 1];
 
 /**

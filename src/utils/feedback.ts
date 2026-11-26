@@ -1,0 +1,54 @@
+import { ensureGuestId } from "@/utils/guestId";
+
+// 피드백으로 Supabase `feedback` 테이블에 넣을 행 (docs/specs/feedback-migration)
+
+const GAME_DATA_KEY = "newmantle_game_data";
+
+type GameStatus = "playing" | "solved" | "given_up";
+
+/** insert 권한이 있는 컬럼만 담는다. status·created_at은 DB가 정한다 (Dec-4, Dec-21) */
+export interface FeedbackRow {
+  feedback: string;
+  quiz_date: string;
+  game_status: GameStatus;
+  user_type: "user" | "guest";
+  subject_id: string;
+}
+
+/** 그 퀴즈 날짜의 게임 기록에서 진행 상태를 읽는다. 게임 기록은 바꾸지 않는다 */
+function readGameStatus(quizDate: string): GameStatus {
+  try {
+    const data = JSON.parse(localStorage.getItem(GAME_DATA_KEY) ?? "null");
+    if (!data || data.lastPlayedDate !== quizDate) return "playing";
+    if (data.givenUp) return "given_up";
+    if (data.gameCompleted) return "solved";
+  } catch {
+    // 읽지 못하면 진행 중으로 본다
+  }
+  return "playing";
+}
+
+/**
+ * 보낼 행을 만든다.
+ * - 로그인했으면 Supabase user id, 아니면 게스트 ID. 게스트 ID가 없으면 만든다 (Dec-7, Dec-22)
+ * - quizDate는 hook이 열린 게임 화면 기준으로 정해 넘긴다. game_status도 그 날짜로 읽는다 (Dec-24)
+ */
+export function buildFeedbackRow({
+  feedback,
+  userId,
+  quizDate,
+}: {
+  feedback: string;
+  userId: string | null;
+  quizDate: string;
+}): FeedbackRow {
+  const identity = userId
+    ? { user_type: "user" as const, subject_id: userId }
+    : { user_type: "guest" as const, subject_id: ensureGuestId() };
+  return {
+    feedback: feedback.trim(),
+    quiz_date: quizDate,
+    game_status: readGameStatus(quizDate),
+    ...identity,
+  };
+}

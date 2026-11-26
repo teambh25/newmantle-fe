@@ -4,18 +4,18 @@ import { toast } from "@/components/ui/use-toast";
 import { logEvent } from "@/utils/amplitude";
 import { getKSTDateString } from "@/utils/date";
 import { getOpenQuizDate } from "@/hooks/useGameDate";
+import { createClient } from "@/utils/supabase/client";
+import { buildFeedbackRow } from "@/utils/feedback";
 
-// 피드백 창 공통 로직 (classic·excel). docs/tasks/ui/feedback/plan.md
+// 피드백 창 공통 로직 (classic·excel). docs/tasks/ui/feedback/plan.md, 저장은 docs/specs/feedback-migration
 
-const WEBHOOK_URL = "https://hook.eu2.make.com/ojb3ezccxcl55rqyhy3lgklp2jlqvxtg";
-/** 마지막으로 보낸 KST 날짜. 퀴즈 날짜당 1회 (Dec-2, Dec-14) */
+/** 마지막으로 보낸 KST 날짜. 하루 1회 판정용, 보내는 시점 날짜 (Dec-2, Dec-14, feedback-migration Dec-25) */
 const SENT_DATE_KEY = "newmantle_feedback_sent_date";
-const GAME_DATA_KEY = "newmantle_game_data";
 const FEEDBACK_MAX_LENGTH = 500;
+/** 다른 요청처럼 3초가 지나면 실패로 본다 */
+const FEEDBACK_TIMEOUT_MS = 3000;
 
 export type FeedbackEntry = "settings" | "result";
-type FeedbackTheme = "classic" | "excel";
-type GameStatus = "playing" | "solved" | "given_up";
 
 function readSentDate(): string | null {
   try {
@@ -25,20 +25,25 @@ function readSentDate(): string | null {
   }
 }
 
-/** 그날 게임 기록에서 진행 상태를 읽는다. 게임 기록은 바꾸지 않는다 (Dec-11) */
-function readGameStatus(quizDate: string): GameStatus {
+/** Supabase feedback 테이블에 넣는다. 결과 행은 받지 않는다(select 권한 없음, feedback-migration Dec-3) */
+async function insertFeedback(feedback: string, quizDate: string) {
+  const supabase = createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const row = buildFeedbackRow({ feedback, userId: session?.user?.id ?? null, quizDate });
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FEEDBACK_TIMEOUT_MS);
   try {
-    const data = JSON.parse(localStorage.getItem(GAME_DATA_KEY) ?? "null");
-    if (!data || data.lastPlayedDate !== quizDate) return "playing";
-    if (data.givenUp) return "given_up";
-    if (data.gameCompleted) return "solved";
-  } catch {
-    // 읽지 못하면 진행 중으로 본다
+    const { error } = await supabase.from("feedback").insert(row).abortSignal(controller.signal);
+    if (error) throw new Error(`feedback insert: ${error.message}`);
+  } finally {
+    clearTimeout(timeout);
   }
-  return "playing";
 }
 
-export function useFeedback({ entry, theme }: { entry: FeedbackEntry; theme: FeedbackTheme }) {
+export function useFeedback({ entry }: { entry: FeedbackEntry }) {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   // 열 때의 KST 날짜로 판정한다. 창은 열 때마다 새로 마운트된다
@@ -50,32 +55,22 @@ export function useFeedback({ entry, theme }: { entry: FeedbackEntry; theme: Fee
   const submit = async () => {
     if (!canSend) return;
     setSending(true);
-    // 보내는 시점의 KST 날짜 (Dec-10)
-    const quizDate = getKSTDateString();
+    // 하루 1회 저장값은 보내는 시점의 KST 날짜 (Dec-10, feedback-migration Dec-25)
+    const sentDate = getKSTDateString();
+    // 행과 Feedback Submitted의 퀴즈 날짜: 열려 있는 게임 화면 기준, 없으면(통계 화면) 오늘 (feedback-migration Dec-24)
+    const quizDate = getOpenQuizDate() ?? sentDate;
     try {
-      const response = await fetch(WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          feedback: trimmed,
-          timestamp: new Date().toISOString(),
-          quizDate,
-          theme,
-          entry,
-          gameStatus: readGameStatus(quizDate),
-        }),
-      });
-      if (!response.ok) throw new Error(`feedback webhook ${response.status}`);
+      await insertFeedback(trimmed, quizDate);
       try {
-        localStorage.setItem(SENT_DATE_KEY, quizDate);
+        localStorage.setItem(SENT_DATE_KEY, sentDate);
       } catch {
         // 저장하지 못해도 이번 창에서는 보낸 상태로 둔다
       }
       // 창은 그대로 두고 감사 안내로 바뀐다. 성공 토스트는 없다 (Dec-18)
       setSent(true);
       setText("");
-      // 본문은 Amplitude에 보내지 않는다 (Dec-8). 퀴즈 날짜는 열려 있는 게임 화면 기준, 없으면(통계 화면) 오늘 (docs/specs/amplitude-migration Dec-34)
-      logEvent("Feedback Submitted", { quiz_date: getOpenQuizDate() ?? quizDate, entry });
+      // 본문은 Amplitude에 보내지 않는다 (Dec-8). 퀴즈 날짜는 행과 같은 값 (docs/specs/amplitude-migration Dec-34)
+      logEvent("Feedback Submitted", { quiz_date: quizDate, entry });
     } catch (error) {
       console.error("Error submitting feedback:", error);
       toast({

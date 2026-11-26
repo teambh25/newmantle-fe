@@ -32,6 +32,12 @@ create table public.feedback (
 
 create index feedback_created_at_idx on public.feedback (created_at desc);
 
+-- 클라이언트가 보낸 값이라 검증되지 않는 컬럼. Table Editor에서 컬럼 설명으로 보인다 (Dec-28)
+comment on column public.feedback.game_status is
+  '클라이언트 localStorage의 게임 기록에서 읽은 값. 사용자가 바꿀 수 있어 검증되지 않음. 정확한 기록은 서버 로그·통계로 확인';
+comment on column public.feedback.subject_id is
+  'user: auth.uid()로 RLS가 검증. guest: 클라이언트가 보낸 UUID라 검증되지 않음 (형식만 확인)';
+
 -- ---- 권한 (Dec-4) ----
 -- RLS는 행만 검사하고 컬럼은 막지 않는다. 클라이언트가 채우는 컬럼에만 insert를 허용한다.
 -- select·update·delete 권한과 정책은 두지 않는다 → anon·로그인 사용자 모두 읽기·수정 불가.
@@ -80,11 +86,8 @@ begin
     url := webhook_url,
     headers := jsonb_build_object('Content-Type', 'application/json'),
     body := jsonb_build_object(
-      -- 본문 최대 500자 + 머리줄 → 디스코드 2000자 제한 안
-      'content', format(
-        E'[%s · %s · %s]\n%s',
-        new.quiz_date, new.game_status, new.user_type, new.feedback
-      ),
+      -- 퀴즈 날짜와 본문만. 받은 시각은 디스코드 메시지에 찍힌다. 본문 최대 500자라 디스코드 2000자 제한 안 (Dec-27)
+      'content', format(E'[%s]\n%s', new.quiz_date, new.feedback),
       -- 본문의 @everyone, @here, 역할·유저 멘션이 알림으로 나가지 않게
       'allowed_mentions', jsonb_build_object('parse', jsonb_build_array())
     )

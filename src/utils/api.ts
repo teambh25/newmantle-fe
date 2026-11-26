@@ -11,7 +11,7 @@ async function getAuthHeader(): Promise<Record<string, string>> {
 
   if (typeof window !== 'undefined') {
     // 처음 만들 때의 Amplitude guest_id 전송은 ensureGuestId가 한다
-    const { guestId } = ensureGuestId();
+    const guestId = ensureGuestId();
     return { 'X-Guest-Id': guestId };
   }
 

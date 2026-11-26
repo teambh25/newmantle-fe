@@ -7,7 +7,6 @@ import { FeedbackEntry, useFeedback } from "@/hooks/useFeedback";
 const SurveyForm: React.FC<{ entry: FeedbackEntry }> = ({ entry }) => {
   const { text, setText, sent, canSend, submit, maxLength } = useFeedback({
     entry,
-    theme: "classic",
   });
 
   if (sent) {
