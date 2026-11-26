@@ -70,7 +70,7 @@
 - 완료 기준:
   - SQL 파일이 저장소에 있고, 디스코드 웹훅 URL이 들어 있지 않다
   - 4. Verification의 Supabase 확인 항목이 모두 통과한다
-- 진행상황: [~] 진행 중 — SQL 작성 (2026-11-25), 대시보드 실행·확인 대기
+- 진행상황: [~] 진행 중 — SQL 작성 (2026-11-25), 대시보드 실행·확인 대기 (Supabase 메모리 최적화가 끝난 뒤 실행, 2026-11-27)
 
 ### Phase 2 — 클라이언트 전환
 - 범위: feat/amplitude merge, 보낼 행을 만드는 함수, 게스트 ID 생성 시 `guest_id` 전송을 `ensureGuestId()`로 옮기기, `useFeedback` 전송을 Supabase insert로 교체(3초 타임아웃), 테스트 stub 교체, 웹훅 body 테스트를 로직 테스트로 이동
