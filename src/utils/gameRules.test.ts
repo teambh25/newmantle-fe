@@ -48,6 +48,10 @@ describe("일반 힌트 순위", () => {
     expect(getNextHintRank(getTopRank([word(22)]))).toBe(20);
   });
 
+  it("순위 단어가 여럿이면 가장 작은 순위 숫자가 최고 순위", () => {
+    expect(getTopRank([word(300), word(50), word(120), outOfRank()])).toBe(50);
+  });
+
   it("힌트로 받은 단어도 최고 순위 기준이 된다", () => {
     expect(getNextHintRank(getTopRank([hintWord(76), word(101)]))).toBe(57);
   });

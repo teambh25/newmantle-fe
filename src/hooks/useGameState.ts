@@ -7,6 +7,16 @@ import {
 } from "@/utils/api";
 import { useToast } from "@/components/ui/use-toast";
 import { logEvent } from "@/utils/amplitude";
+import {
+  getEndedBy,
+  isFirstNormalHint,
+  PAGE_VISIT_LOGGED_KEY,
+  POST_GAME_SUBMITTED_LOGGED_KEY,
+  shouldLogPageVisit,
+  shouldLogPostGameSubmission,
+  shouldLogWordSubmitted,
+  WORD_SUBMITTED_LOGGED_KEY,
+} from "@/utils/analytics";
 import { triggerConfetti } from "@/utils/confetti";
 import { getKSTDateString, toLegacyDateString } from "@/utils/date";
 import { compareByRank, getNextHintRank, getTopRank, isHintDisabled } from "@/utils/gameRules";
@@ -104,10 +114,9 @@ interface GameStateOptions {
 }
 
 
-export function useGameState(gameDate: string, theme?: string, { onRequestError }: GameStateOptions = {}) {
+// 테마·진행 상황 보기는 이벤트 속성이 아니라 사용자 속성으로 본다 (docs/specs/amplitude-migration Dec-29)
+export function useGameState(gameDate: string, { onRequestError }: GameStateOptions = {}) {
   const [gameState, setGameState] = useState<GameData>(getInitialGameState);
-  // 이번 페이지 로드 시각. timeSpent(연속 플레이 시간) 기준이며 새로고침하면 다시 잰다.
-  const startTimeRef = useRef<number>(Date.now());
   const { toast } = useToast();
 
   const notifyRequestError = (kind: GameRequestKind, fallbackToast: { title: string; description: string }) => {
@@ -124,9 +133,15 @@ export function useGameState(gameDate: string, theme?: string, { onRequestError 
 
   useEffect(() => {
     // useGameDate는 ""로 시작해 마운트 후 날짜를 채운다. 빈 값일 때 기록하면 두 번 기록된다.
-    if (!gameDate) return;
-    logEvent("Game Started", { date: gameDate, theme });
-  }, [gameDate, theme]);
+    // 퀴즈 날짜당 1회. 새로고침·테마 전환(게임 화면 재마운트)에도 다시 보내지 않는다 (docs/rules/amplitude.md 2장)
+    if (!shouldLogPageVisit(gameDate, () => localStorage.getItem(PAGE_VISIT_LOGGED_KEY))) return;
+    logEvent("Game Page Visited", { quiz_date: gameDate });
+    try {
+      localStorage.setItem(PAGE_VISIT_LOGGED_KEY, gameDate);
+    } catch {
+      // 저장하지 못하면 다음 방문에 다시 보낸다 (Dec-10)
+    }
+  }, [gameDate]);
 
   useEffect(() => {
     try {
@@ -152,6 +167,30 @@ export function useGameState(gameDate: string, theme?: string, { onRequestError 
     const correctWord = gameState.submittedWords.find((word) => word.correct);
     return correctWord?.attempt ?? gameState.attempts;
   }, [gameState.submittedWords, gameState.attempts]);
+
+  /**
+   * 서버가 판정한 제출(순위·정답·없는 단어)을 그날 1회 기록한다. 오류와 재입력은 여기까지 오지 않는다 (Dec-44)
+   * 게임 중이면 `Word Submitted`, 끝난 뒤면 `Post Game Word Submitted`. 둘은 함께 나가지 않는다 (Dec-43, Dec-46)
+   */
+  const logSubmission = (result: "accepted" | "unknown_word") => {
+    const logOnce = (key: string, send: () => void) => {
+      send();
+      try {
+        localStorage.setItem(key, gameDate);
+      } catch {
+        // 저장하지 못하면 다음 제출에 다시 보낼 수 있다 (Dec-10)
+      }
+    };
+    const readLogged = (key: string) => () => localStorage.getItem(key);
+
+    if (shouldLogWordSubmitted(gameState, gameDate, readLogged(WORD_SUBMITTED_LOGGED_KEY))) {
+      logOnce(WORD_SUBMITTED_LOGGED_KEY, () => logEvent("Word Submitted", { quiz_date: gameDate, result }));
+    } else if (shouldLogPostGameSubmission(gameState, gameDate, readLogged(POST_GAME_SUBMITTED_LOGGED_KEY))) {
+      logOnce(POST_GAME_SUBMITTED_LOGGED_KEY, () =>
+        logEvent("Post Game Word Submitted", { quiz_date: gameDate, ended_by: getEndedBy(gameState) })
+      );
+    }
+  };
 
   /**
    * 제출 결과. 실패면 error(안내 문구)와 함께 reason으로 종류를 알려 준다.
@@ -183,13 +222,7 @@ export function useGameState(gameDate: string, theme?: string, { onRequestError 
 
       const now = Date.now();
 
-      logEvent("Word Submitted", {
-        word: word,
-        attempt: gameState.attempts + 1,
-        similarity: newWord.similarity,
-        isCorrect: newWord.correct,
-        theme,
-      });
+      logSubmission("accepted");
 
       setGameState((prev) => {
         const isCorrect = newWord.correct;
@@ -211,13 +244,12 @@ export function useGameState(gameDate: string, theme?: string, { onRequestError 
       // 축하 멘트는 결과창에 있으므로 토스트는 띄우지 않는다 (docs/tasks/ui/result-box/plan.md)
       if (newWord.correct) {
         logEvent("Game Completed", {
+          quiz_date: gameDate,
           attempts: gameState.attempts + 1,
-          timeSpent: (now - startTimeRef.current) / 1000,
           // 첫 행동부터 정답까지 실제 경과 시간. 첫 행동이 곧 정답이면 0
-          timeSinceFirstAction: (now - (gameState.firstActionAt ?? now)) / 1000,
-          hintUsed: gameState.hintUsed,
-          initialConsonantHintUsed: gameState.initialConsonantHintUsed,
-          theme,
+          time_to_solve: (now - (gameState.firstActionAt ?? now)) / 1000,
+          hint_count: gameState.hintUsed,
+          initial_consonant_hint_used: gameState.initialConsonantHintUsed,
         });
         if (!gameState.givenUp) {
           triggerConfetti();
@@ -230,6 +262,8 @@ export function useGameState(gameDate: string, theme?: string, { onRequestError 
     } catch (error) {
       if (error instanceof Error) {
         if (error.message === "Invalid guess request") {
+          // 없는 단어도 서버가 판정한 제출이다 (Dec-44)
+          logSubmission("unknown_word");
           return { error: "없는 단어입니다", reason: "unknownWord" };
         } else if (error.message === "Invalid date format") {
           return { error: "잘못된 날짜 형식입니다", reason: "failed" };
@@ -243,7 +277,8 @@ export function useGameState(gameDate: string, theme?: string, { onRequestError 
     if (hintDisabled || hintPendingRef.current) return;
 
     // 힌트는 항상 현재 최고 순위보다 높게 주므로, 받은 힌트 단어도 다음 기준이 된다 (A-7).
-    const hintRank = getNextHintRank(getTopRank(gameState.submittedWords));
+    const topRank = getTopRank(gameState.submittedWords);
+    const hintRank = getNextHintRank(topRank);
 
     hintPendingRef.current = true;
     setHintPending(true);
@@ -264,7 +299,15 @@ export function useGameState(gameDate: string, theme?: string, { onRequestError 
         firstActionAt: prev.firstActionAt ?? Date.now(),
       }));
 
-      logEvent("Hint Requested", { hintRank, theme });
+      // 그날 첫 일반 힌트만 (Dec-4)
+      if (isFirstNormalHint(gameState)) {
+        logEvent("Hint Requested", {
+          quiz_date: gameDate,
+          attempts: gameState.attempts,
+          requested_rank: hintRank,
+          top_rank: topRank,
+        });
+      }
     } catch (error) {
       console.error("힌트 요청 중 오류 발생:", error);
       notifyRequestError("hint", {
@@ -300,7 +343,11 @@ export function useGameState(gameDate: string, theme?: string, { onRequestError 
         firstActionAt: prev.firstActionAt ?? Date.now(),
       }));
 
-      logEvent("Initial Consonant Hint Requested", { theme });
+      logEvent("Initial Consonant Hint Requested", {
+        quiz_date: gameDate,
+        attempts: gameState.attempts,
+        top_rank: getTopRank(gameState.submittedWords),
+      });
     } catch (error) {
       console.error("초성 힌트 요청 중 오류 발생:", error);
       notifyRequestError("consonantHint", {
@@ -323,6 +370,7 @@ export function useGameState(gameDate: string, theme?: string, { onRequestError 
     setGiveUpPending(true);
     try {
       const answerData = await getRecentAnswer(gameDate);
+      const now = Date.now();
       setGameState((prev) => {
         const currentAttempts = prev.attempts;
         return {
@@ -345,10 +393,12 @@ export function useGameState(gameDate: string, theme?: string, { onRequestError 
         };
       });
       logEvent("Game Given Up", {
+        quiz_date: gameDate,
         attempts: gameState.attempts,
-        hintUsed: gameState.hintUsed,
-        initialConsonantHintUsed: gameState.initialConsonantHintUsed,
-        theme,
+        // 첫 행동부터 포기까지. 아무것도 하지 않고 포기하면 0
+        time_to_give_up: (now - (gameState.firstActionAt ?? now)) / 1000,
+        hint_count: gameState.hintUsed,
+        initial_consonant_hint_used: gameState.initialConsonantHintUsed,
       });
       return true;
     } catch (error) {

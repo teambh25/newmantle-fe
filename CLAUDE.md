@@ -35,15 +35,21 @@ Harness guide: `src/test/README.md` (fake game server, `renderGame`, presets, cl
 2. Write the tests. Name each test by the behavior it checks, matching the case sentence (precondition → action → expected). Do not put case IDs in test names or comments
 3. Run them and confirm they **fail for the right reason** (missing behavior, not a typo or missing mock). A test that passes before implementation does not distinguish the bug, so revisit the case
 4. Implement until they pass, then update the Phase progress in `plan.md`
-- Things checked by eye on screen (layout, color, timing, real-phone behavior) are not tested in code; add them to `docs/manual-checks.md` instead
-- When adding tests to code that already exists, do not edit implementation files to see them fail. Check that in an isolated copy (git worktree) and only after asking
+- Things checked by eye on screen (layout, color, real-phone behavior) and visual or perceived timing (animation speed, flicker, delay the user feels) are not tested in code; add them to the Verification section of the task's `plan.md` instead
+- When adding tests to code that already exists, check that they fail for the right reason with a mutation check: break the rule in an isolated copy (git worktree) by default, without asking first. Never edit implementation files in the working tree, even temporarily
 
 ### What to test
 - Test behavior, not implementation details: assert on requests sent to the server, hook return values, what is visible on screen, stored `localStorage` values, and Amplitude events. Not on internal state/ref names, call order, or component structure
 - Find screen elements by role and accessible name. Do not assert on copy (toast/notice text), only on presence and which options exist
-- Do not verify the same rule at both logic and screen levels
+- Do not verify the same rule more than once across domain logic, screen, and analytics events (Amplitude)
 - Prefer logic tests over screen tests. Move code that computes what a component shows into pure functions in `utils` and test them there. Write screen tests only for flows that need the real screen (timing, focus, dialogs opening and closing, several components working together), with one representative case per flow
-- Do not test what has no app logic: behavior the library already provides (e.g. Radix closing a dialog by ESC / X / outside click), or elements that are always shown regardless of state. Check how the screen looks in `docs/manual-checks.md` instead
+- Do not test what has no app logic: behavior the library already provides (e.g. Radix closing a dialog by ESC / X / outside click), or elements that are always shown regardless of state. Put how the screen looks in the Verification section of the task's `plan.md` instead
+- Test a delay (`setTimeout`, "after 5 seconds") only when it changes what the user sees or a request result (e.g. a window opening late, a notice dismissing itself, a request timing out). Never wait for real time; use `vi.useFakeTimers()` and `vi.advanceTimersByTime()`. Do not test timers that change no user-facing result (library internals, animations)
+
+### Analytics (Amplitude)
+- Verify only two things: which action sends (or blocks) which event, and any transformation or mapping done only right before sending
+- Do not verify the event payload for values already verified in another module or passed through unchanged
+- Do not split call-count limits into several cases with loose upper bounds ("at most N times"). Verify deduplication only through its core rule (once per same state, zero when the condition is not met) with pure functions or 1–2 representative scenarios
 
 ### Mocking
 - Mock only external boundaries: game server (fake `fetch` in `src/test/fakeGameServer.ts`), Supabase, Amplitude, confetti, time/timezone. Use real app code for hooks, components, `utils`, and UI libraries

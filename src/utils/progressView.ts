@@ -12,7 +12,7 @@ export const PROGRESS_VIEW_STORAGE_KEY = "newmantle-progress-view";
 
 /** 테마별 저장 키, Amplitude 사용자 속성, 게이지를 켠 값(기본값) */
 export const PROGRESS_VIEW_CONFIG = {
-  classic: { storageKey: PROGRESS_VIEW_STORAGE_KEY, userProperty: "progress_view", gauge: "card" },
+  classic: { storageKey: PROGRESS_VIEW_STORAGE_KEY, userProperty: "classic_progress_view", gauge: "card" },
   excel: { storageKey: "newmantle-excel-progress-view", userProperty: "excel_progress_view", gauge: "chart" },
 } as const satisfies Record<ProgressViewTheme, { storageKey: string; userProperty: string; gauge: string }>;
 

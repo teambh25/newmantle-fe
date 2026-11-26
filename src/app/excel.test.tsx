@@ -1,7 +1,7 @@
 // 화면 레벨: excel 테마 메인 화면 (docs/specs/excel-ui)
 // 문구는 검증하지 않는다. 요소는 역할과 접근 가능한 이름으로 찾는다.
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Home from "./page";
 import { notifications } from "@/static/notifications";
@@ -97,8 +97,14 @@ describe("새 공지 알림 / 공지 읽음", () => {
     const legacy = "2026-01-01T00:00:00.000Z";
     localStorage.setItem(LAST_SEEN_KEY, olderId);
     localStorage.setItem(LEGACY_CHECK_KEY, legacy);
+    // setTimeout까지 가짜 타이머로 바꾸고 가짜 시계를 흘린다. 기존 공지 목록은 마운트 100ms 뒤 기존 키를 덮어썼다 (src/test/README.md 시간)
+    vi.useRealTimers();
+    vi.useFakeTimers({
+      toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"],
+      shouldAdvanceTime: true,
+    });
     await renderExcelHome();
-    await new Promise((r) => setTimeout(r, 200));
+    await act(() => vi.advanceTimersByTimeAsync(200));
     expect(localStorage.getItem(LAST_SEEN_KEY)).toBe(olderId);
     expect(localStorage.getItem(LEGACY_CHECK_KEY)).toBe(legacy);
   });

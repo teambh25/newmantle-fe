@@ -3,6 +3,7 @@
 // classic·excel이 같이 쓴다 (docs/specs/excel-ui Dec-2)
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import * as Sentry from "@sentry/nextjs";
 import { logEvent } from "@/utils/amplitude";
 import { fetchSharerStats } from "@/utils/api";
 import { createClient } from "@/utils/supabase/client";
@@ -11,11 +12,9 @@ interface ShareLinkOptions {
   gameDate: string;
   /** 공유 링크에 담을 내 시도 횟수 */
   attempts: number;
-  /** Amplitude 이벤트의 theme */
-  theme: "classic" | "excel";
 }
 
-export function useShareLink({ gameDate, attempts, theme }: ShareLinkOptions) {
+export function useShareLink({ gameDate, attempts }: ShareLinkOptions) {
   const [sharedAttempts, setSharedAttempts] = useState<number | null>(null);
   const [sharerHintCount, setSharerHintCount] = useState<number | null>(null);
   const [isLoadingSharerStats, setIsLoadingSharerStats] = useState(false);
@@ -78,7 +77,7 @@ export function useShareLink({ gameDate, attempts, theme }: ShareLinkOptions) {
     if (navigator.share) {
       try {
         await navigator.share({ url: link });
-        logEvent("Result Shared", { method: "Native Share", attempts, theme });
+        logEvent("Result Shared", { quiz_date: gameDate, method: "native_share" });
         return; // 네이티브 공유는 토스트 없음
       } catch (err) {
         if ((err as Error).name === "AbortError") return; // 사용자가 취소
@@ -92,15 +91,12 @@ export function useShareLink({ gameDate, attempts, theme }: ShareLinkOptions) {
           title: "링크가 복사되었습니다!",
           description: "친구들에게 공유해보세요.",
         });
-        logEvent("Result Shared", { method: "Link Copy", attempts, theme });
+        logEvent("Result Shared", { quiz_date: gameDate, method: "link_copy" });
       },
-      () => {
+      (error: unknown) => {
         toast({ title: "링크 복사 실패", variant: "destructive" });
-        logEvent("Share Error", {
-          method: "Link Copy",
-          errorType: "Clipboard Write Failed",
-          theme,
-        });
+        // 오류는 Amplitude가 아니라 Sentry로 (docs/specs/amplitude-migration Dec-17)
+        Sentry.captureException(error, { tags: { feature: "share", method: "link_copy" } });
       }
     );
   };
