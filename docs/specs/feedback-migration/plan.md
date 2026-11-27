@@ -4,7 +4,7 @@
 ## 1. Context
 - 배경:
   - 지금은 `src/hooks/useFeedback.ts`가 브라우저에서 Make.com 웹훅으로 POST하고, Make.com 시나리오가 시트에 적는다 (main 기준)
-  - 2026-11 Make.com 크레딧이 떨어져 피드백이 시트에 적히지 않았다. 임시로 시나리오를 immediate 모드로 바꿨다 (`docs/todo/make-usage.md`)
+  - 2026-11 Make.com 크레딧이 떨어져 피드백이 시트에 적히지 않았다. 임시로 시나리오를 immediate 모드로 바꿨다 (사용량 메모였던 `docs/todo/make-usage.md`는 Phase 5에서 지웠다)
   - 시트 쪽 시나리오에 맥락 필드가 연결돼 있지 않아 시트에는 본문과 시간만 있다
   - 나중에 유사도 관련 피드백을 모아 유사도 평가 데이터를 만들려 한다. 그때 퀴즈 날짜와 사용자 식별자가 있어야 서버 로그와 맞춰 볼 수 있다
   - 이 브랜치에서 Supabase `feedback` 테이블로 옮기는 작업을 구현까지 했다가 보류했다 (Dec-1). 고려할 점과 구현 위치는 `docs/todo/feedback-supabase.md`
@@ -13,6 +13,7 @@
   - Supabase는 메모리 부족으로 최적화 중이라 이 작업에서 Supabase를 쓰지 않는다 (`docs/specs/db-perf/plan.md`)
   - Apps Script 웹앱은 CORS 사전 확인(OPTIONS)을 처리하지 못한다. 요청은 `text/plain` 본문으로 보낸다 (Dec-2)
   - 웹앱 주소는 클라이언트 번들에 공개된다. 스팸은 막지 못한다 (Make.com 웹훅과 같음)
+  - Apps Script에도 계정별 하루 할당량(실행 수, 외부 요청 수)이 있다. 피드백 규모에서는 여유가 크지만, 다른 스크립트와 같은 계정을 쓰면 함께 센다
   - 디스코드 웹훅 URL은 Apps Script 스크립트 속성에만 둔다. 저장소와 클라이언트에 두지 않는다 (Dec-6)
   - 하루 1회 제한(KST, 브라우저 단위, 보내는 시점 날짜)은 바꾸지 않는다 (`docs/tasks/ui/feedback/decision.md`, Dec-9)
   - 실패 시 입력 유지·재시도 규칙은 없앤다. 화면은 응답을 기다리지 않는다 (Dec-3). 기존 문서(`docs/tasks/ui/feedback`)는 이 작업 범위 밖이라 고치지 않는다
@@ -93,7 +94,9 @@
 ### Phase 5 — 문서 정리
 - 범위: `docs/todo/privacy-terms.md`의 피드백 현황 메모(저장소, 수집 항목, 처리 위탁 업체에서 Make.com 제외, Sentry·디스코드 추가 여부), `docs/todo/make-usage.md` 정리
 - 완료 기준: 두 문서에 Make.com 웹훅이 현재 피드백 경로로 적혀 있지 않다
-- 진행상황: [ ] 대기
+- 진행상황: [x] 완료 (2026-11-27)
+  - `privacy-terms.md`: 수집 표의 피드백 행(시트·디스코드, 저장 항목)과 Amplitude 본문 제거, Sentry 행 추가, 처리 위탁 목록, 확인 사항(시트 보유 기간, Sentry 리전) 갱신
+  - `make-usage.md`: 다루던 문제(사용량, 웹훅 노출)가 전환으로 사라져 삭제. 할당량 메모는 Context로 옮김
 
 ## 4. Verification
 - 테스트 방식은 CLAUDE.md의 Testing 규칙을 따른다. 화면 테스트는 `src/app/feedback.test.tsx`를 고친다
