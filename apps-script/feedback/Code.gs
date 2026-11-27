@@ -57,16 +57,16 @@ function parseInput(e) {
   try {
     data = JSON.parse(e.postData.contents);
   } catch (error) {
-    return null;
+    return reject("JSON이 아님");
   }
-  if (!data || typeof data !== "object") return null;
+  if (!data || typeof data !== "object") return reject("객체가 아님");
 
   const feedback = typeof data.feedback === "string" ? data.feedback.trim() : "";
-  if (feedback.length === 0 || feedback.length > MAX_LENGTH) return null;
-  if (!DATE_PATTERN.test(String(data.quiz_date))) return null;
-  if (GAME_STATUSES.indexOf(data.game_status) === -1) return null;
-  if (USER_TYPES.indexOf(data.user_type) === -1) return null;
-  if (!UUID_PATTERN.test(String(data.subject_id))) return null;
+  if (feedback.length === 0 || feedback.length > MAX_LENGTH) return reject("feedback 길이 " + feedback.length);
+  if (!DATE_PATTERN.test(String(data.quiz_date))) return reject("quiz_date 형식");
+  if (GAME_STATUSES.indexOf(data.game_status) === -1) return reject("game_status 값");
+  if (USER_TYPES.indexOf(data.user_type) === -1) return reject("user_type 값");
+  if (!UUID_PATTERN.test(String(data.subject_id))) return reject("subject_id 형식");
 
   return {
     feedback: feedback,
@@ -77,11 +77,24 @@ function parseInput(e) {
   };
 }
 
+/** 거절 이유는 Apps Script 실행 기록에만 남긴다. 값은 남기지 않는다 */
+function reject(reason) {
+  console.warn("요청 거절: " + reason);
+  return null;
+}
+
 function appendFeedback(input) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
   if (!sheet) throw new Error("'" + SHEET_NAME + "' 탭이 없음");
 
-  const headerRow = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  if (sheet.getLastColumn() === 0) throw new Error("1행에 헤더가 없음");
+  // 헤더 앞뒤 공백은 무시한다
+  const headerRow = sheet
+    .getRange(1, 1, 1, sheet.getLastColumn())
+    .getValues()[0]
+    .map(function (header) {
+      return String(header).trim();
+    });
   const values = {
     receivedAt: new Date(),
     quizDate: input.quizDate,
@@ -95,10 +108,21 @@ function appendFeedback(input) {
   const row = headerRow.map(function () {
     return "";
   });
+  const missing = Object.keys(HEADERS).filter(function (key) {
+    return headerRow.indexOf(HEADERS[key]) === -1;
+  });
+  if (missing.length > 0) {
+    throw new Error(
+      "헤더가 없음: " +
+        missing
+          .map(function (key) {
+            return HEADERS[key];
+          })
+          .join(", ")
+    );
+  }
   Object.keys(HEADERS).forEach(function (key) {
-    const column = headerRow.indexOf(HEADERS[key]);
-    if (column === -1) throw new Error("'" + HEADERS[key] + "' 헤더가 없음");
-    row[column] = values[key];
+    row[headerRow.indexOf(HEADERS[key])] = values[key];
   });
   sheet.appendRow(row);
 }
@@ -108,7 +132,8 @@ function asPlainText(text) {
 }
 
 function formatNotification(input) {
-  const message = "**" + input.quizDate + "**\n" + input.feedback;
+  // allowed_mentions에 더해, @ 뒤에 폭 없는 공백을 넣어 멘션 문법 자체를 깨뜨린다 (Dec-6)
+  const message = "**" + input.quizDate + "**\n" + input.feedback.replace(/@/g, "@\u200b");
   return message.length > DISCORD_MAX_LENGTH ? message.slice(0, DISCORD_MAX_LENGTH - 1) + "…" : message;
 }
 
