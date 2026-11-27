@@ -34,6 +34,8 @@ const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const GAME_STATUSES = ["playing", "solved", "given_up"];
 const USER_TYPES = ["user", "guest"];
+/** 디스코드 알림 머리줄에 쓰는 게임 상태 이름 (Dec-6) */
+const GAME_STATUS_LABELS = { playing: "진행 중", solved: "정답", given_up: "포기" };
 
 function doPost(e) {
   const input = parseInput(e);
@@ -133,7 +135,9 @@ function asPlainText(text) {
 
 function formatNotification(input) {
   // allowed_mentions에 더해, @ 뒤에 폭 없는 공백을 넣어 멘션 문법 자체를 깨뜨린다 (Dec-6)
-  const message = "**" + input.quizDate + "**\n" + input.feedback.replace(/@/g, "@\u200b");
+  const message =
+    "**" + input.quizDate + " 퀴즈 · " + GAME_STATUS_LABELS[input.gameStatus] + "**\n" +
+    input.feedback.replace(/@/g, "@\u200b");
   return message.length > DISCORD_MAX_LENGTH ? message.slice(0, DISCORD_MAX_LENGTH - 1) + "…" : message;
 }
 
