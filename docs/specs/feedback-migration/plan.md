@@ -131,7 +131,7 @@
 | 세 진입점(설정, classic 결과창, excel 피드백 행)에서 보낸 피드백이 새 파일에 쌓인다 | 데스크톱 | 통과(2026-11-27) |
 | 로그인 / 게스트 각각 `user_type`·`subject_id`가 맞다. 게스트는 localStorage `newmantle_guest_id`·게임 요청 `X-Guest-Id`와 같은 값 | 데스크톱 | 통과(2026-11-27) |
 | 보내기를 누르면 바로 감사 상태로 바뀐다 | 데스크톱 + 모바일 | 데스크톱 통과(2026-11-27), 모바일 대기 |
-| 웹앱 요청만 막아 실패시키면(개발자 도구 요청 차단에 `script.google.com`) Sentry에 `feature: feedback` 이벤트가 들어온다. 오프라인으로 하면 Sentry 전송도 막혀 확인할 수 없다 | 데스크톱 | 통과(2026-11-27, 이벤트 이름 정리 전 `TypeError`로 수신). 정리 뒤 `FeedbackSendError`로 오는지 한 번 더 |
+| 웹앱 요청만 막아 실패시키면(개발자 도구 요청 차단에 `script.google.com`) Sentry에 `feature: feedback` 이벤트가 들어온다. 오프라인으로 하면 Sentry 전송도 막혀 확인할 수 없다 | 데스크톱 | 통과(2026-11-27, 이벤트 이름 정리 전 `TypeError`로 수신). 정리 뒤 `FeedbackSendError`로 수신 확인 |
 
 ## 5. Prerequisites
 - 새 스프레드시트 파일 생성과 Apps Script 배포 권한 (웹앱: 실행 계정은 본인, 접근은 모든 사용자)
