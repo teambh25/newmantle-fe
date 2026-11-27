@@ -213,17 +213,17 @@ describe("전송", () => {
   });
 
   // 응답을 기다리지 않는다 (docs/specs/feedback-migration Dec-3)
-  it("Apps Script가 아직 응답하지 않은 상태 → 보내기 → 바로 보낸 상태가 되고, 하루 1회 저장값이 오늘이다", async () => {
+  it("Apps Script가 아직 응답하지 않은 상태 → 보내기 → 바로 보낸 상태가 된다", async () => {
     const { user } = await renderHome();
     const d = await openFromSettings(user);
     await write(user, d, "의견");
     feedbackScript.holdNext();
     await send(user, d);
     await expectSentState(d);
-    expect(localStorage.getItem(SENT_KEY)).toBe(getKSTDateString());
   });
 });
 
+// 저장값 쓰기는 아래 첫 테스트와 KST 자정 테스트에서, 읽기는 다시 열기·결과창·excel·날짜 비교 테스트에서 본다
 describe("퀴즈 날짜(KST)당 1회", () => {
   it("피드백을 입력하고 보내기 → 창은 열린 채 보낸 상태, 토스트 없음, 저장값이 오늘, alert 없음", async () => {
     const { user } = await renderHome();
@@ -257,18 +257,6 @@ describe("퀴즈 날짜(KST)당 1회", () => {
     const { user } = await renderHome();
     const d = await openFromResult(user);
     await expectSentState(d);
-  });
-
-  it("보낸 뒤 새로고침해도 보낸 상태", async () => {
-    const first = await renderHome();
-    const d = await openFromSettings(first.user);
-    await write(first.user, d, "의견");
-    await send(first.user, d);
-    await expectSentState(d);
-    first.unmount();
-
-    const { user } = await renderHome();
-    await expectSentState(await openFromSettings(user));
   });
 
   it("오늘 보냄 → excel로 바꿔 열어도 보낸 상태", async () => {
