@@ -19,7 +19,7 @@ describe("게스트 id 최초 생성", () => {
     expect(ensureGuestId()).toBe("11111111-2222-4333-8444-555555555555");
   });
 
-  // 게임 요청·피드백 어디서 만들든 빠지지 않게, 만드는 곳에서 보낸다 (docs/specs/feedback-migration Dec-23)
+  // 게임 요청·피드백 어디서 만들든 빠지지 않게, 만드는 곳에서 보낸다 (docs/specs/feedback-migration Dec-8)
   it("저장된 게스트 id가 없으면 → 게스트 id를 얻을 때 Amplitude 사용자 속성을 한 번 보낸다", () => {
     ensureGuestId();
 

@@ -1,12 +1,12 @@
 import { ensureGuestId } from "@/utils/guestId";
 
-// 피드백으로 Supabase `feedback` 테이블에 넣을 행 (docs/specs/feedback-migration)
+// 피드백으로 시트에 적을 행. Apps Script(apps-script/feedback/Code.gs)로 보낸다 (docs/specs/feedback-migration)
 
 const GAME_DATA_KEY = "newmantle_game_data";
 
 type GameStatus = "playing" | "solved" | "given_up";
 
-/** insert 권한이 있는 컬럼만 담는다. status·created_at은 DB가 정한다 (Dec-4, Dec-21) */
+/** 클라이언트가 정하는 값만 담는다. 받은 시각은 Apps Script가 적는다 (Dec-7) */
 export interface FeedbackRow {
   feedback: string;
   quiz_date: string;
@@ -30,8 +30,8 @@ function readGameStatus(quizDate: string): GameStatus {
 
 /**
  * 보낼 행을 만든다.
- * - 로그인했으면 Supabase user id, 아니면 게스트 ID. 게스트 ID가 없으면 만든다 (Dec-7, Dec-22)
- * - quizDate는 hook이 열린 게임 화면 기준으로 정해 넘긴다. game_status도 그 날짜로 읽는다 (Dec-24)
+ * - 로그인했으면 Supabase user id, 아니면 게스트 ID. 게스트 ID가 없으면 만든다 (Dec-7, Dec-8)
+ * - quizDate는 hook이 열린 게임 화면 기준으로 정해 넘긴다. game_status도 그 날짜로 읽는다 (Dec-9)
  */
 export function buildFeedbackRow({
   feedback,

@@ -2,7 +2,7 @@ import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, vi } from "vitest";
 import { cleanup } from "@testing-library/react";
 import { gameServer } from "./fakeGameServer";
-import { feedbackTable } from "./fakeFeedbackTable";
+import { feedbackScript } from "./fakeFeedbackScript";
 
 // ---- 외부 의존성 mock ----
 
@@ -20,10 +20,13 @@ vi.mock("@amplitude/analytics-browser", () => ({
   },
 }));
 
+// Sentry SDK: 직접 보고(captureException) 호출만 기록
+vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
+
 // 축하 효과 라이브러리: 호출 여부만 기록
 vi.mock("canvas-confetti", () => ({ default: vi.fn() }));
 
-// Supabase: 로그인하지 않은 게스트. 피드백 insert는 가짜 테이블로
+// Supabase: 로그인하지 않은 게스트
 vi.mock("@/utils/supabase/client", () => ({
   createClient: () => ({
     auth: {
@@ -33,7 +36,6 @@ vi.mock("@/utils/supabase/client", () => ({
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
     },
     from: (table: string) => {
-      if (table === "feedback") return feedbackTable.table();
       throw new Error(`setup.ts Supabase mock: ${table} 테이블은 테스트 파일에서 mock한다`);
     },
   }),
@@ -67,10 +69,13 @@ beforeEach(() => {
   // 축하 효과는 setInterval로 3초간 그려진다. 다른 테스트로 새지 않도록 interval만 가짜로 돌린다
   vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
   gameServer.reset();
-  feedbackTable.reset();
+  feedbackScript.reset();
   vi.stubGlobal(
     "fetch",
-    vi.fn((input: RequestInfo | URL) => gameServer.fetch(input))
+    vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+      return feedbackScript.matches(url) ? feedbackScript.fetch(url, init) : gameServer.fetch(input);
+    })
   );
   // 요청 실패 케이스의 console.error 출력 억제
   vi.spyOn(console, "error").mockImplementation(() => {});

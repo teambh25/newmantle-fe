@@ -72,12 +72,12 @@
 - 진행상황: [~] 진행 중 — 코드 작성, 시트 만들기·배포, 실제 웹앱 확인 (2026-11-27). 남은 것: 팀원 공유. 브라우저 응답 읽기·`keepalive`는 Phase 3에서 확인
 
 ### Phase 3 — 클라이언트 전환
-- 범위: Supabase 피드백 코드 삭제, 전송을 Apps Script로 교체(기다리지 않음, `keepalive`), 실패 시 Sentry 보고, 테스트 교체
+- 범위: Supabase 피드백 코드 삭제, 전송을 Apps Script로 교체(기다리지 않음, `keepalive`), 실패 시 Sentry 보고, 테스트 교체. 보내는 중 표시(excel의 대기 문구·회전 아이콘)는 기다리지 않으니 없앤다 (Dec-3)
 - 완료 기준:
   - `useFeedback.ts`에 Make.com URL과 Supabase insert가 없고, `supabase/migrations/`와 `src/test/fakeFeedbackTable.ts`가 없다
   - 4. Verification의 화면 테스트가 통과한다
   - `npm test`, `npm run lint`, `npm run build`가 통과한다
-- 진행상황: [ ] 대기
+- 진행상황: [~] 진행 중 — 테스트 작성·실패 확인, 전송 교체, Supabase 피드백 코드 삭제, `npm test`·`npm run lint`·`tsc`·`npm run build` 통과, mutation 확인 (2026-11-27). 남은 것: 화면 확인
 
 ### Phase 4 — 배포와 Make.com 종료
 - 범위: 프론트 배포, 실제 환경 확인, Make.com 웹훅 큐 처리 대기, 시나리오 종료와 웹훅 삭제

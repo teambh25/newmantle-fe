@@ -29,9 +29,10 @@ Vitest + React Testing Library + user-event. 실행 명령은 루트 `README.md`
 | 대상 | 방식 | 위치 |
 |---|---|---|
 | 게임 서버 API | `fetch`를 가로채는 가짜 서버. API 클라이언트(`api.ts`)는 실제 코드 | `fakeGameServer.ts` |
-| Supabase | 게스트(세션 없음) 고정. `from("feedback")`은 가짜 피드백 테이블 | `setup.ts` |
-| Supabase `feedback` insert | insert 행을 기록. 오류 응답·네트워크 오류·붙잡기(abortSignal로 중단 가능) | `fakeFeedbackTable.ts` |
+| 피드백 Apps Script 웹앱 | 웹앱 URL로 가는 `fetch`만 가로채 요청(본문·Content-Type·keepalive)을 기록. 성공 표시 없는 응답·네트워크 오류·무응답(signal로 중단 가능) | `fakeFeedbackScript.ts` |
+| Supabase | 게스트(세션 없음) 고정 | `setup.ts` |
 | Amplitude | `track` 등 spy | `setup.ts` |
+| Sentry | `captureException` spy | `setup.ts` |
 | 축하 효과 (`canvas-confetti`) | 호출 spy | `setup.ts` |
 | 시간·기기 타임존 | 가짜 타이머 + `process.env.TZ` | `clock.ts` |
 
@@ -59,14 +60,14 @@ Vitest + React Testing Library + user-event. 실행 명령은 루트 `README.md`
 |---|---|
 | `setup.ts` | 모든 테스트 전에 실행 (`vitest.config.ts`의 `setupFiles`). 외부 mock, jsdom에 없는 브라우저 API, 테스트마다 초기화 |
 | `fakeGameServer.ts` | 가짜 게임 서버 (`gameServer`), 정답 상수 `ANSWER` |
-| `fakeFeedbackTable.ts` | 가짜 피드백 테이블 (`feedbackTable`): `inserts`, `failNext()`, `networkErrorNext()`, `holdNext()` → `release()`. Supabase client mock의 `from("feedback")`에 `feedbackTable.table()`을 돌려준다. 예: `src/app/feedback.test.tsx` |
+| `fakeFeedbackScript.ts` | 가짜 피드백 웹앱 (`feedbackScript`): `requests`, `rejectNext()`, `networkErrorNext()`, `holdNext()`. 예: `src/app/feedback.test.tsx` |
 | `formHarness.tsx` | 화면 레벨 도구: 게임 화면 렌더링·조작 (NewMantleForm 폴더의 화면 테스트가 같이 씀) |
 | `gameHarness.ts` | 로직 레벨 도구: `renderGame`, `presets`, `amplitudeEvents`, `confettiFired`, `GAME_DATE` |
 | `clock.ts` | 기기 타임존·현재 시각 고정: `setClock`, 기준 시각 상수 |
 
 ## 테스트마다 자동으로 되는 것 (`setup.ts`)
 
-- 시작 전: `gameServer.reset()`, `feedbackTable.reset()`, `fetch`를 가짜 서버로 교체, `setInterval`만 가짜 타이머(축하 효과가 다음 테스트로 새지 않게), `console.error` 출력 억제
+- 시작 전: `gameServer.reset()`, `feedbackScript.reset()`, `fetch`를 가짜 서버로 교체(웹앱 URL은 가짜 웹앱으로), `setInterval`만 가짜 타이머(축하 효과가 다음 테스트로 새지 않게), `console.error` 출력 억제
 - 끝난 후: 렌더링 정리, 타이머 정리, `localStorage.clear()`, URL을 `/`로, mock 호출 기록 초기화, `vi.stubGlobal` 해제
 
 따라서 테스트 안에서 저장소·URL·서버 상태를 직접 되돌릴 필요는 없다.

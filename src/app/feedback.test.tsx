@@ -4,15 +4,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import * as amplitude from "@amplitude/analytics-browser";
+import * as Sentry from "@sentry/nextjs";
 import Home from "./page";
 import { Toaster } from "@/components/ui/toaster";
 import { ANSWER } from "@/test/fakeGameServer";
-import { feedbackTable } from "@/test/fakeFeedbackTable";
+import { feedbackScript } from "@/test/fakeFeedbackScript";
 import { amplitudeEvents } from "@/test/gameHarness";
 import { KST_AFTERNOON, KST_BEFORE_MIDNIGHT, KST_MIDNIGHT, setClock } from "@/test/clock";
 import { getKSTDateString } from "@/utils/date";
 
-// 메인 화면이 쓰는 Supabase 메서드 (비로그인 게스트). 피드백 insert는 가짜 테이블로
+// 메인 화면이 쓰는 Supabase 메서드 (비로그인 게스트)
 vi.mock("@/utils/supabase/client", () => ({
   createClient: () => ({
     auth: {
@@ -21,10 +22,7 @@ vi.mock("@/utils/supabase/client", () => ({
       getSession: async () => ({ data: { session: null } }),
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
     },
-    from: (table: string) =>
-      table === "feedback"
-        ? feedbackTable.table()
-        : { select: () => ({ eq: () => ({ single: async () => ({ data: null }) }) }) },
+    from: () => ({ select: () => ({ eq: () => ({ single: async () => ({ data: null }) }) }) }),
   }),
 }));
 
@@ -137,9 +135,9 @@ async function write(user: User, d: HTMLElement, text: string) {
 }
 
 async function send(user: User, d: HTMLElement) {
-  const before = feedbackTable.inserts.length;
+  const before = feedbackScript.requests.length;
   await user.click(sendButton(d)!);
-  await waitFor(() => expect(feedbackTable.inserts.length).toBe(before + 1));
+  await waitFor(() => expect(feedbackScript.requests.length).toBe(before + 1));
 }
 
 /** 보낸 상태: 입력창과 보내기 버튼이 없고, 창 안에 감사 안내(status)가 있음 */
@@ -164,9 +162,17 @@ function expectInputState(d: HTMLElement) {
   expect(sendButton(d)).toBeInTheDocument();
 }
 
-// Radix가 화면 낭독기용 안내 span(role=status)을 1초 동안 함께 붙인다. 가짜 타이머에서 둘이 같이 보일 수 있어 첫 번째만 쓴다
-const failureToast = async () => (await screen.findAllByRole("status"))[0];
-const lastInsert = () => feedbackTable.inserts[feedbackTable.inserts.length - 1];
+const lastRequest = () => feedbackScript.requests[feedbackScript.requests.length - 1];
+const sentryReports = () => vi.mocked(Sentry.captureException).mock.calls;
+/** Sentry로 간 내용 전체. Error는 JSON.stringify로 메시지가 빠지므로 직접 펼친다 */
+const sentryText = () =>
+  JSON.stringify(sentryReports(), (_key, value) =>
+    value instanceof Error ? { name: value.name, message: value.message, cause: value.cause } : value
+  );
+
+/** 감사 안내(창 안 status) 말고는 status가 없음 = 토스트 없음 */
+const expectNoToast = (d: HTMLElement) =>
+  expect(screen.getAllByRole("status").every((el) => d.contains(el))).toBe(true);
 
 /**
  * setTimeout까지 가짜 타이머로 바꾼다. setup.ts가 setInterval만 가짜로 깔아 두었으므로 한 번 풀고 다시 깐다 (src/test/README.md 시간).
@@ -193,29 +199,39 @@ describe("입력", () => {
 
 describe("전송", () => {
   // 보내는 행의 필드 값은 로직 테스트(src/utils/feedback.test.ts)에서 확인한다
-  it("응답 전에는 보내기 비활성, 다시 눌러도 insert 1회", async () => {
+  it("피드백을 입력하고 보내기 → Apps Script로 text/plain·keepalive 요청이 한 번 나간다", async () => {
     const { user } = await renderHome();
     const d = await openFromSettings(user);
     await write(user, d, "의견");
-    const held = feedbackTable.holdNext();
     await send(user, d);
-    expect(sendButton(d)).toBeDisabled();
-    await user.click(sendButton(d)!);
-    await held.release();
-    expect(feedbackTable.inserts).toHaveLength(1);
+    expect(feedbackScript.requests).toHaveLength(1);
+    expect(lastRequest()).toMatchObject({
+      body: { feedback: "의견" },
+      contentType: expect.stringMatching(/^text\/plain/),
+      keepalive: true,
+    });
+  });
+
+  // 응답을 기다리지 않는다 (docs/specs/feedback-migration Dec-3)
+  it("Apps Script가 아직 응답하지 않은 상태 → 보내기 → 바로 보낸 상태가 되고, 하루 1회 저장값이 오늘이다", async () => {
+    const { user } = await renderHome();
+    const d = await openFromSettings(user);
+    await write(user, d, "의견");
+    feedbackScript.holdNext();
+    await send(user, d);
+    await expectSentState(d);
+    expect(localStorage.getItem(SENT_KEY)).toBe(getKSTDateString());
   });
 });
 
 describe("퀴즈 날짜(KST)당 1회", () => {
-  it("피드백을 입력하고 보내기 → feedback 테이블에 한 행 insert, 창은 열린 채 보낸 상태, 토스트 없음, 저장값이 오늘, alert 없음", async () => {
+  it("피드백을 입력하고 보내기 → 창은 열린 채 보낸 상태, 토스트 없음, 저장값이 오늘, alert 없음", async () => {
     const { user } = await renderHome();
     const d = await openFromSettings(user);
     await write(user, d, "의견");
     await send(user, d);
     await expectSentState(d);
-    expect(feedbackTable.inserts).toHaveLength(1);
-    // 감사 안내(창 안 status) 말고는 status가 없음 = 토스트 없음
-    expect(screen.getAllByRole("status").every((el) => d.contains(el))).toBe(true);
+    expectNoToast(d);
     expect(localStorage.getItem(SENT_KEY)).toBe(getKSTDateString());
     expect(window.alert).not.toHaveBeenCalled();
   });
@@ -280,7 +296,7 @@ describe("퀴즈 날짜(KST)당 1회", () => {
     else expectInputState(d);
   });
 
-  // 행과 이벤트의 quiz_date는 같은 규칙이라 한 테스트에서 함께 본다 (docs/specs/feedback-migration Dec-24, Dec-25)
+  // 행과 이벤트의 quiz_date는 같은 규칙이라 한 테스트에서 함께 본다 (docs/specs/feedback-migration Dec-9)
   it("게임 화면을 연 채 KST 자정이 지난 뒤 피드백을 보내면 → 행과 Feedback Submitted의 quiz_date는 어제, 하루 1회 저장값은 오늘", async () => {
     setClock("Asia/Seoul", KST_BEFORE_MIDNIGHT);
     const { user } = await renderHome();
@@ -289,7 +305,7 @@ describe("퀴즈 날짜(KST)당 1회", () => {
     await write(user, d, "의견");
     await send(user, d);
     await expectSentState(d);
-    expect(lastInsert()).toMatchObject({ quiz_date: "2026-11-10" });
+    expect(lastRequest().body).toMatchObject({ quiz_date: "2026-11-10" });
     expect(amplitudeEvents("Feedback Submitted").map((e) => e.quiz_date)).toEqual(["2026-11-10"]);
     expect(localStorage.getItem(SENT_KEY)).toBe("2026-11-11");
   });
@@ -330,71 +346,51 @@ describe("닫으면 연 곳으로", () => {
   });
 });
 
+// 실패는 화면에 보이지 않고 Sentry로 알린다 (docs/specs/feedback-migration Dec-3, Dec-4)
 describe("전송 실패", () => {
   it.each([
-    ["오류 응답", () => feedbackTable.failNext()],
-    ["네트워크 오류", () => feedbackTable.networkErrorNext()],
-  ])("insert가 %s → 실패 토스트, 입력 유지, 저장 안 함, alert 없음", async (_label, failNext) => {
+    ["성공 표시 없이 응답", () => feedbackScript.rejectNext()],
+    ["네트워크 오류로 실패", () => feedbackScript.networkErrorNext()],
+  ])("Apps Script가 %s → 보내기 → Sentry에 피드백 태그로 한 번 보고되고 본문은 없으며, 화면은 보낸 상태 그대로다", async (_label, failNext) => {
     const { user } = await renderHome();
     const d = await openFromSettings(user);
-    await write(user, d, "의견");
+    await write(user, d, "비밀 의견");
     failNext();
     await send(user, d);
 
-    expect(await failureToast()).toBeInTheDocument();
-    expect(input(d)).toHaveValue("의견");
-    await waitFor(() => expect(sendButton(d)).toBeEnabled());
-    expect(localStorage.getItem(SENT_KEY)).toBeNull();
-    expect(window.alert).not.toHaveBeenCalled();
-  });
-
-  it("실패 뒤 다시 보내 성공하면 보낸 상태", async () => {
-    const { user } = await renderHome();
-    const d = await openFromSettings(user);
-    await write(user, d, "의견");
-    feedbackTable.failNext();
-    await send(user, d);
-    await failureToast();
-    await waitFor(() => expect(sendButton(d)).toBeEnabled());
-
-    await send(user, d);
-    expect(feedbackTable.inserts).toHaveLength(2);
+    await waitFor(() => expect(sentryReports()).toHaveLength(1));
+    expect(sentryReports()[0][1]).toMatchObject({ tags: { feature: "feedback" } });
+    expect(sentryText()).not.toContain("비밀 의견");
     await expectSentState(d);
-    expect(localStorage.getItem(SENT_KEY)).toBe(getKSTDateString());
+    expectNoToast(d);
   });
 
-  it("insert가 3초 넘게 응답하지 않음 → 3초 뒤 실패 토스트, 입력 유지, 다시 보낼 수 있음", async () => {
+  it("Apps Script가 제한 시간 넘게 응답하지 않음 → 제한 시간이 지나면 Sentry에 한 번 보고된다", async () => {
     fakeTimeouts();
     const { user } = await renderHome();
     const d = await openFromSettings(user);
     await write(user, d, "의견");
-    feedbackTable.holdNext();
+    feedbackScript.holdNext();
     await send(user, d);
-    expect(sendButton(d)).toBeDisabled();
+    expect(sentryReports()).toHaveLength(0);
 
-    await act(() => vi.advanceTimersByTimeAsync(3000));
-    expect(await failureToast()).toBeInTheDocument();
-    expect(input(d)).toHaveValue("의견");
-    await waitFor(() => expect(sendButton(d)).toBeEnabled());
-    expect(localStorage.getItem(SENT_KEY)).toBeNull();
+    await act(() => vi.advanceTimersByTimeAsync(10_000));
+    await waitFor(() => expect(sentryReports()).toHaveLength(1));
   });
 
-  it("excel에서 insert 오류 → 실패 토스트, 입력 유지, 저장 안 함", async () => {
-    useExcel();
+  it("Apps Script가 성공을 돌려줌 → 보내기 → Sentry에 보고되지 않는다", async () => {
     const { user } = await renderHome();
     const d = await openFromSettings(user);
     await write(user, d, "의견");
-    feedbackTable.failNext();
     await send(user, d);
-
-    expect(await failureToast()).toBeInTheDocument();
-    expect(input(d)).toHaveValue("의견");
-    expect(localStorage.getItem(SENT_KEY)).toBeNull();
+    await expectSentState(d);
+    await act(() => new Promise((r) => setTimeout(r, 0)));
+    expect(sentryReports()).toHaveLength(0);
   });
 });
 
 describe("Amplitude", () => {
-  it("보내기 성공 → Feedback Submitted 1회, 본문은 어디에도 없음", async () => {
+  it("보내기 → Feedback Submitted 1회, 본문은 어디에도 없음", async () => {
     const { user } = await renderHome();
     const d = await openFromSettings(user);
     await write(user, d, "좋아요 굿");
@@ -406,13 +402,14 @@ describe("Amplitude", () => {
     expect(JSON.stringify(vi.mocked(amplitude.track).mock.calls)).not.toContain("좋아요 굿");
   });
 
-  it("보내기 실패 → Feedback Submitted 없음", async () => {
+  // 저장 성공 여부가 아니라 보내려 한 행동을 남긴다 (docs/specs/feedback-migration Dec-16)
+  it("Apps Script가 성공 표시 없이 응답 → 보내기 → Feedback Submitted는 1회 나간다", async () => {
     const { user } = await renderHome();
     const d = await openFromSettings(user);
     await write(user, d, "의견");
-    feedbackTable.failNext();
+    feedbackScript.rejectNext();
     await send(user, d);
-    await failureToast();
-    expect(amplitudeEvents("Feedback Submitted")).toHaveLength(0);
+    await waitFor(() => expect(sentryReports()).toHaveLength(1));
+    expect(amplitudeEvents("Feedback Submitted")).toHaveLength(1);
   });
 });

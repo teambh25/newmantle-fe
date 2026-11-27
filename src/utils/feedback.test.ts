@@ -11,7 +11,7 @@ const USER_ID = "0b7e1c9a-2d3f-4e5a-9b8c-7d6e5f4a3b2c";
 const TODAY = "2026-11-10";
 const YESTERDAY = "2026-11-09";
 
-// 퀴즈 날짜는 hook이 열린 게임 화면 기준으로 정해 넘긴다 (Dec-24)
+// 퀴즈 날짜는 hook이 열린 게임 화면 기준으로 정해 넘긴다 (Dec-9)
 const base = { feedback: "의견", userId: null, quizDate: TODAY } as const;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 

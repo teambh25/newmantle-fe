@@ -52,7 +52,7 @@ Harness guide: `src/test/README.md` (fake game server, `renderGame`, presets, cl
 - Do not split call-count limits into several cases with loose upper bounds ("at most N times"). Verify deduplication only through its core rule (once per same state, zero when the condition is not met) with pure functions or 1–2 representative scenarios
 
 ### Mocking
-- Mock only external boundaries: game server (fake `fetch` in `src/test/fakeGameServer.ts`), Supabase, Amplitude, confetti, time/timezone. Use real app code for hooks, components, `utils`, and UI libraries
+- Mock only external boundaries: game server (fake `fetch` in `src/test/fakeGameServer.ts`), feedback Apps Script (fake `fetch` in `src/test/fakeFeedbackScript.ts`), Supabase, Amplitude, Sentry, confetti, time/timezone. Use real app code for hooks, components, `utils`, and UI libraries
 - Do not `vi.mock` `api.ts` or hooks. Intercepting at HTTP keeps tests valid when the client changes and lets tests check request paths
 - Per-file overrides (e.g. a logged-in Supabase session) go in that test file with `vi.mock`, and must include every method the rendered screen calls
 
