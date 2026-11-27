@@ -9,9 +9,8 @@ import { buildFeedbackRow } from "@/utils/feedback";
 
 // 피드백 창 공통 로직 (classic·excel). docs/tasks/ui/feedback/plan.md, 전송은 docs/specs/feedback-migration
 
-/** 피드백을 시트에 적는 Apps Script 웹앱 (apps-script/feedback/Code.gs). 공개 주소다 */
-const FEEDBACK_URL =
-  "https://script.google.com/macros/s/AKfycbwyVus_mrlFUJEw4pmVRDg_WzaBya6FgkE6vSq-HkcLWyd2PRrNBZBc6Rvktzlo7hWAaQ/exec";
+/** 피드백을 시트에 적는 Apps Script 웹앱 (apps-script/feedback/Code.gs). 공개 주소다. 개발 중 테스트용 웹앱은 .env.local로 바꾼다 */
+const FEEDBACK_URL = process.env.NEXT_PUBLIC_FEEDBACK_URL;
 /** 마지막으로 보낸 KST 날짜. 하루 1회 판정용, 보내는 시점 날짜 (Dec-2, Dec-14, feedback-migration Dec-9) */
 const SENT_DATE_KEY = "newmantle_feedback_sent_date";
 const FEEDBACK_MAX_LENGTH = 500;
@@ -37,6 +36,8 @@ async function postFeedback(feedback: string, quizDate: string) {
     data: { session },
   } = await createClient().auth.getSession();
   const row = buildFeedbackRow({ feedback, userId: session?.user?.id ?? null, quizDate });
+
+  if (!FEEDBACK_URL) throw new Error("NEXT_PUBLIC_FEEDBACK_URL is not set");
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FEEDBACK_TIMEOUT_MS);

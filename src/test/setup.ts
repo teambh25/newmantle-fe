@@ -4,6 +4,9 @@ import { cleanup } from "@testing-library/react";
 import { gameServer } from "./fakeGameServer";
 import { feedbackScript } from "./fakeFeedbackScript";
 
+// 피드백 웹앱 주소. Vitest는 .env를 읽지 않아 테스트용 값을 둔다 (가짜 웹앱이 이 접두어로 가로챈다)
+process.env.NEXT_PUBLIC_FEEDBACK_URL = "https://script.google.com/macros/s/test/exec";
+
 // ---- 외부 의존성 mock ----
 
 // Amplitude SDK: 이벤트 기록만 남긴다

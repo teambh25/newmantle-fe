@@ -218,3 +218,15 @@
 근거 — A면 본문이 수식으로 실행된다. 시트 안 다른 값을 참조하거나, 시트를 내려받아 다른 프로그램에서 열 때 문제가 될 수 있다. `'`는 시트에 보이지 않고 값을 글자로 고정한다. 디스코드 알림에는 원래 본문을 보낸다
 영향 — `apps-script/feedback/Code.gs`, Verification
 상태 — active
+
+### Dec-18. 웹앱 주소를 어디에 두나
+영향도: local · 출처: user-suggested
+
+문제 — Apps Script 웹앱 주소를 코드 상수로 둘까, 환경 변수로 둘까?
+옵션
+  (A) `useFeedback.ts` 상수 (Make.com 웹훅 주소와 같은 방식)
+  (B) 커밋된 `.env`의 `NEXT_PUBLIC_FEEDBACK_URL`
+선택 — B
+근거 — 이 프로젝트는 게임 API 주소, Supabase URL, Amplitude 키 같은 공개 설정을 커밋된 `.env`에 둔다. 웹앱 주소도 공개 값이라 같은 곳이 맞다. `.env.local`로 개발 중에만 테스트용 웹앱을 가리킬 수 있어 실제 시트에 테스트 행이 쌓이지 않게 할 수 있다. A는 그런 전환이 코드 수정이다. 숨기는 효과는 둘 다 없다(`NEXT_PUBLIC_`은 번들에 들어감). Vitest는 `.env`를 읽지 않아 `src/test/setup.ts`에서 테스트용 주소를 둔다. 값이 없으면 전송을 실패로 보고 Sentry에 알린다
+영향 — `.env`, `src/hooks/useFeedback.ts`, `src/test/setup.ts`
+상태 — active
