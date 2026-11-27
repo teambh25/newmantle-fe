@@ -21,7 +21,7 @@
 | 게임 통계 | 백엔드 (버퍼 + DB) | user id. 일별 상세는 7일 후 자동 삭제, Overview(캘린더·요약)는 영구 → 탈퇴 시 지울 대상은 주로 Overview (`docs/api/stats.md`) |
 | 로그인 전 기록 (연결된 게스트) | 백엔드 | `POST /v2/stats/link` 시 user id로 옮겨지고 guest id 기록은 즉시 삭제 (확인됨). 연동 안 된 게스트 기록은 7일 후 자동 삭제 |
 | 추측한 단어 | 백엔드 서버 로그 | 보관 기간·키 확인 필요 |
-| 피드백 | Supabase `feedback` (피드백 마이그레이션 이후) | `user_type = 'user'`, `subject_id` = user id. 게스트 id와 같은 컬럼이라 `auth.users` FK(cascade) 불가 → 탈퇴 로직에서 직접 처리 |
+| 피드백 | Google 시트 (Apps Script로 저장, `docs/specs/feedback-migration`) | `user_type = user` 행의 `subject_id` = user id. 시트라 자동 삭제가 없어 사람이 직접 처리하거나 Apps Script에 삭제 기능을 둬야 함 |
 | 이용 행태 | Amplitude | `setUserId(user.id)` |
 | 로그인 세션 | 브라우저 쿠키 | |
 | 기기 데이터 | localStorage `newmantle_guest_id`, `newmantle_game_data`, `newmantle_pending_link` | |
@@ -102,7 +102,7 @@
 - [ ] Amplitude: 삭제 요청까지 할지 / `reset()`만 하고 처리방침에 "분석 데이터는 가명 상태로 보관 기간 후 삭제"로 쓸지
 - [ ] 진입점: 로그아웃 옆(헤더가 좁음) / 설정 메뉴 / `/stats` 하단. 추천: 설정 메뉴 하단에 작게
 - [ ] 확인 단계: 확인 창 1번 / 닉네임 입력 후 확인. 추천: 확인 창 1번 (되돌릴 수 없음을 명시)
-- [ ] 피드백(Supabase `feedback`) 처리: 행 삭제 / `subject_id`만 `null`로 익명화(본문 유지) / 그대로 둠. 그대로 두면 탈퇴 후에도 식별자가 남아 처리방침과 맞춰야 함
+- [ ] 피드백 시트 처리: 행 삭제 / `subject_id`만 지워 익명화(본문 유지) / 그대로 둠. 그대로 두면 탈퇴 후에도 식별자가 남아 처리방침과 맞춰야 함
 - [ ] 탈퇴 이벤트를 Amplitude에 남길지 (예: `Account Deleted`, user id 제외)
 - [ ] excel 테마: 이번엔 classic만 (다른 문서와 동일)
 
