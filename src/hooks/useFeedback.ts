@@ -37,7 +37,7 @@ async function postFeedback(feedback: string, quizDate: string) {
   } = await createClient().auth.getSession();
   const row = buildFeedbackRow({ feedback, userId: session?.user?.id ?? null, quizDate });
 
-  if (!FEEDBACK_URL) throw new Error("NEXT_PUBLIC_FEEDBACK_URL is not set");
+  if (!FEEDBACK_URL) throw new FeedbackSendError("NEXT_PUBLIC_FEEDBACK_URL 없음");
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FEEDBACK_TIMEOUT_MS);
@@ -50,18 +50,28 @@ async function postFeedback(feedback: string, quizDate: string) {
       signal: controller.signal,
     });
     const result = await response.json().catch(() => null);
-    if (result?.ok !== true) throw new Error(`feedback script: no ok (status ${response.status})`);
+    if (result?.ok !== true) throw new FeedbackSendError(`성공 표시 없는 응답 (status ${response.status})`);
   } finally {
     clearTimeout(timeout);
+  }
+}
+
+/** Sentry에서 피드백 전송 실패로 바로 알아보게 이름과 메시지를 붙인다. 원래 오류는 cause로 남긴다 */
+class FeedbackSendError extends Error {
+  constructor(reason: string, cause?: unknown) {
+    super(`피드백 전송 실패: ${reason}`, { cause });
+    this.name = "FeedbackSendError";
   }
 }
 
 /** 실패는 화면에 보이지 않으므로 Sentry로 알린다. 본문은 보내지 않는다 (feedback-migration Dec-4) */
 function reportFailure(error: unknown) {
   const reported =
-    (error as { name?: unknown } | null)?.name === "AbortError"
-      ? new Error(`feedback script: no response in ${FEEDBACK_TIMEOUT_MS}ms`)
-      : error;
+    error instanceof FeedbackSendError
+      ? error
+      : (error as { name?: unknown } | null)?.name === "AbortError"
+        ? new FeedbackSendError(`${FEEDBACK_TIMEOUT_MS / 1000}초 동안 응답 없음`, error)
+        : new FeedbackSendError(`요청 오류 (${String(error)})`, error);
   Sentry.captureException(reported, { tags: { feature: "feedback" } });
 }
 

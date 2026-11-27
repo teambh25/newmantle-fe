@@ -359,6 +359,7 @@ describe("전송 실패", () => {
     await send(user, d);
 
     await waitFor(() => expect(sentryReports()).toHaveLength(1));
+    expect(sentryReports()[0][0]).toMatchObject({ name: "FeedbackSendError" });
     expect(sentryReports()[0][1]).toMatchObject({ tags: { feature: "feedback" } });
     expect(sentryText()).not.toContain("비밀 의견");
     await expectSentState(d);
@@ -376,6 +377,7 @@ describe("전송 실패", () => {
 
     await act(() => vi.advanceTimersByTimeAsync(10_000));
     await waitFor(() => expect(sentryReports()).toHaveLength(1));
+    expect(sentryReports()[0][0]).toMatchObject({ name: "FeedbackSendError" });
   });
 
   it("Apps Script가 성공을 돌려줌 → 보내기 → Sentry에 보고되지 않는다", async () => {
