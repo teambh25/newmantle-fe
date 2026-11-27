@@ -5,7 +5,7 @@
  * 배포 (저장소의 이 파일이 원본이다. 편집기에서 고치지 말고 여기서 고쳐 붙여 넣는다, Dec-13)
  * 1. 새 스프레드시트 파일을 만들고 탭 이름을 SHEET_NAME으로 바꾼다. 1행에 HEADERS 값을 적는다 (순서·추가 컬럼은 자유)
  *    사람이 채우는 컬럼(처리 완료 등)에 체크박스를 아래로 미리 깔아 두지 않는다. 새 행이 체크박스가 끝난 아래에 붙는다
- * 2. 파일 설정에서 시간대를 서울로 둔다 (받은 시각 표시용)
+ * 2. 파일 → 설정 → 일반 → 시간대를 "(GMT+09:00) 서울"로 둔다 (received_at 표시용)
  * 3. 확장 프로그램 → Apps Script에 이 파일 내용을 붙여 넣는다
  * 4. 프로젝트 설정 → 스크립트 속성에 DISCORD_WEBHOOK_URL을 넣는다 (저장소에 두지 않는다, Dec-6)
  * 5. 배포 → 새 배포 → 웹앱. 실행 계정: 나, 액세스: 모든 사용자
@@ -22,12 +22,12 @@ const DISCORD_MAX_LENGTH = 2000;
 
 /** 시트 1행의 헤더 이름. 값은 헤더 이름을 찾아 넣으므로 컬럼 순서를 바꾸거나 사람이 채우는 컬럼을 더해도 된다 (Dec-12) */
 const HEADERS = {
-  receivedAt: "받은 시각",
-  quizDate: "퀴즈 날짜",
-  userType: "유저 구분",
-  subjectId: "유저 ID",
-  gameStatus: "게임 상태",
-  feedback: "피드백",
+  receivedAt: "received_at",
+  userType: "user_type",
+  subjectId: "subject_id",
+  quizDate: "quiz_date",
+  gameStatus: "game_status",
+  feedback: "feedback",
 };
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;

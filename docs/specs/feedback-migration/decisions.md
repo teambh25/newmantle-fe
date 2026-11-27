@@ -92,7 +92,7 @@
   (A) 지금처럼 본문과 시간만
   (B) 본문, `quiz_date`, `game_status`, `user_type`, `subject_id`, 받은 시각. `theme`, `entry`는 Amplitude에만
 선택 — B
-근거 — 유사도 관련 피드백의 맥락(어떤 단어를 말하는지)은 퀴즈 날짜와 사용자 식별자로 서버 로그와 맞춰야 알 수 있다. 맥락 자체는 저장하지 않는다. `theme`, `entry`는 Amplitude가 추적한다. 두 곳을 잇는 값(`quiz_date`, 사용자 식별자)만 둘 다 둔다. 받은 시각은 클라이언트 시각을 믿지 않고 Apps Script가 적는다. 처리 완료 여부는 사람이 시트에서 직접 채우는 컬럼으로 따로 둔다 (Dec-12). 시트 헤더는 보기 좋게 시간 → 유저 정보 → 상태 → 피드백 순으로 둔다: 받은 시각, 퀴즈 날짜, 유저 구분, 유저 ID, 게임 상태, 피드백, 처리 완료 (순서는 사용자 제안) 게스트 UUID는 다른 정보와 연결되면 개인정보라 처리방침 메모에 반영한다 (Phase 5). Supabase 방식 때 정한 내용을 이어받았다
+근거 — 유사도 관련 피드백의 맥락(어떤 단어를 말하는지)은 퀴즈 날짜와 사용자 식별자로 서버 로그와 맞춰야 알 수 있다. 맥락 자체는 저장하지 않는다. `theme`, `entry`는 Amplitude가 추적한다. 두 곳을 잇는 값(`quiz_date`, 사용자 식별자)만 둘 다 둔다. 받은 시각은 클라이언트 시각을 믿지 않고 Apps Script가 적는다. 처리 완료 여부는 사람이 시트에서 직접 채우는 컬럼으로 따로 둔다 (Dec-12). 시트 헤더는 보기 좋게 시간 → 유저 정보 → 상태 → 피드백 순으로, 영문으로 둔다: `received_at`, `user_type`, `subject_id`, `quiz_date`, `game_status`, `feedback`, 처리 완료 컬럼 (순서·표기는 사용자 제안) 게스트 UUID는 다른 정보와 연결되면 개인정보라 처리방침 메모에 반영한다 (Phase 5). Supabase 방식 때 정한 내용을 이어받았다
 영향 — `src/utils/feedback.ts`, Apps Script, plan.md Context 표
 상태 — active
 
