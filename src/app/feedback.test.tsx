@@ -380,13 +380,14 @@ describe("전송 실패", () => {
     expect(sentryReports()[0][0]).toMatchObject({ name: "FeedbackSendError" });
   });
 
-  it("Apps Script가 성공을 돌려줌 → 보내기 → Sentry에 보고되지 않는다", async () => {
+  it("Apps Script가 성공을 돌려줌 → 보내기 → 제한 시간이 지나도 Sentry에 보고되지 않는다", async () => {
+    fakeTimeouts();
     const { user } = await renderHome();
     const d = await openFromSettings(user);
     await write(user, d, "의견");
     await send(user, d);
     await expectSentState(d);
-    await act(() => new Promise((r) => setTimeout(r, 0)));
+    await act(() => vi.advanceTimersByTimeAsync(10_000));
     expect(sentryReports()).toHaveLength(0);
   });
 });
