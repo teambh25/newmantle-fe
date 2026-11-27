@@ -21,7 +21,9 @@ export default function NicknameSetupModal() {
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.user) {
         setUserContext(session.user)
-        const { data: profile } = await supabase.from('profiles').select('nickname').eq('id', session.user.id).single()
+        const { data: profile, error } = await supabase.from('profiles').select('nickname').eq('id', session.user.id).single()
+        // 프로필이 없으면 .single()이 PGRST116을 준다. 그 밖의 오류(DB 중단·네트워크)는 닉네임 유무를 모르므로 창을 열지 않는다
+        if (error && error.code !== 'PGRST116') return
         if (!profile?.nickname) {
           setIsOpen(true)
         }
