@@ -9,9 +9,8 @@ interface SurveyFormProps {
 
 // excel 피드백 창 내용. 셀 모양은 유지하고 동작은 classic과 같다 (docs/tasks/ui/feedback/decision.md Dec-5)
 const SurveyForm: React.FC<SurveyFormProps> = ({ entry, startRow = 21 }) => {
-  const { text, setText, sending, sent, canSend, submit, maxLength } = useFeedback({
+  const { text, setText, sent, canSend, submit, maxLength } = useFeedback({
     entry,
-    theme: "excel",
   });
 
   return (
@@ -70,7 +69,7 @@ const SurveyForm: React.FC<SurveyFormProps> = ({ entry, startRow = 21 }) => {
               aria-label="보내기"
               className="excel-cell border-r-0 w-24 flex-shrink-0 justify-center bg-[#217346] text-white font-medium text-[13px] hover:bg-[#1a5a37] disabled:bg-[#f3f3f3] disabled:text-[#a0a0a0] transition-colors cursor-pointer uppercase"
             >
-              {sending ? "Wait" : "Enter"}
+              Enter
             </button>
           </div>
         </>

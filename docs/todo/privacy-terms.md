@@ -39,8 +39,9 @@
 | 추측한 단어 | 백엔드 서버 로그 | 통계에는 저장 안 함. 로그 보관 기간·함께 남는 항목(id, IP 등) 확인 필요 |
 | 진행 중 게임 (제출 단어 목록 등) | localStorage `newmantle_game_data` | 기기에만 저장 |
 | 공유 링크의 `sharer_id` | URL | 로그인 유저면 Supabase user id(UUID, 계정마다 고정), 게스트면 guest id. `GET /v2/stats/{type}/{id}/{date}`로 최근 7일 통계가 인증 없이 조회됨 (프론트는 오늘·어제만 호출) |
-| 이용 행태 | Amplitude (기본 리전 US, `serverZone` 미설정) | 이벤트 + 세션 추적, 로그인 시 `setUserId(user.id)`. 식별자 저장에 쿠키 사용(SDK 기본값). 피드백 본문도 `Feedback Submitted` 이벤트에 포함 |
-| 피드백 본문 | Make.com 웹훅 `hook.eu2.make.com` (EU) | 설정 → 설문에서 전송(`SurveyForm.tsx`). Make.com이 이후 어디로 보내는지 확인 필요 |
+| 이용 행태 | Amplitude (기본 리전 US, `serverZone` 미설정) | 이벤트 + 세션 추적, 로그인 시 `setUserId(user.id)`. 식별자 저장에 쿠키 사용(SDK 기본값). 피드백은 `Feedback Submitted`에 퀴즈 날짜·진입 위치만 보내고 본문은 보내지 않음 |
+| 피드백 (본문, 퀴즈 날짜, 게임 상태, 회원·게스트 구분, user id 또는 guest id, 받은 시각) | Google Apps Script 웹앱 → Google 시트 (팀 Google 계정), 디스코드 채널 알림 | 설정·결과창에서 전송(`src/hooks/useFeedback.ts`, `apps-script/feedback/Code.gs`). id가 함께 저장돼 본문이 계정과 연결됨. 디스코드에는 본문·퀴즈 날짜·게임 상태만 감 (`docs/specs/feedback-migration`) |
+| 오류 정보 | Sentry | 앱 오류 자동 수집. `sendDefaultPii: true`라 IP 등이 포함될 수 있음. 피드백 전송 실패 보고에는 본문을 넣지 않음. 리전 확인 필요 |
 | 기타 localStorage | 테마, 공지 확인 시각, 로그인 툴팁 닫음 여부, 게스트 연결 대기 | 기기에만 저장 |
 
 ---
@@ -57,7 +58,7 @@
   - 서버 로그(추측한 단어): 확인 필요
 - [ ] 파기 절차·방법 (제21조), 탈퇴 방법
 - [ ] 제3자 제공 (없음으로 예상)
-- [ ] 처리 위탁: Supabase, Amplitude, Make.com (+ 호스팅·백엔드 서버 업체)
+- [ ] 처리 위탁: Supabase, Amplitude, Google(Apps Script·시트), Sentry, 디스코드 (+ 호스팅·백엔드 서버 업체). 디스코드·Sentry를 위탁으로 적을지는 확인 필요
 - [ ] 국외 이전 (제28조의8): 받는 자, 국가(싱가포르 / 미국 / EU 등), 일시·방법, 항목, 목적, 보유 기간
 - [ ] 정보주체의 권리와 행사 방법 (열람·정정·삭제 요청 → teambh25@gmail.com)
 - [ ] 쿠키 등 자동 수집 장치 (Supabase 세션 쿠키, Amplitude 쿠키)와 거부 방법
@@ -77,7 +78,7 @@
 ### 2-3. 같이 볼 것
 
 - `sharer_id`가 user id 그대로 노출: 처리방침에 기재하고, 공유 방식 변경은 `docs/todo/share.md`에서
-- 피드백: Make.com 웹훅 URL이 클라이언트에 노출(아무나 요청 가능), 본문이 Amplitude에도 중복 전송. Amplitude 쪽 본문 제거 검토
+- 피드백: Apps Script 웹앱 주소가 클라이언트에 공개돼 아무나 요청 가능. 형식이 틀린 요청은 시트·디스코드에 남지 않음. Amplitude 쪽 본문은 제거됨. 시트 보유 기간(언제 지울지)은 정해야 함
 
 ---
 
@@ -121,7 +122,9 @@
 - [x] 서버의 게스트 기록 보유 기간 → 7일 (`docs/api/stats.md`)
 - [ ] 서버 로그(추측한 단어)의 보관 기간과 함께 남는 항목 (user id / guest id, IP 등)
 - [ ] 백엔드 서버와 프론트 호스팅(Vercel 등)의 업체·위치 (위탁·국외 이전 기재용)
-- [ ] Make.com이 피드백을 어디로 넘기는지 (Slack, Google Sheets, 이메일 등 → 추가 수탁자)
+- [x] 피드백이 어디로 가는지 → Google 시트 + 디스코드 알림 (Make.com에서 Apps Script로 전환, `docs/specs/feedback-migration`)
+- [ ] 피드백 시트의 보유 기간과 파기 방법 (탈퇴 시 해당 id의 행도 지울지)
+- [ ] Sentry 프로젝트 리전
 - [ ] 개인정보 보호책임자 표기: 실명 vs "teambh25" + 이메일
 - [ ] 만 14세 미만: "가입 불가"로 명시할지
 - [ ] Amplitude 프로젝트 리전 확인 (코드상 기본값 US)

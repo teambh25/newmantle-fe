@@ -2,7 +2,10 @@ import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, vi } from "vitest";
 import { cleanup } from "@testing-library/react";
 import { gameServer } from "./fakeGameServer";
-import { feedbackWebhook } from "./fakeFeedbackWebhook";
+import { feedbackScript } from "./fakeFeedbackScript";
+
+// 피드백 웹앱 주소. Vitest는 .env를 읽지 않아 테스트용 값을 둔다 (가짜 웹앱이 이 접두어로 가로챈다)
+process.env.NEXT_PUBLIC_FEEDBACK_URL = "https://script.google.com/macros/s/test/exec";
 
 // ---- 외부 의존성 mock ----
 
@@ -20,6 +23,9 @@ vi.mock("@amplitude/analytics-browser", () => ({
   },
 }));
 
+// Sentry SDK: 직접 보고(captureException) 호출만 기록
+vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
+
 // 축하 효과 라이브러리: 호출 여부만 기록
 vi.mock("canvas-confetti", () => ({ default: vi.fn() }));
 
@@ -31,6 +37,9 @@ vi.mock("@/utils/supabase/client", () => ({
       // 헤더 로그인 버튼(AuthButton)이 로그인 여부를 본다 (useAuthUser)
       getUser: async () => ({ data: { user: null } }),
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
+    },
+    from: (table: string) => {
+      throw new Error(`setup.ts Supabase mock: ${table} 테이블은 테스트 파일에서 mock한다`);
     },
   }),
 }));
@@ -63,13 +72,12 @@ beforeEach(() => {
   // 축하 효과는 setInterval로 3초간 그려진다. 다른 테스트로 새지 않도록 interval만 가짜로 돌린다
   vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
   gameServer.reset();
-  feedbackWebhook.reset();
-  // 피드백 웹훅은 가짜 웹훅으로, 나머지는 가짜 게임 서버로
+  feedbackScript.reset();
   vi.stubGlobal(
     "fetch",
     vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
-      const url = typeof input === "string" ? input : input.toString();
-      return feedbackWebhook.matches(url) ? feedbackWebhook.fetch(url, init) : gameServer.fetch(input);
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+      return feedbackScript.matches(url) ? feedbackScript.fetch(url, init) : gameServer.fetch(input);
     })
   );
   // 요청 실패 케이스의 console.error 출력 억제
